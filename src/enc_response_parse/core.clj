@@ -8,6 +8,13 @@
     [tupelo.string :as str])
   (:gen-class))
 
+(s/def encounter-response-root-dir :- s/Str
+  "The root directory containing Iowa Encounter Response files"
+  "/Users/athom555/work/iowa-response")
+
+(s/def encounter-response-filename-patt
+  #"^ENC_RESPONSE_D_.*.TXT$") ; eg `ENC_RESPONSE_D_20200312_062014.TXT`
+
 (s/def spec-opts-default :- tsk/KeyMap
   "Default options for field specs"
   {:trim? true

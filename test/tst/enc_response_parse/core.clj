@@ -3,14 +3,19 @@
         tupelo.core
         tupelo.test)
   (:require
+    [clojure.data :as data]
+    [clojure.java.io :as io]
     [clojure.pprint :as pp]
     [schema.core :as s]
-    [tupelo.core :as t]
+    [tupelo.misc :as misc]
     [tupelo.parse :as parse]
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
     )
-  (:import [java.lang Character]))
+  (:import
+    [java.lang Character]
+    [java.io File]
+    ))
 
 
 (verify
@@ -107,3 +112,103 @@
        :field                           "DENIED"
        :error-field-value               ""})
     ))
+
+(s/defn enc-resp-file-name? :- s/Bool
+  [fname :- s/Str]
+  (boolean (re-matches encounter-response-filename-patt fname)))
+
+(s/defn enc-resp-file? :- s/Bool
+  [file :- File]
+  (enc-resp-file-name?
+    (.getName file) ; returns string w/o parent dirs
+    ))
+
+(verify
+  ; works only on filename w/o parent dirs
+  (isnt (enc-resp-file-name? "xyzENC_RESPONSE_D_20200312_062014.TXT"))
+  (is (enc-resp-file-name? "ENC_RESPONSE_D_20200312_062014.TXT"))
+
+  ; ignores parent dirs in path
+  (is (enc-resp-file? (File. "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20200312_062014.TXT")))
+
+  ; OK if not exist, as long as pattern matches
+  (is (enc-resp-file? (File. "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_xxxxxxx_062014.TXT")))
+  (isnt (enc-resp-file? (File. "/Users/athom555/work/iowa-response/xxxxENC_RESPONSE_D_xxxxxxx_062014.TXT")))
+  )
+
+;---------------------------------------------------------------------------------------------------
+(s/defn discard-grep-pretext ; :- s/Str
+  [out :- s/Str]
+  (let [out (str/trim out)]
+    (xsecond (re-matches #"^.*ENC_.*.TXT:(.*)$" out))))
+
+(verify
+  (let [out      "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20211202_065818.TXT:30000062649906                6213360078000001412022021D1170411          \r\n"
+        expected "30000062649906                6213360078000001412022021D1170411"
+        actual   (discard-grep-pretext out)]
+    (is= actual expected)))
+
+;---------------------------------------------------------------------------------------------------
+(s/defn extract-enc-resp-fields ; :- s/Str
+  [shell-result :- tsk/KeyMap]
+  (with-map-vals shell-result [exit out err]
+    (assert (= 0 exit))
+    (assert (= "" err))
+    (let [enc-response-line   (discard-grep-pretext out)
+          enc-response-parsed (parse-string-fields iowa-encounter-response-specs enc-response-line)]
+      enc-response-parsed)))
+
+(verify
+  (let [shell-result        {:exit     0
+                             :out      "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20211202_065818.TXT:30000062649906                6213360078000001412022021D11704114C0701202119527117801124202100000000000000A00DENIED                                                                                                  \r\n"
+                             :err      ""
+                             :cmd-str  "grep '^30000062649906' /Users/athom555/work/iowa-response/ENC_*.TXT"
+                             :os-shell "/bin/bash"}
+        enc-response-parsed (extract-enc-resp-fields shell-result)
+        ]
+    (is= enc-response-parsed {:mco-claim-number                "30000062649906"
+                              :iowa-transaction-control-number "62133600780000014"
+                              :iowa-processing-date            "12022021"
+                              :claim-type                      "D"
+                              :claim-frequency-code            "1"
+                              :member-id                       "1704114C"
+                              :first-date-of-service           "07012021"
+                              :billing-provider-npi            "1952711780"
+                              :mco-paid-date                   "11242021"
+                              :total-paid-amount               "000000000000"
+                              :line-number                     "00"
+                              :error-code                      "A00"
+                              :field                           "DENIED"
+                              :error-field-value               ""})))
+
+(s/defn orig-icn->response-parsed :- tsk/KeyMap
+  [icn-str :- s/Str]
+  (let [icn-str             (str/trim icn-str)
+        shell-cmd-str       (format "grep '^%s' %s/ENC_*.TXT" icn-str encounter-response-root-dir)
+        shell-result        (misc/shell-cmd shell-cmd-str)
+        enc-response-parsed (extract-enc-resp-fields shell-result)]
+    enc-response-parsed))
+
+(verify
+  (let [enc-resp-root-dir (io/file encounter-response-root-dir)
+        all-files         (file-seq enc-resp-root-dir)
+        enc-resp-files    (vec (sort-by str (keep-if enc-resp-file? all-files)))
+        ]
+    (comment ; sample output
+      ;(take 5 all-files) =>
+      ;[#object[java.io.File 0x15fd8daa "/Users/athom555/work/iowa-response"]
+      ; #object[java.io.File 0x762b698 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20200312_062014.TXT"]
+      ; #object[java.io.File 0x5ee9866c "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20180104_065621.TXT"]
+      ; #object[java.io.File 0x2f6268d9 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20181108_061817.TXT"]
+      ; #object[java.io.File 0x6d244c88 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20210715_115630.TXT"]]
+      ;(take 5 enc-resp-files) =>
+      ;[#object[java.io.File 0x66a9013e "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170413_132207.TXT"]
+      ; #object[java.io.File 0x65236427 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170424_125320.TXT"]
+      ; #object[java.io.File 0x425c5389 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170505_160755.TXT"]
+      ; #object[java.io.File 0x3f348a38 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170509_144929.TXT"]
+      ; #object[java.io.File 0x1e7822fb "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170515_094001.TXT"]]
+      )
+
+    )
+
+  )
