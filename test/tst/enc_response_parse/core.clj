@@ -113,16 +113,6 @@
        :error-field-value               ""})
     ))
 
-(s/defn enc-resp-file-name? :- s/Bool
-  [fname :- s/Str]
-  (boolean (re-matches encounter-response-filename-patt fname)))
-
-(s/defn enc-resp-file? :- s/Bool
-  [file :- File]
-  (enc-resp-file-name?
-    (.getName file) ; returns string w/o parent dirs
-    ))
-
 (verify
   ; works only on filename w/o parent dirs
   (isnt (enc-resp-file-name? "xyzENC_RESPONSE_D_20200312_062014.TXT"))
@@ -137,11 +127,6 @@
   )
 
 ;---------------------------------------------------------------------------------------------------
-(s/defn discard-grep-pretext ; :- s/Str
-  [out :- s/Str]
-  (let [out (str/trim out)]
-    (xsecond (re-matches #"^.*ENC_.*.TXT:(.*)$" out))))
-
 (verify
   (let [out      "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20211202_065818.TXT:30000062649906                6213360078000001412022021D1170411          \r\n"
         expected "30000062649906                6213360078000001412022021D1170411"
@@ -149,23 +134,13 @@
     (is= actual expected)))
 
 ;---------------------------------------------------------------------------------------------------
-(s/defn extract-enc-resp-fields ; :- s/Str
-  [shell-result :- tsk/KeyMap]
-  (with-map-vals shell-result [exit out err]
-    (assert (= 0 exit))
-    (assert (= "" err))
-    (let [enc-response-line   (discard-grep-pretext out)
-          enc-response-parsed (parse-string-fields iowa-encounter-response-specs enc-response-line)]
-      enc-response-parsed)))
-
 (verify
   (let [shell-result        {:exit     0
                              :out      "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20211202_065818.TXT:30000062649906                6213360078000001412022021D11704114C0701202119527117801124202100000000000000A00DENIED                                                                                                  \r\n"
                              :err      ""
                              :cmd-str  "grep '^30000062649906' /Users/athom555/work/iowa-response/ENC_*.TXT"
                              :os-shell "/bin/bash"}
-        enc-response-parsed (extract-enc-resp-fields shell-result)
-        ]
+        enc-response-parsed (extract-enc-resp-fields shell-result)]
     (is= enc-response-parsed {:mco-claim-number                "30000062649906"
                               :iowa-transaction-control-number "62133600780000014"
                               :iowa-processing-date            "12022021"
@@ -182,7 +157,8 @@
                               :error-field-value               ""})))
 
 (s/defn orig-icn->response-parsed :- tsk/KeyMap
-  [icn-str :- s/Str]
+  [encounter-response-root-dir :- s/Str
+   icn-str :- s/Str]
   (let [icn-str             (str/trim icn-str)
         shell-cmd-str       (format "grep '^%s' %s/ENC_*.TXT" icn-str encounter-response-root-dir)
         shell-result        (misc/shell-cmd shell-cmd-str)
@@ -190,9 +166,31 @@
     enc-response-parsed))
 
 (verify
-  (let [enc-resp-root-dir (io/file encounter-response-root-dir)
-        all-files         (file-seq enc-resp-root-dir)
-        enc-resp-files    (vec (sort-by str (keep-if enc-resp-file? all-files)))
+  (let [encounter-response-root-dir "./enc-response-files-test"
+        icn-str                     "30000062649906"
+        enc-resp-parsed (orig-icn->response-parsed encounter-response-root-dir icn-str)]
+    (is= enc-resp-parsed
+      {:mco-claim-number                "30000062649906"
+       :iowa-transaction-control-number "62133600780000014"
+       :iowa-processing-date            "12022021"
+       :claim-type                      "D"
+       :claim-frequency-code            "1"
+       :member-id                       "1704114C"
+       :first-date-of-service           "07012021"
+       :billing-provider-npi            "1952711780"
+       :mco-paid-date                   "11242021"
+       :total-paid-amount               "000000000000"
+       :line-number                     "00"
+       :error-code                      "A00"
+       :field                           "DENIED"
+       :error-field-value               ""})
+    )
+  )
+
+(verify
+  (let [enc-resp-root-dir-File (io/file encounter-response-root-dir)
+        all-files              (file-seq enc-resp-root-dir-File)
+        enc-resp-files         (vec (sort-by str (keep-if enc-resp-file? all-files)))
         ]
     (comment ; sample output
       ;(take 5 all-files) =>

@@ -5,7 +5,10 @@
     [schema.core :as s]
     [tupelo.core :as t]
     [tupelo.schema :as tsk]
-    [tupelo.string :as str])
+    [tupelo.string :as str]
+    )
+  (:import
+    [java.io File])
   (:gen-class))
 
 (s/def encounter-response-root-dir :- s/Str
@@ -13,15 +16,18 @@
   "/Users/athom555/work/iowa-response")
 
 (s/def encounter-response-filename-patt
+  "Regex pattern for encounter response files (no parent dirs!)"
   #"^ENC_RESPONSE_D_.*.TXT$") ; eg `ENC_RESPONSE_D_20200312_062014.TXT`
 
 (s/def spec-opts-default :- tsk/KeyMap
   "Default options for field specs"
-  {:trim? true
+  {:trim? true ; trim leading/trailing blanks from returned string
+
+   ; Don't crash if insufficient chars found in line.  Should only be used for last N fields
    :length-strict? true})
 
 (s/def iowa-encounter-response-specs :- [tsk/KeyMap]
-  "Field specs for the Iowa Encounter Response files. Named like `ENC_RESPONSE_D_20210722_071949.TXT`"
+  "Field specs (in order) for the Iowa Encounter Response files. Named like `ENC_RESPONSE_D_20210722_071949.TXT`"
   [{:name :mco-claim-number :format :numeric :length 30} ; #todo it is a number like "30000062649905                "
    {:name :iowa-transaction-control-number :format :numeric :length 17}
    {:name :iowa-processing-date :format :numeric :length 8}
@@ -91,6 +97,31 @@
             chars-next  (fetch-in slice-out [:state :chars-remaining])
             result-next (glue result (grab :output slice-out))]
         (recur specs-next chars-next result-next)))))
+
+;---------------------------------------------------------------------------------------------------
+(s/defn enc-resp-file-name? :- s/Bool
+  [fname :- s/Str]
+  (boolean (re-matches encounter-response-filename-patt fname)))
+
+(s/defn enc-resp-file? :- s/Bool
+  [file :- File]
+  (enc-resp-file-name?
+    (.getName file) ; returns string w/o parent dirs
+    ))
+
+(s/defn discard-grep-pretext ; :- s/Str
+  [out :- s/Str]
+  (let [out (str/trim out)]
+    (xsecond (re-matches #"^.*ENC_.*.TXT:(.*)$" out))))
+
+(s/defn extract-enc-resp-fields ; :- s/Str
+  [shell-result :- tsk/KeyMap]
+  (with-map-vals shell-result [exit out err]
+    (assert (= 0 exit))
+    (assert (= "" err))
+    (let [enc-response-line   (discard-grep-pretext out)
+          enc-response-parsed (parse-string-fields iowa-encounter-response-specs enc-response-line)]
+      enc-response-parsed)))
 
 (defn -main
   [& args]
