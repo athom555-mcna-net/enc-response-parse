@@ -42,7 +42,7 @@
    ])
 
 ;---------------------------------------------------------------------------------------------------
-(def format->pattern
+(s/def format->pattern :- tsk/KeyMap
   "Map from format kw to regex pattern."
   {:char         #"\p{Alpha}*" ; *** empty string allowed ***
    :numeric      #"\p{Digit}*" ; *** empty string allowed ***
