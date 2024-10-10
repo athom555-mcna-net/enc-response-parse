@@ -133,6 +133,27 @@
     (is= actual expected)))
 
 ;---------------------------------------------------------------------------------------------------
+(comment  ; sample output
+  (verify
+    (let [encounter-response-root-dir "/Users/athom555/work/iowa-response"
+          enc-resp-root-dir-File      (io/file encounter-response-root-dir)
+          all-files                   (file-seq enc-resp-root-dir-File) ; returns a tree like `find`
+          enc-resp-files              (vec (sort-by str (keep-if enc-resp-file? all-files)))
+          ]
+      ;(take 5 all-files) =>
+      ;[#object[java.io.File 0x15fd8daa "/Users/athom555/work/iowa-response"]
+      ; #object[java.io.File 0x762b698 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20200312_062014.TXT"]
+      ; #object[java.io.File 0x5ee9866c "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20180104_065621.TXT"]
+      ; #object[java.io.File 0x2f6268d9 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20181108_061817.TXT"]
+      ; #object[java.io.File 0x6d244c88 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20210715_115630.TXT"]]
+      ;(take 5 enc-resp-files) =>
+      ;[#object[java.io.File 0x66a9013e "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170413_132207.TXT"]
+      ; #object[java.io.File 0x65236427 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170424_125320.TXT"]
+      ; #object[java.io.File 0x425c5389 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170505_160755.TXT"]
+      ; #object[java.io.File 0x3f348a38 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170509_144929.TXT"]
+      ; #object[java.io.File 0x1e7822fb "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170515_094001.TXT"]]
+      )))
+
 (verify
   (let [shell-result        {:exit     0
                              :out      "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20211202_065818.TXT:30000062649906                6213360078000001412022021D11704114C0701202119527117801124202100000000000000A00DENIED                                                                                                  \r\n"
@@ -175,28 +196,4 @@
        :field                           "DENIED"
        :error-field-value               ""})
     )
-  )
-
-(verify
-  (let [enc-resp-root-dir-File (io/file encounter-response-root-dir)
-        all-files              (file-seq enc-resp-root-dir-File)
-        enc-resp-files         (vec (sort-by str (keep-if enc-resp-file? all-files)))
-        ]
-    (comment ; sample output
-      ;(take 5 all-files) =>
-      ;[#object[java.io.File 0x15fd8daa "/Users/athom555/work/iowa-response"]
-      ; #object[java.io.File 0x762b698 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20200312_062014.TXT"]
-      ; #object[java.io.File 0x5ee9866c "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20180104_065621.TXT"]
-      ; #object[java.io.File 0x2f6268d9 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20181108_061817.TXT"]
-      ; #object[java.io.File 0x6d244c88 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20210715_115630.TXT"]]
-      ;(take 5 enc-resp-files) =>
-      ;[#object[java.io.File 0x66a9013e "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170413_132207.TXT"]
-      ; #object[java.io.File 0x65236427 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170424_125320.TXT"]
-      ; #object[java.io.File 0x425c5389 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170505_160755.TXT"]
-      ; #object[java.io.File 0x3f348a38 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170509_144929.TXT"]
-      ; #object[java.io.File 0x1e7822fb "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170515_094001.TXT"]]
-      )
-
-    )
-
   )

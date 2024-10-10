@@ -12,10 +12,6 @@
     [java.io File])
   (:gen-class))
 
-(s/def encounter-response-root-dir :- s/Str
-  "The root directory containing Iowa Encounter Response files"
-  "/Users/athom555/work/iowa-response")
-
 (s/def encounter-response-filename-patt
   "Regex pattern for encounter response files (no parent dirs!)"
   #"^ENC_RESPONSE_D_.*.TXT$") ; eg `ENC_RESPONSE_D_20200312_062014.TXT`
