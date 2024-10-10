@@ -4,6 +4,7 @@
     [flatland.ordered.map :as omap]
     [schema.core :as s]
     [tupelo.core :as t]
+    [tupelo.misc :as misc]
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
     )
@@ -122,6 +123,15 @@
     (let [enc-response-line   (discard-grep-pretext out)
           enc-response-parsed (parse-string-fields iowa-encounter-response-specs enc-response-line)]
       enc-response-parsed)))
+
+(s/defn orig-icn->response-parsed :- tsk/KeyMap
+  [encounter-response-root-dir :- s/Str
+   icn-str :- s/Str]
+  (let [icn-str             (str/trim icn-str)
+        shell-cmd-str       (format "grep '^%s' %s/ENC_*.TXT" icn-str encounter-response-root-dir)
+        shell-result        (misc/shell-cmd shell-cmd-str)
+        enc-response-parsed (extract-enc-resp-fields shell-result)]
+    enc-response-parsed))
 
 (defn -main
   [& args]

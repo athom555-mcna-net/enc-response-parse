@@ -7,7 +7,6 @@
     [clojure.java.io :as io]
     [clojure.pprint :as pp]
     [schema.core :as s]
-    [tupelo.misc :as misc]
     [tupelo.parse :as parse]
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
@@ -155,15 +154,6 @@
                               :error-code                      "A00"
                               :field                           "DENIED"
                               :error-field-value               ""})))
-
-(s/defn orig-icn->response-parsed :- tsk/KeyMap
-  [encounter-response-root-dir :- s/Str
-   icn-str :- s/Str]
-  (let [icn-str             (str/trim icn-str)
-        shell-cmd-str       (format "grep '^%s' %s/ENC_*.TXT" icn-str encounter-response-root-dir)
-        shell-result        (misc/shell-cmd shell-cmd-str)
-        enc-response-parsed (extract-enc-resp-fields shell-result)]
-    enc-response-parsed))
 
 (verify
   (let [encounter-response-root-dir "./enc-response-files-test"
