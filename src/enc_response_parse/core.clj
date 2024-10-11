@@ -106,17 +106,22 @@
     (.getName file) ; returns string w/o parent dirs
     ))
 
-(s/defn discard-grep-pretext ; :- s/Str
+(s/defn parse-grep-result :- tsk/KeyMap
   [out :- s/Str]
-  (let [out (str/trim out)]
-    (xsecond (re-matches #"^.*ENC_.*.TXT:(.*)$" out))))
+  (let [out (str/trim out)
+        matches-out  (re-matches #"(^.*ENC_RESPONSE_.*.TXT):(.*)$" out)
+        result {:fname  (xsecond  matches-out)
+                :content (xthird matches-out)}]
+    result))
 
 (s/defn extract-enc-resp-fields ; :- s/Str
   [shell-result :- tsk/KeyMap]
   (with-map-vals shell-result [exit out err]
     (assert (= 0 exit))
     (assert (= "" err))
-    (let [enc-response-line   (discard-grep-pretext out)
+    (let [grep-result    (parse-grep-result out)
+          >> (println "                      found file: " (grab :fname grep-result))
+          enc-response-line (grab :content grep-result)
           enc-response-parsed (parse-string-fields iowa-encounter-response-specs enc-response-line)]
       enc-response-parsed)))
 
