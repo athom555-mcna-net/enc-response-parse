@@ -235,7 +235,7 @@
       icn-strs))
 
   (verify-focus
-    (let [missing-icn-maps            (load-missing-icns "missing-sample.edn")
+    (let [missing-icn-maps            (load-missing-icns "missing-3.edn")
           encounter-response-root-dir "./enc-response-files-test" ; "/Users/athom555/work/iowa-response"
 
           icn-maps-aug                (forv [icn-map missing-icn-maps]
