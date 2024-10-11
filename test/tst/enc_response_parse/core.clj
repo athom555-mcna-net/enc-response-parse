@@ -6,6 +6,7 @@
     [clojure.data :as data]
     [clojure.java.io :as io]
     [clojure.pprint :as pp]
+    [clojure.tools.reader.edn :as edn]
     [schema.core :as s]
     [tupelo.parse :as parse]
     [tupelo.schema :as tsk]
@@ -179,7 +180,7 @@
 (verify
   (let [encounter-response-root-dir "./enc-response-files-test"
         icn-str                     "30000062649906"
-        enc-resp-parsed (orig-icn->response-parsed encounter-response-root-dir icn-str)]
+        enc-resp-parsed             (orig-icn->response-parsed encounter-response-root-dir icn-str)]
     (is= enc-resp-parsed
       {:mco-claim-number                "30000062649906"
        :iowa-transaction-control-number "62133600780000014"
@@ -198,3 +199,58 @@
     )
   )
 
+
+(comment  ; sample datomic record from heron-qa
+  (pp/pprint (d/pull db '[*] 17592186108600))
+  {:encounter-transmission/generation               1673971295
+   :encounter-transmission/frequency                #:db{:id 17592186045418}
+   :encounter-transmission/access-point-medicaid-id "399584705"
+   :encounter-transmission/status                   #:db{:id 17592186045428}
+   :encounter-transmission/facility-ein             "453596313"
+   :encounter-transmission/payer-claim-ids          ["1166980510631" "1167180886508"]
+   :encounter-transmission/plan                     "tx-medicaid"
+   :db/id                                           17592186108600
+   :encounter-transmission/encounter-data           #uuid "637f06c2-de73-40f3-a671-1e8ff01d56bd"
+   :encounter-transmission/icn                      "30000000165819"
+   :inbound-encounter-status/timestamp              #inst "2023-02-08T17:19:12.995-00:00"
+   :encounter-transmission/previous-icn             "30000000165694"
+   :encounter-transmission/billing-provider-npi     "1831475300"}
+  )
+
+(verify
+  (let [encounter-response-root-dir "/Users/athom555/work/iowa-response"
+        icn-str                     "30000062649906"
+        enc-resp-parsed             (orig-icn->response-parsed encounter-response-root-dir icn-str)]
+    (pp/pprint enc-resp-parsed))
+
+  )
+(s/defn load-missing-icns :- [tsk/KeyMap]
+  [missing-icns-edn-file :- s/Str]
+  (let [; 2D file. Each record is [<eid> <icn> <previous-icn>]
+        missing-data (edn/read-string (slurp (io/resource missing-icns-edn-file)))
+        icn-strs     (forv [rec missing-data]
+                       (zipmap [:eid :icn :previous-icn] rec))]
+    icn-strs))
+
+(verify-focus
+  (let [missing-icn-maps            (load-missing-icns "missing-5.edn")
+        encounter-response-root-dir "/Users/athom555/work/iowa-response"
+
+        icn-maps-aug                (forv [icn-map missing-icn-maps]
+                                      (println "seaching ENC_RESPONSE*.TXT for icn:" icn-map)
+                                      (with-map-vals icn-map [eid icn]
+                                        (let [enc-resp    (->sorted-map (orig-icn->response-parsed encounter-response-root-dir icn))
+                                              iowa-tcn    (grab :iowa-transaction-control-number enc-resp)
+                                              icn-map-aug (glue icn-map {:plan-icn iowa-tcn})]
+                                          icn-map-aug)))
+        tx-data                     (forv [icn-map-aug icn-maps-aug]
+                                      (with-map-vals icn-map-aug [eid plan-icn]
+                                        {:db/id    eid
+                                         :plan-icn plan-icn}))
+        ]
+    (spyx-pretty missing-icn-maps)
+    (spit "icn-maps-aug.edn" (spyx-pretty icn-maps-aug))
+    (spit "tx-data.edn" (spyx-pretty tx-data))
+    )
+
+  )
