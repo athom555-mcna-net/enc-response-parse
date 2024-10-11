@@ -218,12 +218,13 @@
     )
 
   (verify
-    (let [encounter-response-root-dir "/Users/athom555/work/iowa-response"
-          icn-str                     "30000062649906"
-          enc-resp-parsed             (orig-icn->response-parsed encounter-response-root-dir icn-str)]
-      (pp/pprint enc-resp-parsed))
+    (when false
+      (let [encounter-response-root-dir "./enc-response-files-test" ; "/Users/athom555/work/iowa-response"
+            icn-str                     "30000062649906"
 
-    )
+            ; Each call requires about 0.5 sec for full data search
+            enc-resp-parsed             (orig-icn->response-parsed encounter-response-root-dir icn-str)]
+        (pp/pprint enc-resp-parsed))))
 
   (s/defn load-missing-icns :- [tsk/KeyMap]
     [missing-icns-edn-file :- s/Str]
@@ -234,8 +235,8 @@
       icn-strs))
 
   (verify-focus
-    (let [missing-icn-maps            (load-missing-icns "missing-5.edn")
-          encounter-response-root-dir "/Users/athom555/work/iowa-response"
+    (let [missing-icn-maps            (load-missing-icns "missing-sample.edn")
+          encounter-response-root-dir "./enc-response-files-test" ; "/Users/athom555/work/iowa-response"
 
           icn-maps-aug                (forv [icn-map missing-icn-maps]
                                         (println "seaching ENC_RESPONSE_*.TXT for icn:" icn-map)
@@ -254,3 +255,4 @@
       (spit "tx-data.edn" (with-out-str (pp/pprint tx-data)))
 
       ))
+
