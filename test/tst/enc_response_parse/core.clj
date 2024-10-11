@@ -249,8 +249,8 @@
                                          :plan-icn plan-icn}))
         ]
     (spyx-pretty missing-icn-maps)
-    (spit "icn-maps-aug.edn" (spyx-pretty icn-maps-aug))
-    (spit "tx-data.edn" (spyx-pretty tx-data))
+    (spit "icn-maps-aug.edn" (with-out-str (pp/pprint icn-maps-aug)))
+    (spit "tx-data.edn" (with-out-str (pp/pprint tx-data)))
     )
 
   )
