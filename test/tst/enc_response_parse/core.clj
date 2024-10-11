@@ -237,8 +237,8 @@
         encounter-response-root-dir "/Users/athom555/work/iowa-response"
 
         icn-maps-aug                (forv [icn-map missing-icn-maps]
-                                      (println "seaching ENC_RESPONSE*.TXT for icn:" icn-map)
-                                      (with-map-vals icn-map [eid icn]
+                                      (println "seaching ENC_RESPONSE_*.TXT for icn:" icn-map)
+                                      (with-map-vals icn-map [icn]
                                         (let [enc-resp    (->sorted-map (orig-icn->response-parsed encounter-response-root-dir icn))
                                               iowa-tcn    (grab :iowa-transaction-control-number enc-resp)
                                               icn-map-aug (glue icn-map {:plan-icn iowa-tcn})]
@@ -246,11 +246,10 @@
         tx-data                     (forv [icn-map-aug icn-maps-aug]
                                       (with-map-vals icn-map-aug [eid plan-icn]
                                         {:db/id    eid
-                                         :plan-icn plan-icn}))
-        ]
-    (spyx-pretty missing-icn-maps)
+                                         :plan-icn plan-icn}))]
+    (nl)
+    (spyx-pretty :results  icn-maps-aug)
     (spit "icn-maps-aug.edn" (with-out-str (pp/pprint icn-maps-aug)))
     (spit "tx-data.edn" (with-out-str (pp/pprint tx-data)))
-    )
 
-  )
+    ))
