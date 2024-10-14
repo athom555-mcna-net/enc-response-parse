@@ -17,6 +17,9 @@
     [java.io File]
     ))
 
+(def ^:dynamic verbose-tests?
+  "Enable to see progress printouts"
+  true)
 
 (verify
   (throws? (validate-format :charxxx "abc")) ; must be valid format
@@ -157,47 +160,49 @@
         )))
 
   (verify
-    (let [shell-result        {:exit     0
-                               :out      "./iowa-response/ENC_RESPONSE_D_20211202_065818.TXT:30000062649906                6213360078000001412022021D11704114C0701202119527117801124202100000000000000A00DENIED                                                                                                  \r\n"
-                               :err      ""
-                               :cmd-str  "grep '^30000062649906' ./iowa-response/ENC_*.TXT"
-                               :os-shell "/bin/bash"}
-          enc-response-parsed (extract-enc-resp-fields shell-result)]
-      (is= enc-response-parsed {:mco-claim-number                "30000062649906"
-                                :iowa-transaction-control-number "62133600780000014"
-                                :iowa-processing-date            "12022021"
-                                :claim-type                      "D"
-                                :claim-frequency-code            "1"
-                                :member-id                       "1704114C"
-                                :first-date-of-service           "07012021"
-                                :billing-provider-npi            "1952711780"
-                                :mco-paid-date                   "11242021"
-                                :total-paid-amount               "000000000000"
-                                :line-number                     "00"
-                                :error-code                      "A00"
-                                :field                           "DENIED"
-                                :error-field-value               ""})))
+    (with-redefs [verbose? verbose-tests?]
+      (let [shell-result        {:exit     0
+                                 :out      "./iowa-response/ENC_RESPONSE_D_20211202_065818.TXT:30000062649906                6213360078000001412022021D11704114C0701202119527117801124202100000000000000A00DENIED                                                                                                  \r\n"
+                                 :err      ""
+                                 :cmd-str  "grep '^30000062649906' ./iowa-response/ENC_*.TXT"
+                                 :os-shell "/bin/bash"}
+            enc-response-parsed (extract-enc-resp-fields shell-result)]
+        (is= enc-response-parsed {:mco-claim-number                "30000062649906"
+                                  :iowa-transaction-control-number "62133600780000014"
+                                  :iowa-processing-date            "12022021"
+                                  :claim-type                      "D"
+                                  :claim-frequency-code            "1"
+                                  :member-id                       "1704114C"
+                                  :first-date-of-service           "07012021"
+                                  :billing-provider-npi            "1952711780"
+                                  :mco-paid-date                   "11242021"
+                                  :total-paid-amount               "000000000000"
+                                  :line-number                     "00"
+                                  :error-code                      "A00"
+                                  :field                           "DENIED"
+                                  :error-field-value               ""}))))
 
   (verify
-    (let [encounter-response-root-dir "./enc-response-files-test"
-          icn-str                     "30000062649906"
-          enc-resp-parsed             (orig-icn->response-parsed encounter-response-root-dir icn-str)]
-      (is= enc-resp-parsed
-        {:mco-claim-number                "30000062649906"
-         :iowa-transaction-control-number "62133600780000014"
-         :iowa-processing-date            "12022021"
-         :claim-type                      "D"
-         :claim-frequency-code            "1"
-         :member-id                       "1704114C"
-         :first-date-of-service           "07012021"
-         :billing-provider-npi            "1952711780"
-         :mco-paid-date                   "11242021"
-         :total-paid-amount               "000000000000"
-         :line-number                     "00"
-         :error-code                      "A00"
-         :field                           "DENIED"
-         :error-field-value               ""})
-      )
+    (with-redefs [verbose? verbose-tests?]
+      (let [encounter-response-root-dir "./enc-response-files-test"
+            icn-str                     "30000062649906"
+            enc-resp-parsed             (orig-icn->response-parsed encounter-response-root-dir icn-str)]
+        (is= enc-resp-parsed
+          {:mco-claim-number                "30000062649906"
+           :iowa-transaction-control-number "62133600780000014"
+           :iowa-processing-date            "12022021"
+           :claim-type                      "D"
+           :claim-frequency-code            "1"
+           :member-id                       "1704114C"
+           :first-date-of-service           "07012021"
+           :billing-provider-npi            "1952711780"
+           :mco-paid-date                   "11242021"
+           :total-paid-amount               "000000000000"
+           :line-number                     "00"
+           :error-code                      "A00"
+           :field                           "DENIED"
+           :error-field-value               ""})
+        ))
     )
 
 (comment ; sample datomic record from heron-qa
@@ -234,25 +239,27 @@
                          (zipmap [:eid :icn :previous-icn] rec))]
       icn-strs))
 
-  (verify-focus
-    (let [missing-icn-maps            (load-missing-icns "missing-3.edn")
-          encounter-response-root-dir "./enc-response-files-test" ; "/Users/athom555/work/iowa-response"
+  (verify
+    (with-redefs [verbose? verbose-tests?]
+      (let [missing-icn-maps            (load-missing-icns "missing-3.edn")
+            encounter-response-root-dir "./enc-response-files-test" ; "/Users/athom555/work/iowa-response"
 
-          icn-maps-aug                (forv [icn-map missing-icn-maps]
-                                        (println "seaching ENC_RESPONSE_*.TXT for icn:" icn-map)
-                                        (with-map-vals icn-map [icn]
-                                          (let [enc-resp    (->sorted-map (orig-icn->response-parsed encounter-response-root-dir icn))
-                                                iowa-tcn    (grab :iowa-transaction-control-number enc-resp)
-                                                icn-map-aug (glue icn-map {:plan-icn iowa-tcn})]
-                                            icn-map-aug)))
-          tx-data                     (forv [icn-map-aug icn-maps-aug]
-                                        (with-map-vals icn-map-aug [eid plan-icn]
-                                          {:db/id    eid
-                                           :plan-icn plan-icn}))]
-      (nl)
-      (spyx-pretty :results icn-maps-aug)
-      (spit "icn-maps-aug.edn" (with-out-str (pp/pprint icn-maps-aug)))
-      (spit "tx-data.edn" (with-out-str (pp/pprint tx-data)))
+            icn-maps-aug                (forv [icn-map missing-icn-maps]
+                                          (when verbose?
+                                            (println "seaching ENC_RESPONSE_*.TXT for icn:" icn-map))
+                                          (with-map-vals icn-map [icn]
+                                            (let [enc-resp    (->sorted-map (orig-icn->response-parsed encounter-response-root-dir icn))
+                                                  iowa-tcn    (grab :iowa-transaction-control-number enc-resp)
+                                                  icn-map-aug (glue icn-map {:plan-icn iowa-tcn})]
+                                              icn-map-aug)))
+            tx-data                     (forv [icn-map-aug icn-maps-aug]
+                                          (with-map-vals icn-map-aug [eid plan-icn]
+                                            {:db/id    eid
+                                             :plan-icn plan-icn}))]
+        (nl)
+        (spyx-pretty :results icn-maps-aug)
+        (spit "icn-maps-aug.edn" (with-out-str (pp/pprint icn-maps-aug)))
+        (spit "tx-data.edn" (with-out-str (pp/pprint tx-data)))
 
-      ))
+        )))
 

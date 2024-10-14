@@ -12,6 +12,10 @@
     [java.io File])
   (:gen-class))
 
+(def ^:dynamic verbose?
+  "Enable to see progress printouts"
+  false)
+
 (s/def encounter-response-filename-patt
   "Regex pattern for encounter response files (no parent dirs!)"
   #"^ENC_RESPONSE_D_.*.TXT$") ; eg `ENC_RESPONSE_D_20200312_062014.TXT`
@@ -120,7 +124,8 @@
     (assert (= 0 exit))
     (assert (= "" err))
     (let [grep-result    (parse-grep-result out)
-          >> (println "                      found file: " (grab :fname grep-result))
+          >>             (when verbose?
+                           (println "                      found file: " (grab :fname grep-result)))
           enc-response-line (grab :content grep-result)
           enc-response-parsed (parse-string-fields iowa-encounter-response-specs enc-response-line)]
       enc-response-parsed)))
