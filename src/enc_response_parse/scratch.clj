@@ -3,7 +3,8 @@
 (require
   '[clojure.pprint :as pp]
   '[clojure.walk :as walk]
-  '[datomic.api :as d] ; peer api
+  '[datomic.api :as d.peer] ; peer api
+  '[clojure.tools.reader.edn :as edn]
   '[schema.core :as s]
   )
 
@@ -11,37 +12,22 @@
 (def postgres-uri "jdbc:postgresql://postgres.qa:5432/topaz?user=datomic&password=geheim")
 (def db-uri (str datomic-uri \? postgres-uri))
 
-(defn save-missing-icns
-  []
-  (let [conn (d/connect db-uri)
-        db   (d/db conn)]
-    (spit "missing-icns.edn"
-      (with-out-str
-        (pp/pprint
-          (vec
-            (d/q '[:find ?eid ?icn ?previous-icn
-                   :where
-                   [(missing? $ ?eid :encounter-transmission/plan-icn)]
-                   [?eid :encounter-transmission/icn ?icn]
-                   [?eid :encounter-transmission/previous-icn ?previous-icn]]
-              db)))))))
-
 (comment
 
   (def datomic-uri "datomic:sql://encounters")
   (def postgres-uri "jdbc:postgresql://postgres.qa:5432/topaz?user=datomic&password=geheim")
   (def db-uri (str datomic-uri \? postgres-uri))
-  (def conn (d/connect db-uri))
-  (def db (d/db conn))
+  (def conn (d.peer/connect db-uri))
+  (def db (d.peer/db conn))
 
   (pp/pprint (vec (sort-by second
-                    (d/q '[:find ?eid ?db-ident
+                    (d.peer/q '[:find ?eid ?db-ident
                            :where [?eid :db/ident ?db-ident]]
                       db))))
 
   (pp/pprint
     (first
-      (d/q '[:find ?eid ?icn ?plan-icn ?previous-icn
+      (d.peer/q '[:find ?eid ?icn ?plan-icn ?previous-icn
              :where
              [?eid :encounter-transmission/plan-icn ?plan-icn]
              [?eid :encounter-transmission/icn ?icn]
@@ -50,7 +36,7 @@
 
   (pp/pprint
     (first
-      (d/q '[:find (pull ?eid [*])
+      (d.peer/q '[:find (pull ?eid [*])
              :where
              [?eid :encounter-transmission/plan-icn ?plan-icn]
              [?eid :encounter-transmission/icn ?icn]
@@ -75,7 +61,7 @@
 
 
   (count
-    (d/q '[:find ?eid ?icn ?previous-icn
+    (d.peer/q '[:find ?eid ?icn ?previous-icn
            :where
            [(missing? $ ?eid :encounter-transmission/plan-icn)]
            [?eid :encounter-transmission/icn ?icn]
@@ -86,7 +72,7 @@
 
   (pp/pprint
     (vec (take 9
-           (d/q '[:find ?eid ?icn ?previous-icn
+           (d.peer/q '[:find ?eid ?icn ?previous-icn
                   :where
                   [(missing? $ ?eid :encounter-transmission/plan-icn)]
                   [?eid :encounter-transmission/icn ?icn]
@@ -95,7 +81,7 @@
 
   (pp/pprint
     (first
-      (d/q '[:find (pull ?eid [*])
+      (d.peer/q '[:find (pull ?eid [*])
              :where
              [(missing? $ ?eid :encounter-transmission/plan-icn)]
              [?eid :encounter-transmission/icn ?icn]
@@ -112,7 +98,7 @@
      [17592186109245 "30000000167521" "30000000167405"]
      [17592186108617 "30000000165817" "30000000165692"]])
 
-  (pp/pprint (d/pull db '[*] 17592186108600))
+  (pp/pprint (d.peer/pull db '[*] 17592186108600))
   (comment ; result
     {:encounter-transmission/generation               1673971295
      :encounter-transmission/frequency                #:db{:id 17592186045418}

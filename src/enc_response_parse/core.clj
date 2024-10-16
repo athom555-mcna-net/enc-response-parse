@@ -28,10 +28,12 @@
   "The maxinum number of entity maps to include in a single Datomic transaction."
   500)
 
-(def ^:dynamic encounter-response-root-dir "/shared/tmp/iowa/iowa_response_files" )
-(def ^:dynamic missing-icn-fname "missing-icns.edn")
-(def ^:dynamic icn-maps-aug-fname "icn-maps-aug.edn")
-(def ^:dynamic tx-data-chunked-fname "tx-data-chuncked.edn")
+(def ^:dynamic ctx-default
+  {:encounter-response-root-dir "/shared/tmp/iowa/iowa_response_files"
+   :missing-icn-fname           "missing-icns.edn"
+   :icn-maps-aug-fname          "icn-maps-aug.edn"
+   :tx-data-chunked-fname       "tx-data-chuncked.edn"
+   })
 
 (s/def encounter-response-filename-patt
   "Regex pattern for encounter response files (no parent dirs!)"
@@ -61,6 +63,12 @@
    {:name :field :format :alphanumeric :length 24 :length-strict? false}
    {:name :error-field-value :format :alphanumeric :length 80 :length-strict? false} ; #todo seems to be missing (all blanks!)
    ])
+
+;-----------------------------------------------------------------------------
+(s/defn config->ctc :- tsk/KeyMap
+  [config-fname :- s/Str]
+  (let [config (edn/read-string (slurp config-fname))])
+  )
 
 ;---------------------------------------------------------------------------------------------------
 (s/def format->pattern :- tsk/KeyMap
@@ -148,54 +156,85 @@
       enc-response-parsed)))
 
 (s/defn orig-icn->response-parsed :- tsk/KeyMap
-  [icn-str :- s/Str]
-  (let [icn-str             (str/trim icn-str)
-        shell-cmd-str       (format "grep '^%s' %s/ENC_*.TXT" icn-str encounter-response-root-dir)
-        shell-result        (misc/shell-cmd shell-cmd-str)
-        enc-response-parsed (extract-enc-resp-fields shell-result)]
-    enc-response-parsed))
+  [ctx :- tsk/KeyMap
+   icn-str :- s/Str]
+  (with-map-vals ctx [encounter-response-root-dir]
+    (let [icn-str             (str/trim icn-str)
+          shell-cmd-str       (format "grep '^%s' %s/ENC_*.TXT" icn-str encounter-response-root-dir)
+          shell-result        (misc/shell-cmd shell-cmd-str)
+          enc-response-parsed (extract-enc-resp-fields shell-result)]
+      enc-response-parsed)))
 
 (s/defn load-missing-icns :- [tsk/KeyMap]
-  [missing-icns-edn-file :- s/Str]
-  (println "Reading: " missing-icns-edn-file)
-  (let [; 2D file. Each record is [<eid> <icn> <previous-icn>]
-        missing-data (edn/read-string (slurp (io/resource missing-icns-edn-file)))
-        icn-strs     (forv [rec missing-data]
-                       (zipmap [:eid :icn :previous-icn] rec))]
-    icn-strs))
+  [ctx :- tsk/KeyMap]
+  (with-map-vals ctx [missing-icn-fname]
+    (println "Reading: " missing-icn-fname)
+    (let [; 2D file. Each record is [<eid> <icn> <previous-icn>]
+          missing-data (edn/read-string (slurp missing-icn-fname))
+          icn-strs     (forv [rec missing-data]
+                         (zipmap [:eid :icn :previous-icn] rec))]
+      icn-strs)))
 
 (s/defn create-icn-maps-aug :- [tsk/KeyMap]
-  []
-  (with-redefs [missing-icn-fname "missing-3.edn"]
-    (let [missing-icn-maps            (load-missing-icns missing-icn-fname)
-          icn-maps-aug                (forv [icn-map missing-icn-maps]
-                                        (when verbose?
-                                          (println "seaching ENC_RESPONSE_*.TXT for icn:" icn-map))
-                                        (with-map-vals icn-map [icn]
-                                          (let [enc-resp    (->sorted-map (orig-icn->response-parsed icn))
-                                                iowa-tcn    (grab :iowa-transaction-control-number enc-resp)
-                                                icn-map-aug (glue icn-map {:plan-icn iowa-tcn})]
-                                            icn-map-aug)))]
+  [ctx :- tsk/KeyMap]
+  (with-map-vals ctx [missing-icn-fname]
+    (let [missing-icn-maps (load-missing-icns missing-icn-fname)
+          icn-maps-aug     (forv [icn-map missing-icn-maps]
+                             (when verbose?
+                               (println "seaching ENC_RESPONSE_*.TXT for icn:" icn-map))
+                             (with-map-vals icn-map [icn]
+                               (let [enc-resp    (->sorted-map (orig-icn->response-parsed icn))
+                                     iowa-tcn    (grab :iowa-transaction-control-number enc-resp)
+                                     icn-map-aug (glue icn-map {:plan-icn iowa-tcn})]
+                                 icn-map-aug)))]
       (println "Writing: " missing-icn-fname)
       (spit missing-icn-fname (with-out-str (pp/pprint icn-maps-aug)))
       icn-maps-aug)))
 
 (s/defn create-tx-data-chunked :- [[tsk/KeyMap]]
-  []
-  (let [icn-maps-aug    (edn/read-string (slurp icn-maps-aug-fname))
-        tx-data         (forv [icn-map-aug icn-maps-aug]
-                          (with-map-vals icn-map-aug [eid plan-icn]
-                            {:db/id    eid
-                             :plan-icn plan-icn}))
-        tx-data-chunked (unlazy (partition-all tx-size-limit tx-data))]
-    (println "Writing: " tx-data-chunked-fname)
-    (spit tx-data-chunked-fname (with-out-str (pp/pprint tx-data)))
-    tx-data-chunked))
+  [ctx]
+  (with-map-vals ctx [icn-maps-aug-fname  tx-data-chunked-fname]
+    (let [icn-maps-aug    (edn/read-string (slurp icn-maps-aug-fname))
+          tx-data         (forv [icn-map-aug icn-maps-aug]
+                            (with-map-vals icn-map-aug [eid plan-icn]
+                              {:db/id    eid
+                               :plan-icn plan-icn}))
+          tx-data-chunked (unlazy (partition-all tx-size-limit tx-data))]
+      (println "Writing: " tx-data-chunked-fname)
+      (spit tx-data-chunked-fname (with-out-str (pp/pprint tx-data)))
+      tx-data-chunked)))
+
+(defn save-missing-icns
+  [ctx]
+  (let [conn (d.peer/connect (grab :db-uri ctx))
+        db   (d.peer/db conn)]
+    (spit "missing-icns.edn"
+      (with-out-str
+        (pp/pprint
+          (vec
+            (d.peer/q '[:find ?eid ?icn ?previous-icn
+                        :where
+                        [(missing? $ ?eid :encounter-transmission/plan-icn)]
+                        [?eid :encounter-transmission/icn ?icn]
+                        [?eid :encounter-transmission/previous-icn ?previous-icn]]
+              db)))))))
 
 (s/defn load-commit-transactions :- s/Any
-  [conn :- s/Any] ; Datomic peer connection
-  (let [txs  (edn/read-string (slurp tx-data-chunked-fname)) ]
-    (util/transact-seq-peer conn txs)))
+  [ctx]
+  (with-map-vals ctx [tx-data-chunked-fname]
+    (let [conn (d.peer/connect (grab :db-uri ctx))
+          txs  (edn/read-string (slurp tx-data-chunked-fname))]
+      (util/transact-seq-peer conn txs))))
+
+;-----------------------------------------------------------------------------
+(s/defn config-load->ctx :- tsk/KeyMap
+  [config-fname :- s/Str]
+  (let [config (edn/read-string (slurp config-fname))
+        ctx    (glue ctx-default
+                 (submap-by-keys config [:invoke-fn])
+                 {:db-uri (str (grab :datomic-uri config) \? (grab :postgres-uri config))
+                  })]
+    ctx))
 
 (defn -main
   [& args]
