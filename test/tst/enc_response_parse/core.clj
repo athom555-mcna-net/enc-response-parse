@@ -232,34 +232,11 @@
           enc-resp-parsed             (orig-icn->response-parsed encounter-response-root-dir icn-str)]
       (pp/pprint enc-resp-parsed))))
 
-(s/defn load-missing-icns :- [tsk/KeyMap]
-  [missing-icns-edn-file :- s/Str]
-  (let [; 2D file. Each record is [<eid> <icn> <previous-icn>]
-        missing-data (edn/read-string (slurp (io/resource missing-icns-edn-file)))
-        icn-strs     (forv [rec missing-data]
-                       (zipmap [:eid :icn :previous-icn] rec))]
-    icn-strs))
-
 (verify
-  (with-redefs [verbose?      verbose-tests?
-                tx-size-limit 2]
-    (let [missing-icn-maps            (load-missing-icns "missing-3.edn")
-          encounter-response-root-dir "./enc-response-files-test" ; "/Users/athom555/work/iowa-response"
-
-          icn-maps-aug                (forv [icn-map missing-icn-maps]
-                                        (when verbose?
-                                          (println "seaching ENC_RESPONSE_*.TXT for icn:" icn-map))
-                                        (with-map-vals icn-map [icn]
-                                          (let [enc-resp    (->sorted-map (orig-icn->response-parsed encounter-response-root-dir icn))
-                                                iowa-tcn    (grab :iowa-transaction-control-number enc-resp)
-                                                icn-map-aug (glue icn-map {:plan-icn iowa-tcn})]
-                                            icn-map-aug)))
-          tx-data                     (forv [icn-map-aug icn-maps-aug]
-                                        (with-map-vals icn-map-aug [eid plan-icn]
-                                          {:db/id    eid
-                                           :plan-icn plan-icn}))
-          tx-data-chunked             (unlazy (partition-all tx-size-limit tx-data))
-          ]
+  (with-redefs [verbose?          verbose-tests?
+                tx-size-limit     2
+                missing-icn-fname "missing-3.edn"]
+    (let [icn-maps-aug (create-icn-maps-aug)]
       (is (wild-match?
             [{:eid          util/eid?
               :icn          "30000063295500"
@@ -273,21 +250,11 @@
               :icn          "30000063295502"
               :plan-icn     "62200600780000003"
               :previous-icn "30000000165720"}]
-            icn-maps-aug))
-      (is (wild-match?
-            [{:plan-icn "62200600780000001" :db/id util/eid?}
-             {:plan-icn "62200600780000002" :db/id util/eid?}
-             {:plan-icn "62200600780000003" :db/id util/eid?}]
-            tx-data))
-
+            icn-maps-aug)))
+    (let [tx-data-chunked (create-tx-data-chunked)]
       (is (->> tx-data-chunked ; alternate style with variable "first"
             (wild-match?
               [[{:plan-icn "62200600780000001", :db/id util/eid?}
                 {:plan-icn "62200600780000002", :db/id util/eid?}]
-               [{:plan-icn "62200600780000003", :db/id util/eid?}]])))
-
-      (spit "icn-maps-aug.edn" (with-out-str (pp/pprint icn-maps-aug)))
-      (spit "tx-data.edn" (with-out-str (pp/pprint tx-data)))
-
-      )))
-
+               [{:plan-icn "62200600780000003", :db/id util/eid?}]]))))
+    ))

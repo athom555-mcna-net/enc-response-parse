@@ -1,10 +1,16 @@
 (ns enc-response-parse.core
   (:use tupelo.core)
   (:require
+    [clojure.data :as data]
+    [clojure.java.io :as io]
+    [clojure.pprint :as pp]
+    [clojure.tools.reader.edn :as edn]
+    [enc-response-parse.util :as util]
     [flatland.ordered.map :as omap]
     [schema.core :as s]
     [tupelo.core :as t]
     [tupelo.misc :as misc]
+    [tupelo.parse :as parse]
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
     )
@@ -20,13 +26,17 @@
   "The maxinum number of entity maps to include in a single Datomic transaction."
   500)
 
+(def ^:dynamic missing-icn-fname "missing-icns.edn")
+(def ^:dynamic icn-maps-aug-fname "icn-maps-aug.edn")
+(def ^:dynamic tx-data-chunked-fname "tx-data-chuncked.edn")
+
 (s/def encounter-response-filename-patt
   "Regex pattern for encounter response files (no parent dirs!)"
   #"^ENC_RESPONSE_D_.*.TXT$") ; eg `ENC_RESPONSE_D_20200312_062014.TXT`
 
 (s/def spec-opts-default :- tsk/KeyMap
   "Default options for field specs"
-  {:trim? true ; trim leading/trailing blanks from returned string
+  {:trim?          true ; trim leading/trailing blanks from returned string
 
    ; Don't crash if insufficient chars found in line.  Should only be used for last N fields
    :length-strict? true})
@@ -46,7 +56,7 @@
    {:name :line-number :format :numeric :length 2}
    {:name :error-code :format :alphanumeric :length 3} ; #todo always "A00"
    {:name :field :format :alphanumeric :length 24 :length-strict? false}
-   {:name :error-field-value :format :alphanumeric :length 80 :length-strict? false}  ; #todo seems to be missing (all blanks!)
+   {:name :error-field-value :format :alphanumeric :length 80 :length-strict? false} ; #todo seems to be missing (all blanks!)
    ])
 
 ;---------------------------------------------------------------------------------------------------
@@ -116,10 +126,10 @@
 
 (s/defn parse-grep-result :- tsk/KeyMap
   [out :- s/Str]
-  (let [out (str/trim out)
-        matches-out  (re-matches #"(^.*ENC_RESPONSE_.*.TXT):(.*)$" out)
-        result {:fname  (xsecond  matches-out)
-                :content (xthird matches-out)}]
+  (let [out         (str/trim out)
+        matches-out (re-matches #"(^.*ENC_RESPONSE_.*.TXT):(.*)$" out)
+        result      {:fname   (xsecond matches-out)
+                     :content (xthird matches-out)}]
     result))
 
 (s/defn extract-enc-resp-fields ; :- s/Str
@@ -127,10 +137,10 @@
   (with-map-vals shell-result [exit out err]
     (assert (= 0 exit))
     (assert (= "" err))
-    (let [grep-result    (parse-grep-result out)
-          >>             (when verbose?
-                           (println "                      found file: " (grab :fname grep-result)))
-          enc-response-line (grab :content grep-result)
+    (let [grep-result         (parse-grep-result out)
+          >>                  (when verbose?
+                                (println "                      found file: " (grab :fname grep-result)))
+          enc-response-line   (grab :content grep-result)
           enc-response-parsed (parse-string-fields iowa-encounter-response-specs enc-response-line)]
       enc-response-parsed)))
 
@@ -142,6 +152,45 @@
         shell-result        (misc/shell-cmd shell-cmd-str)
         enc-response-parsed (extract-enc-resp-fields shell-result)]
     enc-response-parsed))
+
+(s/defn load-missing-icns :- [tsk/KeyMap]
+  [missing-icns-edn-file :- s/Str]
+  (println "Reading: " missing-icns-edn-file)
+  (let [; 2D file. Each record is [<eid> <icn> <previous-icn>]
+        missing-data (edn/read-string (slurp (io/resource missing-icns-edn-file)))
+        icn-strs     (forv [rec missing-data]
+                       (zipmap [:eid :icn :previous-icn] rec))]
+    icn-strs))
+
+(s/defn create-icn-maps-aug :- [tsk/KeyMap]
+  []
+  (with-redefs [missing-icn-fname "missing-3.edn"]
+    (let [missing-icn-maps            (load-missing-icns missing-icn-fname)
+          encounter-response-root-dir "./enc-response-files-test" ; "/Users/athom555/work/iowa-response"
+
+          icn-maps-aug                (forv [icn-map missing-icn-maps]
+                                        (when verbose?
+                                          (println "seaching ENC_RESPONSE_*.TXT for icn:" icn-map))
+                                        (with-map-vals icn-map [icn]
+                                          (let [enc-resp    (->sorted-map (orig-icn->response-parsed encounter-response-root-dir icn))
+                                                iowa-tcn    (grab :iowa-transaction-control-number enc-resp)
+                                                icn-map-aug (glue icn-map {:plan-icn iowa-tcn})]
+                                            icn-map-aug)))]
+      (println "Writing: " missing-icn-fname)
+      (spit missing-icn-fname (with-out-str (pp/pprint icn-maps-aug)))
+      icn-maps-aug)))
+
+(s/defn create-tx-data-chunked :- [[tsk/KeyMap]]
+  []
+  (let [icn-maps-aug    (edn/read-string (slurp icn-maps-aug-fname))
+        tx-data         (forv [icn-map-aug icn-maps-aug]
+                          (with-map-vals icn-map-aug [eid plan-icn]
+                            {:db/id    eid
+                             :plan-icn plan-icn}))
+        tx-data-chunked (unlazy (partition-all tx-size-limit tx-data))]
+    (println "Writing: " tx-data-chunked-fname)
+    (spit tx-data-chunked-fname (with-out-str (pp/pprint tx-data)))
+    tx-data-chunked))
 
 (defn -main
   [& args]
