@@ -5,9 +5,9 @@
   ;-----------------------------------------------------------------------------
 
   :dependencies [
-                 [org.clojure/clojure "1.12.0-rc1"]
-                 [prismatic/schema    "1.4.1"]
-                 [tupelo       "24.06.21"]
+                 [org.clojure/clojure "1.12.0"]
+                 [prismatic/schema "1.4.1"]
+                 [tupelo "24.09.30"]
                  ]
 
   :jvm-opts ["-Xmx4g"]

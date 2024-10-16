@@ -16,6 +16,10 @@
   "Enable to see progress printouts"
   false)
 
+(def ^:dynamic tx-size-limit
+  "The maxinum number of entity maps to include in a single Datomic transaction."
+  500)
+
 (s/def encounter-response-filename-patt
   "Regex pattern for encounter response files (no parent dirs!)"
   #"^ENC_RESPONSE_D_.*.TXT$") ; eg `ENC_RESPONSE_D_20200312_062014.TXT`

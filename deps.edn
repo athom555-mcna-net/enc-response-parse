@@ -23,7 +23,7 @@
              org.clojure/clojure  {:mvn/version "1.12.0"} ; "1.11.3"
              org.flatland/ordered {:mvn/version "1.15.12"}
              prismatic/schema     {:mvn/version "1.4.1"}
-             tupelo/tupelo        {:mvn/version "24.06.21"}
+             tupelo/tupelo        {:mvn/version "24.09.30"}
              }
  :aliases   {
              :run          {:exec-fn enc-response-parse.core/-main
