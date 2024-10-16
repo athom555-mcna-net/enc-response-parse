@@ -5,6 +5,8 @@
     [clojure.java.io :as io]
     [clojure.pprint :as pp]
     [clojure.tools.reader.edn :as edn]
+    [datomic.api :as d.peer]
+    [datomic.client.api :as d.client]
     [enc-response-parse.util :as util]
     [flatland.ordered.map :as omap]
     [schema.core :as s]
@@ -26,6 +28,7 @@
   "The maxinum number of entity maps to include in a single Datomic transaction."
   500)
 
+(def ^:dynamic encounter-response-root-dir "/shared/tmp/iowa/iowa_response_files" )
 (def ^:dynamic missing-icn-fname "missing-icns.edn")
 (def ^:dynamic icn-maps-aug-fname "icn-maps-aug.edn")
 (def ^:dynamic tx-data-chunked-fname "tx-data-chuncked.edn")
@@ -145,8 +148,7 @@
       enc-response-parsed)))
 
 (s/defn orig-icn->response-parsed :- tsk/KeyMap
-  [encounter-response-root-dir :- s/Str
-   icn-str :- s/Str]
+  [icn-str :- s/Str]
   (let [icn-str             (str/trim icn-str)
         shell-cmd-str       (format "grep '^%s' %s/ENC_*.TXT" icn-str encounter-response-root-dir)
         shell-result        (misc/shell-cmd shell-cmd-str)
@@ -166,13 +168,11 @@
   []
   (with-redefs [missing-icn-fname "missing-3.edn"]
     (let [missing-icn-maps            (load-missing-icns missing-icn-fname)
-          encounter-response-root-dir "./enc-response-files-test" ; "/Users/athom555/work/iowa-response"
-
           icn-maps-aug                (forv [icn-map missing-icn-maps]
                                         (when verbose?
                                           (println "seaching ENC_RESPONSE_*.TXT for icn:" icn-map))
                                         (with-map-vals icn-map [icn]
-                                          (let [enc-resp    (->sorted-map (orig-icn->response-parsed encounter-response-root-dir icn))
+                                          (let [enc-resp    (->sorted-map (orig-icn->response-parsed icn))
                                                 iowa-tcn    (grab :iowa-transaction-control-number enc-resp)
                                                 icn-map-aug (glue icn-map {:plan-icn iowa-tcn})]
                                             icn-map-aug)))]
@@ -191,6 +191,11 @@
     (println "Writing: " tx-data-chunked-fname)
     (spit tx-data-chunked-fname (with-out-str (pp/pprint tx-data)))
     tx-data-chunked))
+
+(s/defn load-commit-transactions :- s/Any
+  [conn :- s/Any] ; Datomic peer connection
+  (let [txs  (edn/read-string (slurp tx-data-chunked-fname)) ]
+    (util/transact-seq-peer conn txs)))
 
 (defn -main
   [& args]

@@ -1,7 +1,10 @@
 (ns enc-response-parse.util
   (:require
+    [datomic.api :as d.peer]
+    [datomic.client.api :as d.client]
     [schema.core :as s]
     [tupelo.math :as math]
+    [tupelo.schema :as tsk]
     ))
 
 ; Define an EID-like value from Datomic (aka a :db/id value) as any positive integer with at
@@ -18,3 +21,29 @@
 (s/defn eid? :- s/Bool
   "Is an int 'EID-like' (Datomic Entity ID), i.e. large positive integer?"
   [v :- s/Int] (<= eid-min-value v))
+
+;-----------------------------------------------------------------------------
+(s/defn transact-seq-peer :- tsk/Vec
+  "Accepts a sequence of transactions into Datomic, which are committed in order.
+  Each transaction is a vector of entity maps."
+  [conn :- s/Any ; Datomic connection
+   txs :- [[tsk/KeyMap]]]
+  (reduce
+    (fn [cum tx]
+      (conj cum
+        (d.peer/transact conn {:tx-data tx}))) ; uses Datomic Client API
+    []
+    txs))
+
+(s/defn transact-seq-client :- tsk/Vec
+  "Accepts a sequence of transactions into Datomic, which are committed in order.
+  Each transaction is a vector of entity maps."
+  [conn :- s/Any ; Datomic connection
+   txs :- [[tsk/KeyMap]]]
+  (reduce
+    (fn [cum tx]
+      (conj cum
+        (d.client/transact conn {:tx-data tx}))) ; uses Datomic Client API
+    []
+    txs))
+

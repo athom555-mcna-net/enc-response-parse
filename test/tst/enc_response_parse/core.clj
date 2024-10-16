@@ -141,24 +141,25 @@
 ;---------------------------------------------------------------------------------------------------
 (comment  ; sample output
   (verify
-    (let [encounter-response-root-dir "./enc-response-files-test" ; full data:  "/Users/athom555/work/iowa-response"
-          enc-resp-root-dir-File      (io/file encounter-response-root-dir)
-          all-files                   (file-seq enc-resp-root-dir-File) ; returns a tree like `find`
-          enc-resp-files              (vec (sort-by str (keep-if enc-resp-file? all-files)))
-          ]
-      ;(take 5 all-files) =>
-      ;[#object[java.io.File 0x15fd8daa "/Users/athom555/work/iowa-response"]
-      ; #object[java.io.File 0x762b698 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20200312_062014.TXT"]
-      ; #object[java.io.File 0x5ee9866c "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20180104_065621.TXT"]
-      ; #object[java.io.File 0x2f6268d9 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20181108_061817.TXT"]
-      ; #object[java.io.File 0x6d244c88 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20210715_115630.TXT"]]
-      ;(take 5 enc-resp-files) =>
-      ;[#object[java.io.File 0x66a9013e "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170413_132207.TXT"]
-      ; #object[java.io.File 0x65236427 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170424_125320.TXT"]
-      ; #object[java.io.File 0x425c5389 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170505_160755.TXT"]
-      ; #object[java.io.File 0x3f348a38 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170509_144929.TXT"]
-      ; #object[java.io.File 0x1e7822fb "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170515_094001.TXT"]]
-      )))
+    (with-redefs [encounter-response-root-dir "./enc-response-files-test" ; full data:  "/Users/athom555/work/iowa-response"
+                  ]
+      (let [enc-resp-root-dir-File (io/file encounter-response-root-dir)
+            all-files              (file-seq enc-resp-root-dir-File) ; returns a tree like `find`
+            enc-resp-files         (vec (sort-by str (keep-if enc-resp-file? all-files)))
+            ]
+        ;(take 5 all-files) =>
+        ;[#object[java.io.File 0x15fd8daa "/Users/athom555/work/iowa-response"]
+        ; #object[java.io.File 0x762b698 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20200312_062014.TXT"]
+        ; #object[java.io.File 0x5ee9866c "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20180104_065621.TXT"]
+        ; #object[java.io.File 0x2f6268d9 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20181108_061817.TXT"]
+        ; #object[java.io.File 0x6d244c88 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20210715_115630.TXT"]]
+        ;(take 5 enc-resp-files) =>
+        ;[#object[java.io.File 0x66a9013e "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170413_132207.TXT"]
+        ; #object[java.io.File 0x65236427 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170424_125320.TXT"]
+        ; #object[java.io.File 0x425c5389 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170505_160755.TXT"]
+        ; #object[java.io.File 0x3f348a38 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170509_144929.TXT"]
+        ; #object[java.io.File 0x1e7822fb "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170515_094001.TXT"]]
+        ))))
 
 (verify
   (with-redefs [verbose? verbose-tests?]
@@ -184,10 +185,10 @@
                                 :error-field-value               ""}))))
 
 (verify
-  (with-redefs [verbose? verbose-tests?]
-    (let [encounter-response-root-dir "./enc-response-files-test"
-          icn-str                     "30000062649906"
-          enc-resp-parsed             (orig-icn->response-parsed encounter-response-root-dir icn-str)]
+  (with-redefs [verbose?                    verbose-tests?
+                encounter-response-root-dir "./enc-response-files-test"]
+    (let [icn-str         "30000062649906"
+          enc-resp-parsed (orig-icn->response-parsed icn-str)]
       (is= enc-resp-parsed
         {:mco-claim-number                "30000062649906"
          :iowa-transaction-control-number "62133600780000014"
@@ -225,17 +226,18 @@
 
 (verify
   (when false
-    (let [encounter-response-root-dir "./enc-response-files-test" ; "/Users/athom555/work/iowa-response"
-          icn-str                     "30000062649906"
+    (with-redefs [encounter-response-root-dir "./enc-response-files-test"] ; "/Users/athom555/work/iowa-response"
+      (let [icn-str         "30000062649906"
 
-          ; Each call requires about 0.5 sec for full data search
-          enc-resp-parsed             (orig-icn->response-parsed encounter-response-root-dir icn-str)]
-      (pp/pprint enc-resp-parsed))))
+            ; Each call requires about 0.5 sec for full data search
+            enc-resp-parsed (orig-icn->response-parsed icn-str)]
+        (pp/pprint enc-resp-parsed)))))
 
 (verify
-  (with-redefs [verbose?          verbose-tests?
-                tx-size-limit     2
-                missing-icn-fname "missing-3.edn"]
+  (with-redefs [verbose?                    verbose-tests?
+                tx-size-limit               2
+                encounter-response-root-dir "./enc-response-files-test" ; "/Users/athom555/work/iowa-response"
+                missing-icn-fname           "missing-3.edn"]
     (let [icn-maps-aug (create-icn-maps-aug)]
       (is (wild-match?
             [{:eid          util/eid?
