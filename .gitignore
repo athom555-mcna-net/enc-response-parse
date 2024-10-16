@@ -39,3 +39,6 @@ pom.xml
 pom.xml.asc
 tags
 target
+config-tmp.edn		
+icn-maps-aug.edn	
+tx-data-chuncked.edn

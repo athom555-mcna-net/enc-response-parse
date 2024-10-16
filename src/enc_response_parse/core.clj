@@ -173,22 +173,22 @@
           missing-data (edn/read-string (slurp missing-icn-fname))
           icn-strs     (forv [rec missing-data]
                          (zipmap [:eid :icn :previous-icn] rec))]
-      icn-strs)))
+      (spyx-pretty icn-strs))))
 
 (s/defn create-icn-maps-aug :- [tsk/KeyMap]
   [ctx :- tsk/KeyMap]
-  (with-map-vals ctx [missing-icn-fname]
-    (let [missing-icn-maps (load-missing-icns missing-icn-fname)
+  (with-map-vals ctx [icn-maps-aug-fname]
+    (let [missing-icn-maps (load-missing-icns ctx)
           icn-maps-aug     (forv [icn-map missing-icn-maps]
                              (when verbose?
                                (println "seaching ENC_RESPONSE_*.TXT for icn:" icn-map))
                              (with-map-vals icn-map [icn]
-                               (let [enc-resp    (->sorted-map (orig-icn->response-parsed icn))
+                               (let [enc-resp    (->sorted-map (orig-icn->response-parsed ctx icn))
                                      iowa-tcn    (grab :iowa-transaction-control-number enc-resp)
                                      icn-map-aug (glue icn-map {:plan-icn iowa-tcn})]
                                  icn-map-aug)))]
-      (println "Writing: " missing-icn-fname)
-      (spit missing-icn-fname (with-out-str (pp/pprint icn-maps-aug)))
+      (println "Writing: " icn-maps-aug-fname)
+      (spit icn-maps-aug-fname (with-out-str (pp/pprint icn-maps-aug)))
       icn-maps-aug)))
 
 (s/defn create-tx-data-chunked :- [[tsk/KeyMap]]
