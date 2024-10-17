@@ -65,10 +65,18 @@
    ])
 
 ;-----------------------------------------------------------------------------
-(s/defn config->ctc :- tsk/KeyMap
+(s/defn config-load->ctx :- tsk/KeyMap
   [config-fname :- s/Str]
-  (let [config (edn/read-string (slurp config-fname))])
-  )
+  (let [config (edn/read-string (slurp config-fname))
+        ctx    (glue ctx-default
+                 (submap-by-keys config [:invoke-fn])
+                 {:db-uri (str (grab :datomic-uri config) \? (grab :postgres-uri config))})]
+    ctx))
+
+(s/defn dispatch :- s/Any
+  [ctx :- tsk/KeyMap]
+  (with-map-vals ctx [invoke-fn]
+    (eval `(~invoke-fn ~ctx))))
 
 ;---------------------------------------------------------------------------------------------------
 (s/def format->pattern :- tsk/KeyMap
@@ -225,16 +233,6 @@
     (let [conn (d.peer/connect (grab :db-uri ctx))
           txs  (edn/read-string (slurp tx-data-chunked-fname))]
       (util/transact-seq-peer conn txs))))
-
-;-----------------------------------------------------------------------------
-(s/defn config-load->ctx :- tsk/KeyMap
-  [config-fname :- s/Str]
-  (let [config (edn/read-string (slurp config-fname))
-        ctx    (glue ctx-default
-                 (submap-by-keys config [:invoke-fn])
-                 {:db-uri (str (grab :datomic-uri config) \? (grab :postgres-uri config))
-                  })]
-    ctx))
 
 (defn -main
   [& args]
