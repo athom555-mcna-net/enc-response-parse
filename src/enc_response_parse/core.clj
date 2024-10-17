@@ -76,14 +76,13 @@
 ;-----------------------------------------------------------------------------
 (defn dummy-fn
   [& args]
-  ; (prn :dummy-fn--enter)
+  (prn :dummy-fn--enter)
   (with-result :dummy-fn--result
-    ; (prn :dummy-fn--leave)
-    ))
+    (prn :dummy-fn--leave)))
 
 (s/defn dispatch :- s/Any
   [ctx :- tsk/KeyMap]
-  ; (spyx-pretty ctx)
+  (spyx-pretty :dispatch-fn ctx)
   (let [invoke-fn (grab :invoke-fn ctx)
         ; >>>       (spyx invoke-fn)
         ctx (dissoc ctx :invoke-fn)
