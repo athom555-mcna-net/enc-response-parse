@@ -73,10 +73,30 @@
                  {:db-uri (str (grab :datomic-uri config) \? (grab :postgres-uri config))})]
     ctx))
 
+;-----------------------------------------------------------------------------
+(defn dummy-fn
+  [& args]
+  ; (prn :dummy-fn--enter)
+  (with-result :dummy-fn--result
+    ; (prn :dummy-fn--leave)
+    ))
+
 (s/defn dispatch :- s/Any
   [ctx :- tsk/KeyMap]
-  (with-map-vals ctx [invoke-fn]
-    (eval `(~invoke-fn ~ctx))))
+  ; (spyx-pretty ctx)
+  (let [invoke-fn (grab :invoke-fn ctx)
+        ; >>>       (spyx invoke-fn)
+        ctx (dissoc ctx :invoke-fn)
+        form      (list invoke-fn ctx)]
+    ; (spyxx invoke-fn)
+    ; (prn :92 (find-var invoke-fn))
+    ; (prn :93 (requiring-resolve invoke-fn))
+    ; (prn :94 (qualified-symbol? invoke-fn))
+    ; (prn :95 (simple-symbol? invoke-fn))
+    ; (prn :var (var invoke-fn))
+    ; (prn :form)
+    ; (pp/pprint form)
+    (eval form)))
 
 ;---------------------------------------------------------------------------------------------------
 (s/def format->pattern :- tsk/KeyMap
@@ -201,7 +221,7 @@
 
 (s/defn create-tx-data-chunked :- [[tsk/KeyMap]]
   [ctx]
-  (with-map-vals ctx [icn-maps-aug-fname  tx-data-chunked-fname]
+  (with-map-vals ctx [icn-maps-aug-fname tx-data-chunked-fname]
     (let [icn-maps-aug    (edn/read-string (slurp icn-maps-aug-fname))
           tx-data         (forv [icn-map-aug icn-maps-aug]
                             (with-map-vals icn-map-aug [eid plan-icn]

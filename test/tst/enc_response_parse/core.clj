@@ -1,12 +1,12 @@
 (ns tst.enc-response-parse.core
-  (:use enc-response-parse.core
-        tupelo.core
+  (:use tupelo.core
         tupelo.test)
   (:require
     [clojure.data :as data]
     [clojure.java.io :as io]
     [clojure.pprint :as pp]
     [clojure.tools.reader.edn :as edn]
+    [enc-response-parse.core :refer :all]
     [enc-response-parse.util :as util]
     [schema.core :as s]
     [tupelo.parse :as parse]
@@ -22,15 +22,9 @@
 (def ^:dynamic verbose-tests?
   true)
 
-;-----------------------------------------------------------------------------
-(defn dummmy-fn
-  [& args]
-  ; (prn :dummmy-fn--enter)
-  (with-result :dummy-fn--result
-    ; (prn :dummmy-fn--enter)
-    ))
-
 (verify
+  (is= :dummy-fn--result (enc-response-parse.core/dummy-fn))
+
   ; verify config-load->ctx works
   (let [config-fname "config-tmp.edn"]
     (spit config-fname
@@ -48,7 +42,8 @@
            :icn-maps-aug-fname          "icn-maps-aug.edn"
            :invoke-fn                   tupelo.core/noop
            :missing-icn-fname           "missing-icns.edn"
-           :tx-data-chunked-fname       "tx-data-chuncked.edn"})))
+           :tx-data-chunked-fname       "tx-data-chuncked.edn"}
+          )))
 
     ; verify `dispatch` works
     (spit config-fname
@@ -57,10 +52,10 @@
           (quote
             {:datomic-uri  "aaa"
              :postgres-uri "bbb"
-             :invoke-fn    tst.enc-response-parse.core/dummmy-fn}))))
+             :invoke-fn    enc-response-parse.core/dummy-fn}))))
     (let [ctx (config-load->ctx config-fname)]
       (is (submatch? '{:db-uri    "aaa?bbb"
-                       :invoke-fn tst.enc-response-parse.core/dummmy-fn}
+                       :invoke-fn enc-response-parse.core/dummy-fn}
             ctx))
       (is= (dispatch ctx) :dummy-fn--result))
 
