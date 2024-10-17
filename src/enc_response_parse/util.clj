@@ -4,7 +4,7 @@
     [clojure.pprint :as pp]
     [clojure.tools.reader.edn :as edn]
     [datomic.api :as d.peer]
-    [datomic.client.api :as d.client]
+   ;[datomic.client.api :as d.client]
     [schema.core :as s]
     [tupelo.math :as math]
     [tupelo.schema :as tsk]
@@ -38,15 +38,16 @@
     []
     txs))
 
-(s/defn transact-seq-client :- tsk/Vec
-  "Accepts a sequence of transactions into Datomic, which are committed in order.
-  Each transaction is a vector of entity maps."
-  [conn :- s/Any ; Datomic connection
-   txs :- [[tsk/KeyMap]]]
-  (reduce
-    (fn [cum tx]
-      (conj cum
-        (d.client/transact conn {:tx-data tx}))) ; uses Datomic Client API
-    []
-    txs))
+(comment
+  (s/defn transact-seq-client :- tsk/Vec
+    "Accepts a sequence of transactions into Datomic, which are committed in order.
+    Each transaction is a vector of entity maps."
+    [conn :- s/Any ; Datomic connection
+     txs :- [[tsk/KeyMap]]]
+    (reduce
+      (fn [cum tx]
+        (conj cum
+          (d.client/transact conn {:tx-data tx}))) ; uses Datomic Client API
+      []
+      txs)))
 

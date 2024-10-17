@@ -6,7 +6,7 @@
     [clojure.pprint :as pp]
     [clojure.tools.reader.edn :as edn]
     [datomic.api :as d.peer]
-    [datomic.client.api :as d.client]
+   ;[datomic.client.api :as d.client]
     [enc-response-parse.util :as util]
     [flatland.ordered.map :as omap]
     [schema.core :as s]
