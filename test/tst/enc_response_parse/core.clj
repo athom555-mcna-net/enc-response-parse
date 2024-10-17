@@ -31,6 +31,7 @@
     ))
 
 (verify
+  ; verify config-load->ctx works
   (let [config-fname "config-tmp.edn"]
     (spit config-fname
       (with-out-str
@@ -49,6 +50,7 @@
            :missing-icn-fname           "missing-icns.edn"
            :tx-data-chunked-fname       "tx-data-chuncked.edn"})))
 
+    ; verify `dispatch` works
     (spit config-fname
       (with-out-str
         (pp/pprint
@@ -61,6 +63,15 @@
                        :invoke-fn tst.enc-response-parse.core/dummmy-fn}
             ctx))
       (is= (dispatch ctx) :dummy-fn--result))
+
+    ; verify -main calls :invoke-fn & returns result
+    (let [out-txt (with-out-str
+                    (let [result (-main config-fname)]
+                      (is= result :dummy-fn--result)))]
+      ; (spyx-pretty  out-txt)
+      (is (str/contains-str-frags? out-txt
+            ":main--enter"
+            ":main--leave")))
     ))
 
 (def ctx-local

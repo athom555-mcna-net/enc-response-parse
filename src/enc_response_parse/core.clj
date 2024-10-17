@@ -235,6 +235,11 @@
       (util/transact-seq-peer conn txs))))
 
 (defn -main
-  [& args]
+  [config-fname]
   (spy :main--enter)
-  (spy :main--leave))
+  (spyx :-main config-fname)
+  (assert (not-nil? config-fname))
+
+  (with-result (let [ctx (config-load->ctx config-fname)]
+                 (dispatch ctx))
+    (spy :main--leave)))
