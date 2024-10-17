@@ -14,7 +14,6 @@
     [tupelo.string :as str]
     )
   (:import
-    [java.lang Character]
     [java.io File]
     ))
 

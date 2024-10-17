@@ -1,10 +1,7 @@
 (ns enc-response-parse.util
   (:require
-    [clojure.java.io :as io]
     [clojure.pprint :as pp]
-    [clojure.tools.reader.edn :as edn]
     [datomic.api :as d.peer]
-   ;[datomic.client.api :as d.client]
     [schema.core :as s]
     [tupelo.math :as math]
     [tupelo.schema :as tsk]

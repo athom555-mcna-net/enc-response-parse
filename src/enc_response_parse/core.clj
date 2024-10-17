@@ -1,18 +1,15 @@
 (ns enc-response-parse.core
   (:use tupelo.core)
   (:require
-    [clojure.data :as data]
     [clojure.java.io :as io]
     [clojure.pprint :as pp]
     [clojure.tools.reader.edn :as edn]
     [datomic.api :as d.peer]
-   ;[datomic.client.api :as d.client]
     [enc-response-parse.util :as util]
     [flatland.ordered.map :as omap]
     [schema.core :as s]
     [tupelo.core :as t]
     [tupelo.misc :as misc]
-    [tupelo.parse :as parse]
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
     )
