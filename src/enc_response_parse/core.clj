@@ -8,7 +8,6 @@
     [enc-response-parse.util :as util]
     [flatland.ordered.map :as omap]
     [schema.core :as s]
-    [tupelo.core :as t]
     [tupelo.misc :as misc]
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
