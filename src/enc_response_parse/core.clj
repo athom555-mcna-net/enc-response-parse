@@ -231,6 +231,7 @@
   [ctx]
   (let [conn (d.peer/connect (grab :db-uri ctx))
         db   (d.peer/db conn)]
+    (prn :save-missing-icns--enter)
     (spit "missing-icns.edn"
       (with-out-str
         (pp/pprint
@@ -240,7 +241,8 @@
                         [(missing? $ ?eid :encounter-transmission/plan-icn)]
                         [?eid :encounter-transmission/icn ?icn]
                         [?eid :encounter-transmission/previous-icn ?previous-icn]]
-              db)))))))
+              db)))))
+    (prn :save-missing-icns--leave)))
 
 (s/defn load-commit-transactions :- s/Any
   [ctx]
@@ -255,6 +257,10 @@
   (spyx :-main config-fname)
   (assert (not-nil? config-fname))
 
-  (with-result (let [ctx (config-load->ctx config-fname)]
-                 (dispatch ctx))
-    (spy :main--leave)))
+  (with-result
+    (let [ctx    (config-load->ctx config-fname)
+          >>     (spyx-pretty ctx)
+          result (dispatch ctx)]
+      (spyx-pretty :main-result result)
+      (spy :main--leave)
+      result)))
