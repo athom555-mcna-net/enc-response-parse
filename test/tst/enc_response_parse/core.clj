@@ -32,12 +32,14 @@
           (quote
             {:datomic-uri  "datomic:sql://encounters"
              :postgres-uri "jdbc:postgresql://postgres.qa:5432/topaz?user=datomic&password=geheim"
-             :invoke-fn    tupelo.core/noop}))))
+             :invoke-fn    tupelo.core/noop
+             :encounter-response-root-dir "/some/path/to/root"
+             }))))
     (let [ctx (config-load->ctx config-fname)]
       (is= ctx
         (quote
           {:db-uri                      "datomic:sql://encounters?jdbc:postgresql://postgres.qa:5432/topaz?user=datomic&password=geheim"
-           :encounter-response-root-dir "/shared/tmp/iowa/iowa_response_files"
+           :encounter-response-root-dir "/some/path/to/root"
            :icn-maps-aug-fname          "icn-maps-aug.edn"
            :invoke-fn                   tupelo.core/noop
            :missing-icn-fname           "missing-icns.edn"

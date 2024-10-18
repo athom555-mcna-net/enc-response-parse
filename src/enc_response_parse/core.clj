@@ -64,9 +64,12 @@
 (s/defn config-load->ctx :- tsk/KeyMap
   [config-fname :- s/Str]
   (let [config (edn/read-string (slurp config-fname))
-        ctx    (glue ctx-default
-                 (submap-by-keys config [:invoke-fn])
-                 {:db-uri (str (grab :datomic-uri config) \? (grab :postgres-uri config))})]
+        >> (spyx-pretty :config-read config)
+        ctx    (it-> ctx-default
+                 (glue it config)
+                 (glue it {:db-uri (str (grab :datomic-uri config) \? (grab :postgres-uri config))})
+                 (dissoc it :datomic-uri :postgres-uri))]
+    (spyx-pretty :loaded ctx )
     ctx))
 
 ;-----------------------------------------------------------------------------
