@@ -40,14 +40,14 @@
   Each transaction is a vector of entity maps."
   [conn :- s/Any ; Datomic connection
    txs :- [[tsk/KeyMap]]]
-  (loop [db  (d.peer/db conn)
-         txs txs]
-    (if (empty? txs)
-      db
+  (loop [db-curr  (d.peer/db conn)
+         txs-curr txs]
+    (if (empty? txs-curr)
+      db-curr
       (let
-        [tx-curr (t/xfirst txs)
-         txs-next (t/xrest txs)
-         result (d.peer/with db tx-curr) ; use Datomic Peer API
-         db-next (t/grab :db-after result)]
+        [tx-curr  (t/xfirst txs-curr)
+         txs-next (t/xrest txs-curr)
+         result   (d.peer/with db-curr tx-curr) ; Datomic Peer API: transact data into db-curr
+         db-next  (t/grab :db-after result)]
         (recur db-next txs-next)))))
 
