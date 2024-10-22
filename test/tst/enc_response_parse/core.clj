@@ -21,7 +21,7 @@
 (def ^:dynamic verbose-tests?
   true)
 
-(verify-focus
+(verify
   (is= :dummy-fn--result (enc-response-parse.core/dummy-fn))
 
   ; verify config-load->ctx works

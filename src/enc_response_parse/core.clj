@@ -26,7 +26,7 @@
    :icn-maps-aug-fname          "icn-maps-aug.edn"
    :tx-data-chunked-fname       "tx-data-chuncked.edn"
 
-   :tx-size-limit 500 ; The maxinum number of entity maps to include in a single Datomic transaction.
+   :tx-size-limit               500 ; The maxinum number of entity maps to include in a single Datomic transaction.
    })
 
 (s/def encounter-response-filename-patt
@@ -62,12 +62,12 @@
 (s/defn config-load->ctx :- tsk/KeyMap
   [config-fname :- s/Str]
   (let [config (edn/read-string (slurp config-fname))
-        >> (spyx-pretty :config-read config)
+        >>     (spyx-pretty :config-read config)
         ctx    (it-> ctx-default
                  (glue it config)
                  (glue it {:db-uri (str (grab :datomic-uri config) \? (grab :postgres-uri config))})
                  (dissoc it :datomic-uri :postgres-uri))]
-    (spyx-pretty :loaded ctx )
+    (spyx-pretty :loaded ctx)
     ctx))
 
 ;-----------------------------------------------------------------------------
@@ -82,7 +82,7 @@
   (spyx-pretty :dispatch-fn ctx)
   (let [invoke-fn (grab :invoke-fn ctx)
         ; >>>       (spyx invoke-fn)
-        ctx (dissoc ctx :invoke-fn)
+        ctx       (dissoc ctx :invoke-fn)
         form      (list invoke-fn ctx)]
     ; (spyxx invoke-fn)
     ; (prn :92 (find-var invoke-fn))
@@ -189,6 +189,31 @@
           enc-response-parsed (extract-enc-resp-fields shell-result)]
       enc-response-parsed)))
 
+(s/defn find-missing-icns :- [[s/Any]]
+  [ctx]
+  (with-map-vals ctx [db-uri]
+    (let [conn         (d.peer/connect db-uri)
+          db           (d.peer/db conn)
+          missing-icns (vec (d.peer/q '[:find ?eid ?icn ?previous-icn
+                                        :where
+                                        [(missing? $ ?eid :encounter-transmission/plan-icn)]
+                                        [?eid :encounter-transmission/icn ?icn]
+                                        [?eid :encounter-transmission/previous-icn ?previous-icn]]
+                              db))]
+      (println "Number Missing ICNs:  " (count missing-icns))
+      missing-icns)))
+
+(defn save-missing-icns
+  [ctx]
+  (prn :save-missing-icns--enter)
+  (with-map-vals ctx [missing-icn-fname]
+    (spit missing-icn-fname
+      (with-out-str
+        (pp/pprint
+          (vec
+            (find-missing-icns ctx))))))
+  (prn :save-missing-icns--leave))
+
 (s/defn load-missing-icns :- [tsk/KeyMap]
   [ctx :- tsk/KeyMap]
   (with-map-vals ctx [missing-icn-fname]
@@ -228,29 +253,19 @@
       (spit tx-data-chunked-fname (with-out-str (pp/pprint tx-data)))
       tx-data-chunked)))
 
-(defn save-missing-icns
-  [ctx]
-  (let [conn (d.peer/connect (grab :db-uri ctx))
-        db   (d.peer/db conn)]
-    (prn :save-missing-icns--enter)
-    (spit "missing-icns.edn"
-      (with-out-str
-        (pp/pprint
-          (vec
-            (d.peer/q '[:find ?eid ?icn ?previous-icn
-                        :where
-                        [(missing? $ ?eid :encounter-transmission/plan-icn)]
-                        [?eid :encounter-transmission/icn ?icn]
-                        [?eid :encounter-transmission/previous-icn ?previous-icn]]
-              db)))))
-    (prn :save-missing-icns--leave)))
-
 (s/defn load-commit-transactions :- s/Any
   [ctx]
   (with-map-vals ctx [tx-data-chunked-fname]
     (let [conn (d.peer/connect (grab :db-uri ctx))
           txs  (edn/read-string (slurp tx-data-chunked-fname))]
       (util/transact-seq-peer conn txs))))
+
+(s/defn load-commit-transactions-with :- datomic.db.Db
+  [ctx]
+  (with-map-vals ctx [tx-data-chunked-fname]
+    (let [conn (d.peer/connect (grab :db-uri ctx))
+          txs  (edn/read-string (slurp tx-data-chunked-fname))]
+      (util/transact-seq-peer-with conn txs))))
 
 (defn -main
   [config-fname]
