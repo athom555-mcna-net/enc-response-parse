@@ -206,12 +206,12 @@
 (defn save-missing-icns
   [ctx]
   (prn :save-missing-icns--enter)
-  (with-map-vals ctx [missing-icn-fname]
-    (spit missing-icn-fname
-      (with-out-str
-        (pp/pprint
-          (vec
-            (find-missing-icns ctx))))))
+  (let [missing-icns (find-missing-icns ctx)]
+    (with-map-vals ctx [missing-icn-fname]
+      (spit missing-icn-fname
+        (with-out-str
+          (pp/pprint
+            (vec missing-icns))))))
   (prn :save-missing-icns--leave))
 
 (s/defn load-missing-icns :- [tsk/KeyMap]
@@ -222,7 +222,7 @@
           missing-data (edn/read-string (slurp missing-icn-fname))
           icn-strs     (forv [rec missing-data]
                          (zipmap [:eid :icn :previous-icn] rec))]
-      (spyx-pretty icn-strs))))
+      icn-strs)))
 
 (s/defn create-icn-maps-aug :- [tsk/KeyMap]
   [ctx :- tsk/KeyMap]
@@ -242,16 +242,18 @@
 
 (s/defn create-tx-data-chunked :- [[tsk/KeyMap]]
   [ctx]
-  (with-map-vals ctx [icn-maps-aug-fname tx-data-chunked-fname]
+  (prn :create-tx-data-chunked--enter)
+  (with-map-vals ctx [icn-maps-aug-fname tx-data-chunked-fname tx-size-limit]
     (let [icn-maps-aug    (edn/read-string (slurp icn-maps-aug-fname))
           tx-data         (forv [icn-map-aug icn-maps-aug]
                             (with-map-vals icn-map-aug [eid plan-icn]
                               {:db/id    eid
                                :plan-icn plan-icn}))
-          tx-data-chunked (unlazy (partition-all (grab :tx-size-limit ctx) tx-data))]
+          tx-data-chunked (unlazy (partition-all tx-size-limit tx-data))]
       (println "Writing: " tx-data-chunked-fname)
-      (spit tx-data-chunked-fname (with-out-str (pp/pprint tx-data)))
-      tx-data-chunked)))
+      (spit tx-data-chunked-fname (with-out-str (pp/pprint tx-data-chunked)))
+      (with-result tx-data-chunked
+        (prn :create-tx-data-chunked--leave)))))
 
 (s/defn load-commit-transactions :- s/Any
   [ctx]
@@ -277,6 +279,8 @@
     (let [ctx    (config-load->ctx config-fname)
           >>     (spyx-pretty ctx)
           result (dispatch ctx)]
-      (spyx-pretty :main-result result)
+      (spy :main--dispatch-post)
+      (spyx (type result))
+      ; (spyx-pretty :main-result result)
       (spy :main--leave)
       result)))

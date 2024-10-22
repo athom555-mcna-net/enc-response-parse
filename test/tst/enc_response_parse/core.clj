@@ -289,6 +289,7 @@
       (pp/pprint enc-resp-parsed))))
 
 (verify
+  (prn :-----------------------------------------------------------------------------)
   (with-redefs [verbose? verbose-tests?]
     (let [icn-maps-aug (create-icn-maps-aug ctx-local)]
       (is (wild-match?
@@ -310,6 +311,6 @@
             (wild-match?
               [[{:plan-icn "62200600780000001", :db/id util/eid?}
                 {:plan-icn "62200600780000002", :db/id util/eid?}]
-               [{:plan-icn "62200600780000003", :db/id util/eid?}]]))))
-    ))
-
+               [{:plan-icn "62200600780000003", :db/id util/eid?}]])))))
+  (prn :-----------------------------------------------------------------------------)
+  )
