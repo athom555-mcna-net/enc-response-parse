@@ -12,7 +12,7 @@
 
 (s/def eid-min-digits :- s/Int
   "The minimum length positive int to be 'EID-like' (Datomic Entity ID)"
-  9)                ; 32 bit Long is about +/- 2e9
+  9)      ; 32 bit Long is about +/- 2e9
 
 (s/def eid-min-value :- BigInteger
   "The minimum value positive int to be 'EID-like' (Datomic Entity ID)"
@@ -44,9 +44,10 @@
          txs txs]
     (if (empty? txs)
       db
-      (let [tx-curr  (t/xfirst txs)
-            txs-next (t/xrest txs)
-            result   (d.peer/with db tx-curr) ; use Datomic Peer API
-            db-next  (t/grab :db-after result)]
+      (let
+        [tx-curr (t/xfirst txs)
+         txs-next (t/xrest txs)
+         result (d.peer/with db tx-curr) ; use Datomic Peer API
+         db-next (t/grab :db-after result)]
         (recur db-next txs-next)))))
 

@@ -293,24 +293,24 @@
   (with-redefs [verbose? verbose-tests?]
     (let [icn-maps-aug (create-icn-maps-aug ctx-local)]
       (is (wild-match?
-            [{:eid          util/eid?
-              :icn          "30000063295500"
-              :plan-icn     "62200600780000001"
-              :previous-icn "30000000165694"}
-             {:eid          util/eid?
-              :icn          "30000063295501"
-              :plan-icn     "62200600780000002"
-              :previous-icn "30000000165713"}
-             {:eid          util/eid?
-              :icn          "30000063295502"
-              :plan-icn     "62200600780000003"
-              :previous-icn "30000000165720"}]
+            [{:eid                             util/eid?
+              :icn                             "30000063295500"
+              :plan-icn "62200600780000001"
+              :previous-icn                    "30000000165694"}
+             {:eid                             util/eid?
+              :icn                             "30000063295501"
+              :plan-icn "62200600780000002"
+              :previous-icn                    "30000000165713"}
+             {:eid                             util/eid?
+              :icn                             "30000063295502"
+              :plan-icn "62200600780000003"
+              :previous-icn                    "30000000165720"}]
             icn-maps-aug)))
     (let [tx-data-chunked (create-tx-data-chunked ctx-local)]
       (is (->> tx-data-chunked ; alternate style with variable "first"
             (wild-match?
-              [[{:plan-icn "62200600780000001", :db/id util/eid?}
-                {:plan-icn "62200600780000002", :db/id util/eid?}]
-               [{:plan-icn "62200600780000003", :db/id util/eid?}]])))))
+              [[{:encounter-transmission/plan-icn "62200600780000001", :db/id util/eid?}
+                {:encounter-transmission/plan-icn "62200600780000002", :db/id util/eid?}]
+               [{:encounter-transmission/plan-icn "62200600780000003", :db/id util/eid?}]])))))
   (prn :-----------------------------------------------------------------------------)
   )

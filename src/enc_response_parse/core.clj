@@ -253,7 +253,7 @@
           tx-data         (forv [icn-map-aug icn-maps-aug]
                             (with-map-vals icn-map-aug [eid plan-icn]
                               {:db/id    eid
-                               :plan-icn plan-icn}))
+                               :encounter-transmission/plan-icn plan-icn}))
           tx-data-chunked (unlazy (partition-all tx-size-limit tx-data))]
       (println "Writing: " tx-data-chunked-fname)
       (spit tx-data-chunked-fname (with-out-str (pp/pprint tx-data-chunked)))
