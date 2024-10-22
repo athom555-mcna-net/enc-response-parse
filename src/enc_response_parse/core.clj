@@ -189,17 +189,22 @@
           enc-response-parsed (extract-enc-resp-fields shell-result)]
       enc-response-parsed)))
 
+(s/defn query-missing-icns :- [[s/Any]]
+  [db :- datomic.db.Db]
+  (let [missing-icns (vec (d.peer/q '[:find ?eid ?icn ?previous-icn
+                                      :where
+                                      [(missing? $ ?eid :encounter-transmission/plan-icn)]
+                                      [?eid :encounter-transmission/icn ?icn]
+                                      [?eid :encounter-transmission/previous-icn ?previous-icn]]
+                            db))]
+    missing-icns))
+
 (s/defn find-missing-icns :- [[s/Any]]
   [ctx]
   (with-map-vals ctx [db-uri]
     (let [conn         (d.peer/connect db-uri)
           db           (d.peer/db conn)
-          missing-icns (vec (d.peer/q '[:find ?eid ?icn ?previous-icn
-                                        :where
-                                        [(missing? $ ?eid :encounter-transmission/plan-icn)]
-                                        [?eid :encounter-transmission/icn ?icn]
-                                        [?eid :encounter-transmission/previous-icn ?previous-icn]]
-                              db))]
+          missing-icns (query-missing-icns db)]
       (println "Number Missing ICNs:  " (count missing-icns))
       missing-icns)))
 
@@ -264,10 +269,19 @@
 
 (s/defn load-commit-transactions-with :- datomic.db.Db
   [ctx]
+  (prn :-----------------------------------------------------------------------------)
+  (prn :load-commit-transactions-with--enter)
   (with-map-vals ctx [tx-data-chunked-fname]
-    (let [conn (d.peer/connect (grab :db-uri ctx))
-          txs  (edn/read-string (slurp tx-data-chunked-fname))]
-      (util/transact-seq-peer-with conn txs))))
+    (let [txs                 (edn/read-string (slurp tx-data-chunked-fname))
+          conn                (d.peer/connect (grab :db-uri ctx))
+          db-before           (d.peer/db conn)
+          missing-icns-before (query-missing-icns db-before)
+          db-after            (util/transact-seq-peer-with conn txs)
+          missing-icns-after  (query-missing-icns db-after)]
+      (println "Missing ICNs before = " (count missing-icns-before))
+      (println "Missing ICNs after  = " (count missing-icns-after))))
+  (prn :load-commit-transactions-with--leave)
+  (prn :-----------------------------------------------------------------------------))
 
 (defn -main
   [config-fname]
