@@ -20,15 +20,13 @@
   "Enable to see progress printouts"
   false)
 
-(def ^:dynamic tx-size-limit
-  "The maxinum number of entity maps to include in a single Datomic transaction."
-  500)
-
 (def ^:dynamic ctx-default
   {:encounter-response-root-dir "/shared/tmp/iowa/iowa_response_files"
    :missing-icn-fname           "missing-icns.edn"
    :icn-maps-aug-fname          "icn-maps-aug.edn"
    :tx-data-chunked-fname       "tx-data-chuncked.edn"
+
+   :tx-size-limit 500 ; The maxinum number of entity maps to include in a single Datomic transaction.
    })
 
 (s/def encounter-response-filename-patt
@@ -225,7 +223,7 @@
                             (with-map-vals icn-map-aug [eid plan-icn]
                               {:db/id    eid
                                :plan-icn plan-icn}))
-          tx-data-chunked (unlazy (partition-all tx-size-limit tx-data))]
+          tx-data-chunked (unlazy (partition-all (grab :tx-size-limit ctx) tx-data))]
       (println "Writing: " tx-data-chunked-fname)
       (spit tx-data-chunked-fname (with-out-str (pp/pprint tx-data)))
       tx-data-chunked)))

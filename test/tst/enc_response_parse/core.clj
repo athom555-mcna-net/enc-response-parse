@@ -21,7 +21,7 @@
 (def ^:dynamic verbose-tests?
   true)
 
-(verify
+(verify-focus
   (is= :dummy-fn--result (enc-response-parse.core/dummy-fn))
 
   ; verify config-load->ctx works
@@ -30,11 +30,12 @@
       (with-out-str
         (pp/pprint
           (quote
-            {:datomic-uri  "datomic:sql://encounters"
-             :postgres-uri "jdbc:postgresql://postgres.qa:5432/topaz?user=datomic&password=geheim"
-             :invoke-fn    tupelo.core/noop
+            {:datomic-uri                 "datomic:sql://encounters"
+             :postgres-uri                "jdbc:postgresql://postgres.qa:5432/topaz?user=datomic&password=geheim"
+             :invoke-fn                   tupelo.core/noop
              :encounter-response-root-dir "/some/path/to/root"
              }))))
+
     (let [ctx (config-load->ctx config-fname)]
       (is= ctx
         (quote
@@ -43,7 +44,7 @@
            :icn-maps-aug-fname          "icn-maps-aug.edn"
            :invoke-fn                   tupelo.core/noop
            :missing-icn-fname           "missing-icns.edn"
-           :tx-data-chunked-fname       "tx-data-chuncked.edn"}
+           :tx-data-chunked-fname       "tx-data-chuncked.edn" :tx-size-limit 500}
           )))
 
     ; verify `dispatch` works
@@ -75,6 +76,7 @@
    :missing-icn-fname           "resources/missing-3.edn"
    :icn-maps-aug-fname          "icn-maps-aug.edn"
    :tx-data-chunked-fname       "tx-data-chuncked.edn"
+   :tx-size-limit               2
    })
 
 ;-----------------------------------------------------------------------------
@@ -287,8 +289,7 @@
       (pp/pprint enc-resp-parsed))))
 
 (verify
-  (with-redefs [verbose?      verbose-tests?
-                tx-size-limit 2]
+  (with-redefs [verbose? verbose-tests?]
     (let [icn-maps-aug (create-icn-maps-aug ctx-local)]
       (is (wild-match?
             [{:eid          util/eid?
