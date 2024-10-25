@@ -23,6 +23,12 @@
   [v :- s/Int] (<= eid-min-value v))
 
 ;-----------------------------------------------------------------------------
+(s/defn iowa-prefix? :- s/Bool
+  [s :- s/Str]
+  (t/with-exception-default false
+    (t/truthy? (= "ia-" (subs s 0 3)))))
+
+;-----------------------------------------------------------------------------
 (s/defn transact-seq-peer :- tsk/Vec
   "Accepts a sequence of transactions into Datomic, which are committed in order.
   Each transaction is a vector of entity maps."

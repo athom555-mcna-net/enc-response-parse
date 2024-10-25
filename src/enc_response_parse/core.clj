@@ -252,7 +252,7 @@
     (let [icn-maps-aug    (edn/read-string (slurp icn-maps-aug-fname))
           tx-data         (forv [icn-map-aug icn-maps-aug]
                             (with-map-vals icn-map-aug [eid plan-icn]
-                              {:db/id    eid
+                              {:db/id                           eid
                                :encounter-transmission/plan-icn plan-icn}))
           tx-data-chunked (unlazy (partition-all tx-size-limit tx-data))]
       (println "Writing: " tx-data-chunked-fname)
@@ -283,6 +283,46 @@
   (prn :load-commit-transactions-with--leave)
   (prn :-----------------------------------------------------------------------------))
 
+;---------------------------------------------------------------------------------------------------
+(s/defn icn-status-sample :- [[s/Any]]
+  [ctx]
+  (prn :icn-status-sample--enter)
+  (with-map-vals ctx [db-uri]
+    (let [conn   (d.peer/connect db-uri)
+          db     (d.peer/db conn)
+          result (vec (d.peer/q '[:find (pull ?eid [:encounter-transmission/icn
+                                                    {:encounter-transmission/status [*]}]
+                                          )
+                                  :in $ [?status ...]
+                                  :where [?eid :encounter-transmission/status ?status]]
+
+                        db
+                        [:encounter-transmission.status/accepted
+                         :encounter-transmission.status/rejected
+                         :encounter-transmission.status/rejected-by-validation]))
+          ]
+      (prn :icn-status-sample--result)
+      (pp/pprint result))))
+(comment
+  [[:encounter-transmission/icn "30000000165819"]
+   [:encounter-transmission/previous-icn "30000000165694"]
+   [:encounter-transmission/status
+    {:db/id    17592186045428,
+     :db/ident :encounter-transmission.status/accepted}]])
+
+(comment
+  ; find all the Stewart or Stuart first names
+  (is (submatch? [{:name/first "Stewart", :name/last "Brand"}
+                  {:name/first "Stuart", :name/last "Halloway"}
+                  {:name/first "Stuart", :name/last "Smalley"}]
+        (sort-by :name/last (onlies (d/q '[:find (pull ?e [*])
+                                           :in $ [?name ...]
+                                           :where [?e :name/first ?name]]
+                                      db
+                                      ["Stewart" "Stuart"])))))
+
+  )
+;---------------------------------------------------------------------------------------------------
 (defn -main
   [config-fname]
   (spy :main--enter)

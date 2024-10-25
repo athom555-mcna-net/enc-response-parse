@@ -1,18 +1,12 @@
 (ns enc-response-parse.scratch)
 
-(require
-  '[clojure.pprint :as pp]
-  '[clojure.walk :as walk]
-  '[datomic.api :as d.peer] ; peer api
-  '[clojure.tools.reader.edn :as edn]
-  '[schema.core :as s]
-  )
-
-(def datomic-uri "datomic:sql://encounters")
-(def postgres-uri "jdbc:postgresql://postgres.qa:5432/topaz?user=datomic&password=geheim")
-(def db-uri (str datomic-uri \? postgres-uri))
-
 (comment
+
+  (require
+    '[clojure.pprint :as pp]
+    '[clojure.walk :as walk]
+    '[datomic.api :as d.peer] ; peer api
+    )
 
   (def datomic-uri "datomic:sql://encounters")
   (def postgres-uri "jdbc:postgresql://postgres.qa:5432/topaz?user=datomic&password=geheim")
@@ -20,27 +14,31 @@
   (def conn (d.peer/connect db-uri))
   (def db (d.peer/db conn))
 
+
+  (defn iowa-prefix?
+    [s] (boolean (= "ia-" (subs s 0 3))))
+
   (pp/pprint (vec (sort-by second
                     (d.peer/q '[:find ?eid ?db-ident
-                           :where [?eid :db/ident ?db-ident]]
+                                :where [?eid :db/ident ?db-ident]]
                       db))))
 
   (pp/pprint
     (first
       (d.peer/q '[:find ?eid ?icn ?plan-icn ?previous-icn
-             :where
-             [?eid :encounter-transmission/plan-icn ?plan-icn]
-             [?eid :encounter-transmission/icn ?icn]
-             [?eid :encounter-transmission/previous-icn ?previous-icn]]
+                  :where
+                  [?eid :encounter-transmission/plan-icn ?plan-icn]
+                  [?eid :encounter-transmission/icn ?icn]
+                  [?eid :encounter-transmission/previous-icn ?previous-icn]]
         db)))
 
   (pp/pprint
     (first
       (d.peer/q '[:find (pull ?eid [*])
-             :where
-             [?eid :encounter-transmission/plan-icn ?plan-icn]
-             [?eid :encounter-transmission/icn ?icn]
-             [?eid :encounter-transmission/previous-icn ?previous-icn]]
+                  :where
+                  [?eid :encounter-transmission/plan-icn ?plan-icn]
+                  [?eid :encounter-transmission/icn ?icn]
+                  [?eid :encounter-transmission/previous-icn ?previous-icn]]
         db)))
   (comment ; result (still wrapped!)
     [{:encounter-transmission/generation               1645901773
@@ -62,30 +60,30 @@
 
   (count
     (d.peer/q '[:find ?eid ?icn ?previous-icn
-           :where
-           [(missing? $ ?eid :encounter-transmission/plan-icn)]
-           [?eid :encounter-transmission/icn ?icn]
-           [?eid :encounter-transmission/previous-icn ?previous-icn]
-           ]
+                :where
+                [(missing? $ ?eid :encounter-transmission/plan-icn)]
+                [?eid :encounter-transmission/icn ?icn]
+                [?eid :encounter-transmission/previous-icn ?previous-icn]
+                ]
       db
       ))  ; => 58
 
   (pp/pprint
     (vec (take 9
            (d.peer/q '[:find ?eid ?icn ?previous-icn
-                  :where
-                  [(missing? $ ?eid :encounter-transmission/plan-icn)]
-                  [?eid :encounter-transmission/icn ?icn]
-                  [?eid :encounter-transmission/previous-icn ?previous-icn]]
+                       :where
+                       [(missing? $ ?eid :encounter-transmission/plan-icn)]
+                       [?eid :encounter-transmission/icn ?icn]
+                       [?eid :encounter-transmission/previous-icn ?previous-icn]]
              db))))
 
   (pp/pprint
     (first
       (d.peer/q '[:find (pull ?eid [*])
-             :where
-             [(missing? $ ?eid :encounter-transmission/plan-icn)]
-             [?eid :encounter-transmission/icn ?icn]
-             [?eid :encounter-transmission/previous-icn ?previous-icn]]
+                  :where
+                  [(missing? $ ?eid :encounter-transmission/plan-icn)]
+                  [?eid :encounter-transmission/icn ?icn]
+                  [?eid :encounter-transmission/previous-icn ?previous-icn]]
         db)))
   (comment ; result
     [[17592186108600 "30000000165819" "30000000165694"]
@@ -115,9 +113,30 @@
      :encounter-transmission/billing-provider-npi     "1831475300"}
     )
 
+  (let [results (vec (d.peer/q '[:find (pull ?eid [:encounter-transmission/icn
+                                                   :encounter-transmission/plan
+                                                   {:encounter-transmission/status [*]}]
+                                         )
+                                 :in $ [?status ...]
+                                 :where
+                                 [?eid :encounter-transmission/status ?status]
+                                 [?eid :encounter-transmission/plan ?plan]
+                                 [(iowa-prefix? ?plan)]
+                                 ]
+
+                       db
+                       [:encounter-transmission.status/accepted
+                        :encounter-transmission.status/rejected
+                        :encounter-transmission.status/rejected-by-validation]))
+        outpp   (with-out-str
+                  (pp/pprint results))]
+    (spit "file.txt" outpp)
+    )
+
   (let [outpp (with-out-str
                 (pp/pprint results))]
     (spit "file.txt" outpp)
     )
 
   )
+
