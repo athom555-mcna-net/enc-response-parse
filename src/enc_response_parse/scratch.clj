@@ -115,6 +115,22 @@
 
   (let [results (vec (d.peer/q '[:find (pull ?eid [:encounter-transmission/icn
                                                    :encounter-transmission/plan
+                                                   {:encounter-transmission/status [*]}])
+                                 :where
+                                 [?eid :encounter-transmission/plan ?plan]
+                                 (or
+                                   [?eid :encounter-transmission/status :encounter-transmission.status/accepted]
+                                   [?eid :encounter-transmission/status :encounter-transmission.status/rejected]
+                                   [?eid :encounter-transmission/status :encounter-transmission.status/rejected-by-validation])
+                                 [(user/iowa-prefix? ?plan)]]
+                       db))
+        outpp   (with-out-str
+                  (pp/pprint results))]
+    (prn :count (count results))
+    (spit "file.txt" outpp))
+
+  (let [results (vec (d.peer/q '[:find (pull ?eid [:encounter-transmission/icn
+                                                   :encounter-transmission/plan
                                                    {:encounter-transmission/status [*]}]
                                          )
                                  :in $ [?status ...]
