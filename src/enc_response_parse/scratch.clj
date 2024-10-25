@@ -121,7 +121,7 @@
                                  :where
                                  [?eid :encounter-transmission/status ?status]
                                  [?eid :encounter-transmission/plan ?plan]
-                                 [(iowa-prefix? ?plan)]
+                                 [(user/iowa-prefix? ?plan)]
                                  ]
 
                        db
