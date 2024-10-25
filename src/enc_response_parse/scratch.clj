@@ -129,6 +129,13 @@
     (prn :count (count results))
     (spit "file.txt" outpp))
 
+  (comment
+    [[:encounter-transmission/icn "30000000165819"]
+     [:encounter-transmission/previous-icn "30000000165694"]
+     [:encounter-transmission/status
+      {:db/id    17592186045428,
+       :db/ident :encounter-transmission.status/accepted}]])
+
   (let [results (vec (d.peer/q '[:find (pull ?eid [:encounter-transmission/icn
                                                    :encounter-transmission/plan
                                                    {:encounter-transmission/status [*]}]

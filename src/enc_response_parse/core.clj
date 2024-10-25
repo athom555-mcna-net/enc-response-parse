@@ -199,6 +199,27 @@
                             db))]
     missing-icns))
 
+(s/defn query-missing-icns-iowa-narrow :- [[s/Any]]
+  [db :- datomic.db.Db]
+  (let [missing-icns (vec (d.peer/q '[:find (pull ?eid [:db/id
+                                                        :encounter-transmission/icn
+                                                        :encounter-transmission/previous-icn
+                                                        :encounter-transmission/plan
+                                                        {:encounter-transmission/status [*]}])
+                                      :where
+                                      [(missing? $ ?eid :encounter-transmission/plan-icn)]
+                                      [?eid :encounter-transmission/icn ?icn]
+                                      (or
+                                        [?eid :encounter-transmission/status :encounter-transmission.status/accepted]
+                                        [?eid :encounter-transmission/status :encounter-transmission.status/rejected]
+                                        [?eid :encounter-transmission/status :encounter-transmission.status/rejected-by-validation])
+                                      [?eid :encounter-transmission/plan ?plan]
+                                      [(user/iowa-prefix? ?plan)]]
+                            db))]
+    missing-icns))
+
+;---------------------------------------------------------------------------------------------------
+
 (s/defn find-missing-icns :- [[s/Any]]
   [ctx]
   (with-map-vals ctx [db-uri]
@@ -206,6 +227,15 @@
           db           (d.peer/db conn)
           missing-icns (query-missing-icns db)]
       (println "Number Missing ICNs:  " (count missing-icns))
+      missing-icns)))
+
+(s/defn find-missing-icns-iowa-narrow :- [[s/Any]]
+  [ctx]
+  (with-map-vals ctx [db-uri]
+    (let [conn         (d.peer/connect db-uri)
+          db           (d.peer/db conn)
+          missing-icns (query-missing-icns-iowa-narrow db)]
+      (println "Number Missing ICNs Iowa Narrow:  " (count missing-icns))
       missing-icns)))
 
 (defn save-missing-icns
@@ -218,6 +248,17 @@
           (pp/pprint
             (vec missing-icns))))))
   (prn :save-missing-icns--leave))
+
+(defn save-missing-icns-iowa-narrow
+  [ctx]
+  (prn :save-missing-icns-iowa-narrow--enter)
+  (let [missing-icn-recs (find-missing-icns-iowa-narrow ctx)]
+    (with-map-vals ctx [missing-icn-fname]
+      (spit missing-icn-fname
+        (with-out-str
+          (pp/pprint
+            (vec missing-icn-recs))))))
+  (prn :save-missing-icns-iowa-narrow--leave))
 
 (s/defn load-missing-icns :- [tsk/KeyMap]
   [ctx :- tsk/KeyMap]
@@ -283,45 +324,6 @@
   (prn :load-commit-transactions-with--leave)
   (prn :-----------------------------------------------------------------------------))
 
-;---------------------------------------------------------------------------------------------------
-(s/defn icn-status-sample :- [[s/Any]]
-  [ctx]
-  (prn :icn-status-sample--enter)
-  (with-map-vals ctx [db-uri]
-    (let [conn   (d.peer/connect db-uri)
-          db     (d.peer/db conn)
-          result (vec (d.peer/q '[:find (pull ?eid [:encounter-transmission/icn
-                                                    {:encounter-transmission/status [*]}]
-                                          )
-                                  :in $ [?status ...]
-                                  :where [?eid :encounter-transmission/status ?status]]
-
-                        db
-                        [:encounter-transmission.status/accepted
-                         :encounter-transmission.status/rejected
-                         :encounter-transmission.status/rejected-by-validation]))
-          ]
-      (prn :icn-status-sample--result)
-      (pp/pprint result))))
-(comment
-  [[:encounter-transmission/icn "30000000165819"]
-   [:encounter-transmission/previous-icn "30000000165694"]
-   [:encounter-transmission/status
-    {:db/id    17592186045428,
-     :db/ident :encounter-transmission.status/accepted}]])
-
-(comment
-  ; find all the Stewart or Stuart first names
-  (is (submatch? [{:name/first "Stewart", :name/last "Brand"}
-                  {:name/first "Stuart", :name/last "Halloway"}
-                  {:name/first "Stuart", :name/last "Smalley"}]
-        (sort-by :name/last (onlies (d/q '[:find (pull ?e [*])
-                                           :in $ [?name ...]
-                                           :where [?e :name/first ?name]]
-                                      db
-                                      ["Stewart" "Stuart"])))))
-
-  )
 ;---------------------------------------------------------------------------------------------------
 (defn -main
   [config-fname]
