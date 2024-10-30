@@ -19,8 +19,17 @@
 
 ; Enable to see progress printouts
 (def ^:dynamic verbose-tests?
-  true)
+  false)
 
+(def ctx-local
+  {:encounter-response-root-dir "./enc-response-files-test" ; full data:  "/Users/athom555/work/iowa-response"
+   :missing-icn-fname           "resources/missing-icns-5.edn"
+   :icn-maps-aug-fname          "icn-maps-aug.edn"
+   :tx-data-chunked-fname       "tx-data-chuncked.edn"
+   :tx-size-limit               2
+   })
+
+;---------------------------------------------------------------------------------------------------
 (verify
   (is= :dummy-fn--result (enc-response-parse.core/dummy-fn))
 
@@ -70,14 +79,6 @@
             ":main--enter"
             ":main--leave")))
     ))
-
-(def ctx-local
-  {:encounter-response-root-dir "./enc-response-files-test" ; full data:  "/Users/athom555/work/iowa-response"
-   :missing-icn-fname           "resources/missing-3.edn"
-   :icn-maps-aug-fname          "icn-maps-aug.edn"
-   :tx-data-chunked-fname       "tx-data-chuncked.edn"
-   :tx-size-limit               2
-   })
 
 ;-----------------------------------------------------------------------------
 (verify
@@ -289,28 +290,64 @@
       (pp/pprint enc-resp-parsed))))
 
 (verify
+  (when false
+  ; (prn :-----------------------------------------------------------------------------)
+  (with-redefs [verbose? verbose-tests?]
+    (load-missing-icns ctx-local))
+  ; (prn :-----------------------------------------------------------------------------)
+  ))
+
+(verify
   (prn :-----------------------------------------------------------------------------)
   (with-redefs [verbose? verbose-tests?]
     (let [icn-maps-aug (create-icn-maps-aug ctx-local)]
-      (is (wild-match?
-            [{:eid          util/eid?
-              :icn          "30000063295500"
-              :plan-icn     "62200600780000001"
-              :previous-icn "30000000165694"}
-             {:eid          util/eid?
-              :icn          "30000063295501"
-              :plan-icn     "62200600780000002"
-              :previous-icn "30000000165713"}
-             {:eid          util/eid?
-              :icn          "30000063295502"
-              :plan-icn     "62200600780000003"
-              :previous-icn "30000000165720"}]
-            icn-maps-aug)))
+      ; (spyx-pretty icn-maps-aug)
+      (is (->> icn-maps-aug
+            (wild-submatch?
+              [{:db/id  util/eid?
+                :encounter-transmission/icn      "30000000100601",
+                :encounter-transmission/plan     "id-medicaid",
+                :encounter-transmission/plan-icn "62133600780000001",
+                :encounter-transmission/status
+                #:db{:db/id  util/eid?
+                     :ident :encounter-transmission.status/rejected-by-validation}}
+               {:db/id                           17592186047700,
+                :encounter-transmission/icn      "30000000102936",
+                :encounter-transmission/plan     "id-medicaid",
+                :encounter-transmission/plan-icn "62133600780000002",
+                :encounter-transmission/status
+                #:db{:ident :encounter-transmission.status/accepted}}
+               {:db/id                           17592186047701,
+                :encounter-transmission/icn      "30000000102990",
+                :encounter-transmission/plan     "id-medicaid",
+                :encounter-transmission/plan-icn "62134500780000003",
+                :encounter-transmission/status
+                #:db{:ident :encounter-transmission.status/accepted}}
+               {:db/id                           17592186126919,
+                :encounter-transmission/icn      "30000000217708",
+                :encounter-transmission/plan     "ut-medicaid",
+                :encounter-transmission/plan-icn "62135000780000004",
+                :encounter-transmission/status
+                #:db{:ident :encounter-transmission.status/rejected}}
+               {:encounter-transmission/icn      "30000000222291",
+                :encounter-transmission/plan     "tx-medicaid",
+                :encounter-transmission/plan-icn "62200600780000005",
+                :encounter-transmission/status
+                #:db{:ident :encounter-transmission.status/accepted}}]))))
+
     (let [tx-data-chunked (create-tx-data-chunked ctx-local)]
-      (is (->> tx-data-chunked ; alternate style with variable "first"
+      (is (->>  tx-data-chunked ; alternate style with variable "first"
             (wild-match?
-              [[{:encounter-transmission/plan-icn "62200600780000001", :db/id util/eid?}
-                {:encounter-transmission/plan-icn "62200600780000002", :db/id util/eid?}]
-               [{:encounter-transmission/plan-icn "62200600780000003", :db/id util/eid?}]])))))
+              [[{:db/id  util/eid?
+                 :encounter-transmission/plan-icn "62133600780000001"}
+                {:db/id util/eid?
+                 :encounter-transmission/plan-icn "62133600780000002"}]
+               [{:db/id util/eid?
+                 :encounter-transmission/plan-icn "62134500780000003"}
+                {:db/id  util/eid?
+                 :encounter-transmission/plan-icn "62135000780000004"}]
+               [{:db/id util/eid?
+                 :encounter-transmission/plan-icn "62200600780000005"}]]
+              )))))
   (prn :-----------------------------------------------------------------------------)
   )

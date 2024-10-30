@@ -113,8 +113,7 @@
      :encounter-transmission/billing-provider-npi     "1831475300"}
     )
 
-  (let [results (vec (d.peer/q '[:find (pull ?eid [:encounter-transmission/icn
-                                                   :encounter-transmission/plan
+  (let [results (vec (d.peer/q '[:find (pull ?eid [*
                                                    {:encounter-transmission/status [*]}])
                                  :where
                                  [?eid :encounter-transmission/plan ?plan]
@@ -130,11 +129,17 @@
     (spit "file.txt" outpp))
 
   (comment
-    [[:encounter-transmission/icn "30000000165819"]
-     [:encounter-transmission/previous-icn "30000000165694"]
-     [:encounter-transmission/status
-      {:db/id    17592186045428,
-       :db/ident :encounter-transmission.status/accepted}]])
+    [[{:db/id                                           17592186122089
+       :encounter-transmission/access-point-medicaid-id "0231720"
+       :encounter-transmission/billing-provider-npi     "1861588857"
+       :encounter-transmission/encounter-data           #uuid "9a6f2502-ee5a-48bf-bfb0-2dca636d147e"
+       :encounter-transmission/facility-ein             "421520623"
+       :encounter-transmission/generation               1695418855
+       :encounter-transmission/icn                      "30000000212762"
+       :encounter-transmission/payer-claim-ids          ["1169284934156" "1169385071074" "1169485286010"]
+       :encounter-transmission/plan                     "ia-medicaid"
+       :encounter-transmission/status                   #:db{:id    17592186045432
+                                                             :ident :encounter-transmission.status/rejected-by-validation}}]])
 
   (let [results (vec (d.peer/q '[:find (pull ?eid [:encounter-transmission/icn
                                                    :encounter-transmission/plan

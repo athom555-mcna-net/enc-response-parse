@@ -62,7 +62,7 @@
 (s/defn config-load->ctx :- tsk/KeyMap
   [config-fname :- s/Str]
   (let [config (edn/read-string (slurp config-fname))
-        >>     (spyx-pretty :config-read config)
+     ;  >>     (spyx-pretty :config-read config)
         ctx    (it-> ctx-default
                  (glue it config)
                  (glue it {:db-uri (str (grab :datomic-uri config) \? (grab :postgres-uri config))})
@@ -201,21 +201,22 @@
 
 (s/defn query-missing-icns-iowa-narrow :- [[s/Any]]
   [db :- datomic.db.Db]
-  (let [missing-icns (vec (d.peer/q '[:find (pull ?eid [:db/id
-                                                        :encounter-transmission/icn
-                                                        :encounter-transmission/previous-icn
-                                                        :encounter-transmission/plan
-                                                        {:encounter-transmission/status [*]}])
-                                      :where
-                                      [(missing? $ ?eid :encounter-transmission/plan-icn)]
-                                      [?eid :encounter-transmission/icn ?icn]
-                                      (or
-                                        [?eid :encounter-transmission/status :encounter-transmission.status/accepted]
-                                        [?eid :encounter-transmission/status :encounter-transmission.status/rejected]
-                                        [?eid :encounter-transmission/status :encounter-transmission.status/rejected-by-validation])
-                                      [?eid :encounter-transmission/plan ?plan]
-                                      [(enc-response-parse.util/iowa-prefix? ?plan)]]
-                            db))]
+  (let [missing-icns (mapv only
+                       (d.peer/q '[:find (pull ?eid [:db/id
+                                                     :encounter-transmission/icn
+                                                     :encounter-transmission/previous-icn
+                                                     :encounter-transmission/plan
+                                                     {:encounter-transmission/status [*]}])
+                                   :where
+                                   [(missing? $ ?eid :encounter-transmission/plan-icn)]
+                                   [?eid :encounter-transmission/icn ?icn]
+                                   (or
+                                     [?eid :encounter-transmission/status :encounter-transmission.status/accepted]
+                                     [?eid :encounter-transmission/status :encounter-transmission.status/rejected])
+                                   [?eid :encounter-transmission/plan ?plan]
+                                  ;[(enc-response-parse.util/iowa-prefix? ?plan)]
+                                   ]
+                         db))]
     missing-icns))
 
 ;---------------------------------------------------------------------------------------------------
@@ -264,11 +265,8 @@
   [ctx :- tsk/KeyMap]
   (with-map-vals ctx [missing-icn-fname]
     (println "Reading: " missing-icn-fname)
-    (let [; 2D file. Each record is [<eid> <icn> <previous-icn>]
-          missing-data (edn/read-string (slurp missing-icn-fname))
-          icn-strs     (forv [rec missing-data]
-                         (zipmap [:eid :icn :previous-icn] rec))]
-      icn-strs)))
+    (let [missing-data (edn/read-string (slurp missing-icn-fname))]
+      missing-data)))
 
 (s/defn create-icn-maps-aug :- [tsk/KeyMap]
   [ctx :- tsk/KeyMap]
@@ -276,12 +274,13 @@
     (let [missing-icn-maps (load-missing-icns ctx)
           icn-maps-aug     (forv [icn-map missing-icn-maps]
                              (when verbose?
+                               (nl)
                                (println "seaching ENC_RESPONSE_*.TXT for icn:" icn-map))
-                             (with-map-vals icn-map [icn]
-                               (let [enc-resp    (->sorted-map (orig-icn->response-parsed ctx icn))
-                                     iowa-tcn    (grab :iowa-transaction-control-number enc-resp)
-                                     icn-map-aug (glue icn-map {:plan-icn iowa-tcn})]
-                                 icn-map-aug)))]
+                             (let [icn         (grab :encounter-transmission/icn icn-map)
+                                   enc-resp    (->sorted-map (orig-icn->response-parsed ctx icn))
+                                   iowa-tcn    (grab :iowa-transaction-control-number enc-resp)
+                                   icn-map-aug (glue icn-map {:encounter-transmission/plan-icn iowa-tcn})]
+                               icn-map-aug))]
       (println "Writing: " icn-maps-aug-fname)
       (spit icn-maps-aug-fname (with-out-str (pp/pprint icn-maps-aug)))
       icn-maps-aug)))
@@ -291,10 +290,15 @@
   (prn :create-tx-data-chunked--enter)
   (with-map-vals ctx [icn-maps-aug-fname tx-data-chunked-fname tx-size-limit]
     (let [icn-maps-aug    (edn/read-string (slurp icn-maps-aug-fname))
-          tx-data         (forv [icn-map-aug icn-maps-aug]
-                            (with-map-vals icn-map-aug [eid plan-icn]
-                              {:db/id                           eid
-                               :encounter-transmission/plan-icn plan-icn}))
+          tx-data         (keep-if not-nil?
+                            (forv [icn-map-aug icn-maps-aug]
+                              (let [eid      (grab :db/id icn-map-aug)
+                                    icn      (grab :encounter-transmission/icn icn-map-aug)
+                                    plan-icn (grab :encounter-transmission/plan-icn icn-map-aug)]
+                                (if (truthy? plan-icn) ; skip if plan-icn not found
+                                  {:db/id                           eid
+                                   :encounter-transmission/plan-icn plan-icn}
+                                  (prn :skipping-nil--plan-icn icn)))))
           tx-data-chunked (unlazy (partition-all tx-size-limit tx-data))]
       (println "Writing: " tx-data-chunked-fname)
       (spit tx-data-chunked-fname (with-out-str (pp/pprint tx-data-chunked)))

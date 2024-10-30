@@ -1,0 +1,33 @@
+[
+ {:db/id 17592186046083,
+  :encounter-transmission/icn "30000000100601",
+  :encounter-transmission/plan "id-medicaid",
+  :encounter-transmission/status
+  {:db/id 17592186045432,
+   :db/ident :encounter-transmission.status/rejected-by-validation}}
+ {:db/id 17592186047700,
+  :encounter-transmission/icn "30000000102936",
+  :encounter-transmission/plan "id-medicaid",
+  :encounter-transmission/status
+  {:db/id 17592186045428,
+   :db/ident :encounter-transmission.status/accepted}}
+ {:db/id 17592186047701,
+  :encounter-transmission/icn "30000000102990",
+  :encounter-transmission/plan "id-medicaid",
+  :encounter-transmission/status
+  {:db/id 17592186045428,
+   :db/ident :encounter-transmission.status/accepted}}
+ {:db/id 17592186126919,
+  :encounter-transmission/icn "30000000217708",
+  :encounter-transmission/plan "ut-medicaid",
+  :encounter-transmission/status
+  {:db/id 17592186045429,
+   :db/ident :encounter-transmission.status/rejected}}
+ {:db/id 17592186136120,
+  :encounter-transmission/icn "30000000222291",
+  :encounter-transmission/plan "tx-medicaid",
+  :encounter-transmission/status
+  {:db/id 17592186045428,
+   :db/ident :encounter-transmission.status/accepted}}
+]
+
