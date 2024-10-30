@@ -290,12 +290,12 @@
   (prn :create-tx-data-chunked--enter)
   (with-map-vals ctx [icn-maps-aug-fname tx-data-chunked-fname tx-size-limit]
     (let [icn-maps-aug    (edn/read-string (slurp icn-maps-aug-fname))
-          tx-data         (keep-if not-nil?
+          tx-data         (keep-if not-nil? ; skip if plan-icn not found #todo unnecessary?
                             (forv [icn-map-aug icn-maps-aug]
                               (let [eid      (grab :db/id icn-map-aug)
                                     icn      (grab :encounter-transmission/icn icn-map-aug)
                                     plan-icn (grab :encounter-transmission/plan-icn icn-map-aug)]
-                                (if (truthy? plan-icn) ; skip if plan-icn not found
+                                (if (truthy? plan-icn) ; skip if plan-icn not found #todo unnecessary?
                                   {:db/id                           eid
                                    :encounter-transmission/plan-icn plan-icn}
                                   (prn :skipping-nil--plan-icn icn)))))
