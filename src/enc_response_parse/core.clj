@@ -214,7 +214,7 @@
                                      [?eid :encounter-transmission/status :encounter-transmission.status/accepted]
                                      [?eid :encounter-transmission/status :encounter-transmission.status/rejected])
                                    [?eid :encounter-transmission/plan ?plan]
-                                  ;[(enc-response-parse.util/iowa-prefix? ?plan)]
+                                   [(enc-response-parse.util/iowa-prefix? ?plan)]
                                    ]
                          db))]
     missing-icns))
