@@ -320,9 +320,9 @@
     (let [txs                 (edn/read-string (slurp tx-data-chunked-fname))
           conn                (d.peer/connect (grab :db-uri ctx))
           db-before           (d.peer/db conn)
-          missing-icns-before (query-missing-icns db-before)
+          missing-icns-before (query-missing-icns-iowa-narrow db-before)
           db-after            (util/transact-seq-peer-with conn txs)
-          missing-icns-after  (query-missing-icns db-after)]
+          missing-icns-after  (query-missing-icns-iowa-narrow db-after)]
       (println "Missing ICNs before = " (count missing-icns-before))
       (println "Missing ICNs after  = " (count missing-icns-after))))
   (prn :load-commit-transactions-with--leave)
