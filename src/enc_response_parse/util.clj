@@ -25,7 +25,7 @@
 ;-----------------------------------------------------------------------------
 (s/defn iowa-prefix? :- s/Bool
   [s :- s/Str]
-  (t/with-exception-default false
+  (t/with-exception-default false ; in case less than 3 chars
     (t/truthy? (= "ia-" (subs s 0 3)))))
 
 ;-----------------------------------------------------------------------------
