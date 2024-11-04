@@ -43,15 +43,25 @@
   (s/fn [block :- [s/Any]]
     (mapv f block)))
 
+(s/defn array-1d->2d :- [[s/Any]]
+  "Convert a 1D sequence to a 2D array (possibly ragged)."
+  [row-size :- s/Int
+   seq-1d :- [s/Any]]
+  (partition-all row-size seq-1d))
+
+(s/defn array-2d->1d :- [s/Any]
+  "Concatenate rows of a 2D array (possibly ragged), returning a 1-D vector."
+  [seq-2d :- [[s/Any]]]
+  (apply glue seq-2d))
+
 (verify-focus
   (let [seq1     (range 5)
-        arr1     (partition-all 2 seq1)
-        seq2     (apply glue arr1)
+        arr1     (array-1d->2d 2 seq1)
+        seq2     (array-2d->1d arr1)
         inc-1d   (fn->blocked inc)
         inc-2d   (fn->blocked inc-1d)
         arr1-inc (inc-2d arr1)
-        seq1-inc (apply glue arr1-inc)
-        ]
+        seq1-inc (array-2d->1d arr1-inc)]
     (is= seq1 [0 1 2 3 4])
     (is= arr1 [[0 1]
                [2 3]
