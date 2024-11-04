@@ -21,7 +21,8 @@
   false)
 
 (def ^:dynamic ctx-default
-  {:encounter-response-root-dir "/shared/tmp/iowa/iowa_response_files"
+  {
+   :encounter-response-root-dir "/shared/tmp/iowa/iowa_response_files"
    :missing-icn-fname           "missing-icns.edn"
    :icn-maps-aug-fname          "icn-maps-aug.edn"
    :tx-data-chunked-fname       "tx-data-chuncked.edn"
@@ -41,8 +42,14 @@
    :length-strict? true})
 
 (s/def iowa-encounter-response-specs :- [tsk/KeyMap]
-  "Field specs (in order) for the Iowa Encounter Response files. Named like `ENC_RESPONSE_D_20210722_071949.TXT`"
-  [{:name :mco-claim-number :format :numeric :length 30} ; #todo it is a number like "30000062649905                "
+  "Field specs (in order) for the Iowa Encounter Response files. Named like `ENC_RESPONSE_D_20210722_071949.TXT`.
+  NOTE: all fields are strings.
+     :char            - string of [a-zA-Z] chars
+     :numeric         - string of [0-9] chars
+     :alphanumeric    - string of [0-9a-zA-Z] chars
+  "
+  [
+   {:name :mco-claim-number :format :numeric :length 30} ; #todo it is a number like "30000062649905                "
    {:name :iowa-transaction-control-number :format :numeric :length 17}
    {:name :iowa-processing-date :format :numeric :length 8}
    {:name :claim-type :format :char :length 1}

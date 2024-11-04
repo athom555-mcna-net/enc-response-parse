@@ -1,0 +1,63 @@
+[
+ {:db/id 17592214023315,
+  :encounter-transmission/icn "30000019034534",
+  :encounter-transmission/plan "ia-medicaid",
+  :encounter-transmission/status
+  {:db/id 17592186045426,
+   :db/ident :encounter-transmission.status/accepted}}
+ {:db/id 17592214023316,
+  :encounter-transmission/icn "30000019034535",
+  :encounter-transmission/plan "ia-medicaid",
+  :encounter-transmission/status
+  {:db/id 17592186045426,
+   :db/ident :encounter-transmission.status/accepted}}
+ {:db/id 17592214023317,
+  :encounter-transmission/icn "30000019034536",
+  :encounter-transmission/plan "ia-medicaid",
+  :encounter-transmission/status
+  {:db/id 17592186045426,
+   :db/ident :encounter-transmission.status/accepted}}
+ {:db/id 17592214023318,
+  :encounter-transmission/icn "30000019034537",
+  :encounter-transmission/plan "ia-medicaid",
+  :encounter-transmission/status
+  {:db/id 17592186045426,
+   :db/ident :encounter-transmission.status/accepted}}
+ {:db/id 17592214023319,
+  :encounter-transmission/icn "30000019034538",
+  :encounter-transmission/plan "ia-medicaid",
+  :encounter-transmission/status
+  {:db/id 17592186045426,
+   :db/ident :encounter-transmission.status/accepted}}
+ {:db/id 17592214023320,
+  :encounter-transmission/icn "30000019034539",
+  :encounter-transmission/plan "ia-medicaid",
+  :encounter-transmission/status
+  {:db/id 17592186045426,
+   :db/ident :encounter-transmission.status/accepted}}
+ {:db/id 17592214023322,
+  :encounter-transmission/icn "30000019034541",
+  :encounter-transmission/plan "ia-medicaid",
+  :encounter-transmission/status
+  {:db/id 17592186045426,
+   :db/ident :encounter-transmission.status/accepted}}
+ {:db/id 17592214023323,
+  :encounter-transmission/icn "30000019034542",
+  :encounter-transmission/plan "ia-medicaid",
+  :encounter-transmission/status
+  {:db/id 17592186045426,
+   :db/ident :encounter-transmission.status/accepted}}
+ {:db/id 17592214023324,
+  :encounter-transmission/icn "30000019034543",
+  :encounter-transmission/plan "ia-medicaid",
+  :encounter-transmission/status
+  {:db/id 17592186045426,
+   :db/ident :encounter-transmission.status/accepted}}
+ {:db/id 17592214023326,
+  :encounter-transmission/icn "30000019034545",
+  :encounter-transmission/plan "ia-medicaid",
+  :encounter-transmission/status
+  {:db/id 17592186045426,
+   :db/ident :encounter-transmission.status/accepted}}
+]
+ 
