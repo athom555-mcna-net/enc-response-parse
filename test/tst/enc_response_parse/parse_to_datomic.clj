@@ -5,9 +5,7 @@
   (:require
     [clojure.pprint :as pp]
     [datomic.api :as d]
-    [demo.util :as u]
     [schema.core :as s]
-    [tst.conf :as conf]
     [tupelo.core :as t]
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
@@ -40,100 +38,56 @@
    :tx-size-limit               2
    })
 
-(verify
+(verify-focus
   (let [
-        conn         (d/connect db-uri-disk)
+        conn        (d/connect db-uri-disk)
 
-        resp2        @(d/transact conn enc-response-schema)
+        resp2       @(d/transact conn enc-response-schema)
+        ; >>          (pp/pprint resp2)
 
-
-        ; >>           (pprint/pprint resp2)
-        first-movies [{:movie/title        "The Goonies"
-                       :movie/genre        "action/adventure"
-                       :movie/release-year 1985}
-                      {:movie/title        "Commando"
-                       :movie/genre        "thriller/action"
-                       :movie/release-year 1985}
-                      {:movie/title        "Repo Man"
-                       :movie/genre        "punk dystopia"
-                       :movie/release-year 1984}]
-        resp3        @(d/transact conn first-movies)
-        ; >>           (pprint/pprint resp3)
-
-        db           (d/db conn)
-        all-titles-q '[:find ?movie-title
-                       :where [_ :movie/title ?movie-title]]
-        raw-results  (d/q all-titles-q db)
-        ; >> (spyxx raw-results)
-        movies       (onlies raw-results)
+        rec-1 {:mco-claim-number                "30000062649905"
+               :iowa-transaction-control-number "62133600780000013"
+               :iowa-processing-date            "12022021"
+               :claim-type                      "D"
+               :claim-frequency-code            "7"
+               :member-id                       "1704114C"
+               :first-date-of-service           "03112021"
+               :billing-provider-npi            "1952711780"
+               :mco-paid-date                   "11242021"
+               :total-paid-amount               "000000022968"
+               :line-number                     "00"
+               :error-code                      "A00"
+               :field                           "PAID"
+               :error-field-value               ""}
+        rec-2 {:mco-claim-number                "30000062649906"
+               :iowa-transaction-control-number "62133600780000014"
+               :iowa-processing-date            "12022021"
+               :claim-type                      "D"
+               :claim-frequency-code            "1"
+               :member-id                       "1704114C"
+               :first-date-of-service           "07012021"
+               :billing-provider-npi            "1952711780"
+               :mco-paid-date                   "11242021"
+               :total-paid-amount               "000000000000"
+               :line-number                     "00"
+               :error-code                      "A00"
+               :field                           "DENIED"
+               :error-field-value               ""}
+        sample-recs [ rec-1
+                     rec-2]
+        resp3       @(d/transact conn sample-recs)
+        ; >>          (pp/pprint resp3)
         ]
-    (is-set= movies ["Commando" "The Goonies" "Repo Man"])
-
-    ; Show the archaic "single result" notation (single `.` at end of `:find` clause)
-    (let [movies-count-1 (d/q '[:find (count ?movie-title)
-                                :where [_ :movie/title ?movie-title]]
-                           db)
-          movies-count-2 (d/q '[:find (count ?movie-title) . ; <= NOTE tiny `.` (dot) here
-                                :where [_ :movie/title ?movie-title]]
-                           db)]
-      (is= [[3]] movies-count-1)
-      (is= 3 (only2 movies-count-1)) ; i.e. (only (only movies-count-1)), or (ffirst movies-count-1)
-      (is= 3 movies-count-2))
-
-    (let [eid          (only2 (d/q '[:find ?eid
-                                     :where [?eid :movie/title "Commando"]]
-                                db))
-          entity       (d/entity db eid) ; like #:db{:id 17592186045421}
-          entity-db-id (:db/id entity)]
-      (is (pos-int? eid)) ; like 96757023244365
-      (is (pos-int? entity-db-id))
-      (is= (type entity) datomic.query.EntityMap)
-      ; NOTE: Datomic Entity is a "lazy associative object". It must be forced to reveal its contents.
-      ; Regular print results in this:
-      (let [pr-str (with-out-str (pr entity))]
-        (is= pr-str "#:db{:id 17592186045421}"))
-      ; Must use `(unlazy entity)` or equiv to force evaluation
-      (is= (into {} entity)
-        #:movie{:genre "thriller/action" :release-year 1985 :title "Commando"})
-
-      (is (wild-match? {:db/id              :*
-                        :movie/genre        "thriller/action",
-                        :movie/release-year 1985,
-                        :movie/title        "Commando"}
-            (d/pull (d/db conn) '[*] eid))))
-
-    (let [titles-from-1985     '[:find ?movie-title
-                                 :where [?e :movie/title ?movie-title]
-                                 [?e :movie/release-year 1985]]
-          titles-1985          (d/q titles-from-1985 db)
-          q-all-data-from-1985 '[:find ?title ?year ?genre
-                                 :where [?e :movie/title ?title]
-                                 [?e :movie/release-year ?year]
-                                 [?e :movie/genre ?genre]
-                                 [?e :movie/release-year 1985]]
-          all-data-from-1985   (d/q q-all-data-from-1985 db)]
-      (is-set= titles-1985 [["Commando"] ["The Goonies"]])
-      (is-set= all-data-from-1985
-        [["Commando" 1985 "thriller/action"]
-         ["The Goonies" 1985 "action/adventure"]])
-
-      (let [commando-id (only2 (d/q '[:find ?e
-                                      :where [?e :movie/title "Commando"]]
-                                 db))]
-        ; (spyx commando-id)
-        @(d/transact conn [{:db/id       commando-id
-                            :movie/genre "future governor"}]) ; NOTE:  no `@` deref for print!!!
-
-        ; No change!!! Since used old value of DB
-        (is-set= (d/q q-all-data-from-1985 db)
-          [["Commando" 1985 "thriller/action"]
-           ["The Goonies" 1985 "action/adventure"]])
-
-        ; Use new DB value
-        (is-set= (d/q q-all-data-from-1985 (d/db conn))
-          [["Commando" 1985 "future governor"]
-           ["The Goonies" 1985 "action/adventure"]])
-        ))
+    (let [db         (d/db conn)
+          raw-result (only2 (d/q '[:find (pull ?e [*])
+                                   :where [?e :mco-claim-number "30000062649905"]]
+                              db))]
+      (is (submatch? rec-1 raw-result)))
+    (let [db         (d/db conn)
+          raw-result (only2 (d/q '[:find (pull ?e [*])
+                                  :where [?e :mco-claim-number "30000062649906"]]
+                             db))]
+      (is (submatch? rec-2 raw-result)))
     ))
 
 

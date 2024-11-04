@@ -4,9 +4,7 @@
   (:require
     [clojure.pprint :as pp]
     [datomic.api :as d]
-    [demo.util :as u]
     [schema.core :as s]
-    [tst.conf :as conf]
     [tupelo.core :as t]
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
