@@ -1,6 +1,6 @@
 (ns enc-response-parse.util
   (:require
-    [datomic.api :as d.peer]
+    [datomic.api :as d.peer] ; Datomic Peer API
     [schema.core :as s]
     [tupelo.core :as t]
     [tupelo.math :as math]
@@ -53,7 +53,7 @@
       (let
         [tx-curr  (t/xfirst txs-curr)
          txs-next (t/xrest txs-curr)
-         result   (d.peer/with db-curr tx-curr) ; Datomic Peer API: transact data into db-curr
+         result   (d.peer/with db-curr tx-curr) ; transact data into db-curr
          db-next  (t/grab :db-after result)]
         (recur db-next txs-next)))))
 
