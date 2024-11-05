@@ -1,4 +1,4 @@
-(ns ^:test-refresh/focus
+(ns       ;    ^:test-refresh/focus
   tst.enc-response-parse.parse-to-datomic
   (:use enc-response-parse.parse-to-datomic
         tupelo.core
@@ -104,7 +104,7 @@
                      :error-field-value               ""}
         sample-recs [rec-1
                      rec-2]
-        resp3       (enc-resp-recs->datomic ctx-local sample-recs)
+        resp3       (enc-response-recs->datomic ctx-local sample-recs)
         ; >>          (pp/pprint resp3)
         ]
     (with-map-vals ctx-local [db-uri]
@@ -180,11 +180,9 @@
                :*
                :*
                rec-5])))
+      (enc-response-schema->datomic ctx-local)
+      (enc-response-recs->datomic ctx-local  data-recs)
       (let [conn  (d/connect db-uri-disk-test)
-            resp1 @(d/transact conn enc-response-schema)
-            ; >>          (pp/pprint resp1)
-            resp2 @(d/transact conn data-recs)
-            ; >>          (pp/pprint resp2)
             db    (d/db conn)]
         (let [result (only2 (d/q '[:find (pull ?e [*])
                                    :where [?e :mco-claim-number "30000000100601"]]

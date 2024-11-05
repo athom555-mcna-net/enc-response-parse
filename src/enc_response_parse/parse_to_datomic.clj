@@ -5,6 +5,7 @@
     [clojure.pprint :as pp]
     [datomic.api :as d.peer]
     [enc-response-parse.core :as core]
+    [enc-response-parse.util :as util]
     [schema.core :as s]
     [tupelo.core :as t]
     [tupelo.schema :as tsk]
@@ -101,11 +102,12 @@
                     (core/parse-string-fields core/iowa-encounter-response-specs line))]
     data-recs))
 
-(s/defn enc-resp-recs->datomic :- s/Any
+(s/defn enc-response-recs->datomic :- s/Any
   [ctx :- tsk/KeyMap
    enc-resp-recs :- [tsk/KeyMap]]
   (with-map-vals ctx [db-uri tx-size-limit]
     (let [enc-resp-rec-chunked (partition-all tx-size-limit enc-resp-recs)
           conn (d.peer/connect db-uri)
-          resp @(d.peer/transact conn enc-resp-recs)]
+          resp  (util/transact-seq-peer  conn enc-resp-rec-chunked)]
+      ; (pp/pprint resp )
       resp)))
