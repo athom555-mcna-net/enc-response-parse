@@ -1,4 +1,4 @@
-(ns enc-response-parse.util
+(ns enc-response.util
   (:use tupelo.core)
   (:require
     [clojure.java.io :as io]

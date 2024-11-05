@@ -1,5 +1,5 @@
-(ns tst.enc-response-parse.util
-  (:use enc-response-parse.util
+(ns tst.enc-response.util
+  (:use enc-response.util
         tupelo.core
         tupelo.test)
   (:require
@@ -7,7 +7,7 @@
     [clojure.java.io :as io]
     [clojure.pprint :as pp]
     [clojure.tools.reader.edn :as edn]
-    [enc-response-parse.util :as util]
+    [enc-response.util :as util]
     [schema.core :as s]
     [tupelo.parse :as parse]
     [tupelo.schema :as tsk]

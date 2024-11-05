@@ -1,11 +1,11 @@
-(ns enc-response-parse.core
+(ns enc-response.core
   (:use tupelo.core)
   (:require
     [clojure.java.io :as io]
     [clojure.pprint :as pp]
     [clojure.tools.reader.edn :as edn]
     [datomic.api :as d.peer]
-    [enc-response-parse.util :as util]
+    [enc-response.util :as util]
     [flatland.ordered.map :as omap]
     [schema.core :as s]
     [tupelo.misc :as misc]

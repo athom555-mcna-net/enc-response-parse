@@ -1,6 +1,6 @@
 (ns       ;    ^:test-refresh/focus
-  tst.enc-response-parse.parse-to-datomic
-  (:use enc-response-parse.parse-to-datomic
+  tst.enc-response.parse-to-datomic
+  (:use enc-response.parse-to-datomic
         tupelo.core
         tupelo.test)
   (:require
@@ -8,7 +8,7 @@
     [clojure.java.io :as io]
     [clojure.pprint :as pp]
     [datomic.api :as d]
-    [enc-response-parse.core :as core]
+    [enc-response.core :as core]
     [schema.core :as s]
     [tupelo.core :as t]
     [tupelo.schema :as tsk]

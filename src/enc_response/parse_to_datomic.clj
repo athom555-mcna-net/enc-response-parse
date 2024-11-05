@@ -1,11 +1,11 @@
-(ns enc-response-parse.parse-to-datomic
+(ns enc-response.parse-to-datomic
   (:use tupelo.core
         tupelo.test)
   (:require
     [clojure.pprint :as pp]
     [datomic.api :as d.peer]
-    [enc-response-parse.core :as core]
-    [enc-response-parse.util :as util]
+    [enc-response.core :as core]
+    [enc-response.util :as util]
     [schema.core :as s]
     [tupelo.core :as t]
     [tupelo.schema :as tsk]

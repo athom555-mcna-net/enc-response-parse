@@ -1,4 +1,4 @@
-(ns enc-response-parse.scratch)
+(ns enc-response.scratch)
 
 (comment
 

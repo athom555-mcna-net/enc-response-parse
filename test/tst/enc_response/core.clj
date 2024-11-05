@@ -1,4 +1,4 @@
-(ns tst.enc-response-parse.core
+(ns tst.enc-response.core
   (:use tupelo.core
         tupelo.test)
   (:require
@@ -6,8 +6,8 @@
     [clojure.java.io :as io]
     [clojure.pprint :as pp]
     [clojure.tools.reader.edn :as edn]
-    [enc-response-parse.core :refer :all]
-    [enc-response-parse.util :as util]
+    [enc-response.core :refer :all]
+    [enc-response.util :as util]
     [schema.core :as s]
     [tupelo.parse :as parse]
     [tupelo.schema :as tsk]
@@ -31,7 +31,7 @@
 
 ;---------------------------------------------------------------------------------------------------
 (verify
-  (is= :dummy-fn--result (enc-response-parse.util/dummy-fn))
+  (is= :dummy-fn--result (enc-response.util/dummy-fn))
 
   ; verify config-load->ctx works
   (let [config-fname "config-tmp.edn"]
@@ -63,10 +63,10 @@
           (quote
             {:datomic-uri  "aaa"
              :postgres-uri "bbb"
-             :invoke-fn    enc-response-parse.util/dummy-fn}))))
+             :invoke-fn    enc-response.util/dummy-fn}))))
     (let [ctx (util/config-load->ctx config-fname)]
       (is (submatch? '{:db-uri    "aaa?bbb"
-                       :invoke-fn enc-response-parse.util/dummy-fn}
+                       :invoke-fn enc-response.util/dummy-fn}
             ctx))
       (is= (util/dispatch ctx) :dummy-fn--result))
 
