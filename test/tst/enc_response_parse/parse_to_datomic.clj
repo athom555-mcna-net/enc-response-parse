@@ -1,4 +1,4 @@
-(ns       ; ^:test-refresh/focus
+(ns ^:test-refresh/focus
   tst.enc-response-parse.parse-to-datomic
   (:use enc-response-parse.parse-to-datomic
         tupelo.core
@@ -16,7 +16,9 @@
     [tupelo.test.jvm :as ttj]
     ))
 
-(def verbose? false)
+; Enable to see progress printouts
+(def ^:dynamic verbose-tests?
+  false)
 
 ; Defines URI for local transactor in `dev` mode. Uses `data-dir` in transactor *.properties file.
 ; Default entry `data-dir=data` => /opt/datomic/data/...
@@ -26,12 +28,12 @@
 (ttj/define-fixture :each
   {:enter (fn [ctx]
             (cond-it-> (validate boolean? (d/delete-database db-uri-disk-test)) ; returns true/false
-              verbose? (println "  Deleted prior db: " it))
+              verbose-tests? (println "  Deleted prior db: " it))
             (cond-it-> (validate boolean? (d/create-database db-uri-disk-test))
-              verbose? (println "  Creating db:      " it)))
+              verbose-tests? (println "  Creating db:      " it)))
    :leave (fn [ctx]
             (cond-it-> (validate boolean? (d/delete-database db-uri-disk-test))
-              verbose? (println "  Deleting db:      " it)))
+              verbose-tests? (println "  Deleting db:      " it)))
    })
 
 (def ctx-local
@@ -40,26 +42,8 @@
    :icn-maps-aug-fname          "icn-maps-aug.edn"
    :tx-data-chunked-fname       "tx-data-chuncked.edn"
    :tx-size-limit               2
-   })
 
-(s/defn fn->vec-fn :- tsk/Fn
-  "Vectorize a function, so that instead of operating on a scalar value,
-  it operates on each value in a 1D array. Used twice, the resulting function operates
-  on each value in a 2D array."
-  [f :- tsk/Fn]
-  (s/fn [block :- [s/Any]]
-    (mapv f block)))
-
-(s/defn array-1d->2d :- [[s/Any]]
-  "Convert a 1D sequence to a 2D array (possibly ragged)."
-  [row-size :- s/Int
-   seq-1d :- [s/Any]]
-  (partition-all row-size seq-1d))
-
-(s/defn array-2d->1d :- [s/Any]
-  "Concatenate rows of a 2D array (possibly ragged), returning a 1-D vector."
-  [seq-2d :- [[s/Any]]]
-  (apply glue seq-2d))
+   :db-uri  "datomic:dev://localhost:4334/enc-response-test"})
 
 (verify
   (let [seq1       (range 5)
@@ -87,10 +71,8 @@
     (is= seq1-inc-b [1 2 3 4 5])))
 
 (verify
-  (let [
-        conn        (d/connect db-uri-disk-test)
-        resp2       @(d/transact conn enc-response-schema)
-        ; >>          (pp/pprint resp2)
+  (let [resp1       (enc-response-schema->datomic ctx-local)
+        ; >>          (pp/pprint resp1)
 
         rec-1       {:mco-claim-number                "30000062649905"
                      :iowa-transaction-control-number "62133600780000013"
@@ -122,26 +104,25 @@
                      :error-field-value               ""}
         sample-recs [rec-1
                      rec-2]
-        resp3       @(d/transact conn sample-recs)
+        resp3       (enc-resp-recs->datomic ctx-local sample-recs)
         ; >>          (pp/pprint resp3)
         ]
-    (let [db         (d/db conn)
-          raw-result (only2 (d/q '[:find (pull ?e [*])
-                                   :where [?e :mco-claim-number "30000062649905"]]
-                              db))]
-      (is (submatch? rec-1 raw-result)))
-    (let [db         (d/db conn)
-          raw-result (only2 (d/q '[:find (pull ?e [*])
-                                   :where [?e :mco-claim-number "30000062649906"]]
-                              db))]
-      (is (submatch? rec-2 raw-result)))
-    ))
+    (with-map-vals ctx-local [db-uri]
+      (let [conn (d/connect db-uri)
+            db   (d/db conn)]
+        (let [raw-result (only2 (d/q '[:find (pull ?e [*])
+                                       :where [?e :mco-claim-number "30000062649905"]]
+                                  db))]
+          (is (submatch? rec-1 raw-result)))
+        (let [raw-result (only2 (d/q '[:find (pull ?e [*])
+                                       :where [?e :mco-claim-number "30000062649906"]]
+                                  db))]
+          (is (submatch? rec-2 raw-result)))))))
 
 ; sample output
 (verify
   ; full data: "/Users/athom555/work/iowa-response"
-  (let [ctx                    (glue ctx-local {:encounter-response-root-dir "./enc-response-files-test-small"})
-        enc-resp-root-dir-File (io/file (:encounter-response-root-dir ctx))
+  (let [enc-resp-root-dir-File (io/file (:encounter-response-root-dir ctx-local))
         all-files              (file-seq enc-resp-root-dir-File) ; returns a tree like `find`
         enc-resp-fnames        (sort (mapv str (keep-if core/enc-resp-file? all-files)))
         fname-first            (xfirst enc-resp-fnames)]
@@ -204,7 +185,7 @@
             ; >>          (pp/pprint resp1)
             resp2 @(d/transact conn data-recs)
             ; >>          (pp/pprint resp2)
-            db     (d/db conn)]
+            db    (d/db conn)]
         (let [result (only2 (d/q '[:find (pull ?e [*])
                                    :where [?e :mco-claim-number "30000000100601"]]
                               db))]
@@ -212,8 +193,7 @@
         (let [result (only2 (d/q '[:find (pull ?e [*])
                                    :where [?e :mco-claim-number "30000062649897"]]
                               db))]
-          (is (submatch? rec-5 result)))
-        )
+          (is (submatch? rec-5 result))))
 
       )))
 

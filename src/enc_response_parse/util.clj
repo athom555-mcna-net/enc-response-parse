@@ -54,7 +54,7 @@
   (reduce
     (fn [cum tx]
       (conj cum
-        (d.peer/transact conn tx))) ; uses Datomic Peer API
+        @(d.peer/transact conn tx))) ; uses Datomic Peer API
     []
     txs))
 
