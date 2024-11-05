@@ -1,4 +1,5 @@
-(ns tst.enc-response-parse.parse-to-datomic
+(ns       ; ^:test-refresh/focus
+  tst.enc-response-parse.parse-to-datomic
   (:use enc-response-parse.parse-to-datomic
         tupelo.core
         tupelo.test)
@@ -143,8 +144,7 @@
         enc-resp-root-dir-File (io/file (:encounter-response-root-dir ctx))
         all-files              (file-seq enc-resp-root-dir-File) ; returns a tree like `find`
         enc-resp-fnames        (sort (mapv str (keep-if core/enc-resp-file? all-files)))
-        fname-first            (xfirst enc-resp-fnames)
-        ]
+        fname-first            (xfirst enc-resp-fnames)]
     (is= enc-resp-fnames
       ["./enc-response-files-test-small/ENC_RESPONSE_D_20211202_065818.TXT"
        "./enc-response-files-test-small/ENC_RESPONSE_D_20211211_061725.TXT"
