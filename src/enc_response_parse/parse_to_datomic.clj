@@ -4,6 +4,7 @@
   (:require
     [clojure.pprint :as pp]
     [datomic.api :as d]
+    [enc-response-parse.core :as core]
     [schema.core :as s]
     [tupelo.core :as t]
     [tupelo.schema :as tsk]
@@ -60,3 +61,21 @@
                           {:db/ident     :error-field-value
                            :db/valueType :db.type/string :db/cardinality :db.cardinality/one}])
 
+(s/defn fname->lines :- [s/Str]
+  [fname :- s/Str]
+  (let [lines (it-> fname
+                (slurp it)
+                (str/split-lines it)
+                (drop-if #(str/whitespace? % ) it))]
+    lines))
+
+(s/defn parse-file ; :- [tsk/KeyMap]
+  [fname :- s/Str]
+  (let [data-recs (forv [line (fname->lines fname)]
+                    (core/parse-string-fields core/iowa-encounter-response-specs line))]
+    data-recs))
+
+(s/defn load-commit-resp-file  :- s/Any
+  [fname :- s/Str]
+
+  )

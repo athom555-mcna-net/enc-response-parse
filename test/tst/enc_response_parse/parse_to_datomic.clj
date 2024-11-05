@@ -3,8 +3,11 @@
         tupelo.core
         tupelo.test)
   (:require
+    [clojure.data :as data]
+    [clojure.java.io :as io]
     [clojure.pprint :as pp]
     [datomic.api :as d]
+    [enc-response-parse.core :as core]
     [schema.core :as s]
     [tupelo.core :as t]
     [tupelo.schema :as tsk]
@@ -85,7 +88,6 @@
 (verify
   (let [
         conn        (d/connect db-uri-disk-test)
-
         resp2       @(d/transact conn enc-response-schema)
         ; >>          (pp/pprint resp2)
 
@@ -133,5 +135,88 @@
                               db))]
       (is (submatch? rec-2 raw-result)))
     ))
+
+; sample output
+(verify-focus
+  ; full data: "/Users/athom555/work/iowa-response"
+  (let [ctx                    (glue ctx-local {:encounter-response-root-dir "./enc-response-files-test-small"})
+        enc-resp-root-dir-File (io/file (:encounter-response-root-dir ctx))
+        all-files              (file-seq enc-resp-root-dir-File) ; returns a tree like `find`
+        enc-resp-fnames        (sort (mapv str (keep-if core/enc-resp-file? all-files)))
+        fname-first            (xfirst enc-resp-fnames)
+        ]
+    (is= enc-resp-fnames
+      ["./enc-response-files-test-small/ENC_RESPONSE_D_20211202_065818.TXT"
+       "./enc-response-files-test-small/ENC_RESPONSE_D_20211211_061725.TXT"
+       "./enc-response-files-test-small/ENC_RESPONSE_D_20211216_070153.TXT"
+       "./enc-response-files-test-small/ENC_RESPONSE_D_20220106_062929.TXT"])
+    (let [lines           (fname->lines fname-first)
+          lines-collapsed (mapv str/whitespace-collapse lines)]
+      (is= lines-collapsed
+        ["30000000100601 6213360078000000112022021D12610850C0630202119527117800820202100000000476300A00PAID"
+         "30000000102936 6213360078000000212022021D13183010G1025202119527117801124202100000002492400A00PAID"
+         "30000062649895 6213360078000000312022021D12906224H1025202119527117801124202100000002492400A00PAID"
+         "30000062649896 6213360078000000412022021D11574993J1025202119527117801124202100000000800000A00PAID"
+         "30000062649897 6213360078000000512022021D14037045B1027202119527117801124202100000003457400A00PAID"]))
+    (let [data-recs (parse-file fname-first)
+          rec-1     (xfirst data-recs)
+          rec-5     (xlast data-recs)]
+      (is= 5 (count data-recs))
+
+      (is= rec-1 {:billing-provider-npi            "1952711780",
+                  :claim-frequency-code            "1",
+                  :claim-type                      "D",
+                  :error-code                      "A00",
+                  :error-field-value               "",
+                  :field                           "PAID",
+                  :first-date-of-service           "06302021",
+                  :iowa-processing-date            "12022021",
+                  :iowa-transaction-control-number "62133600780000001",
+                  :line-number                     "00",
+                  :mco-claim-number                "30000000100601",
+                  :mco-paid-date                   "08202021",
+                  :member-id                       "2610850C",
+                  :total-paid-amount               "000000004763"})
+      (is= rec-5 {:billing-provider-npi            "1952711780",
+                  :claim-frequency-code            "1",
+                  :claim-type                      "D",
+                  :error-code                      "A00",
+                  :error-field-value               "",
+                  :field                           "PAID",
+                  :first-date-of-service           "10272021",
+                  :iowa-processing-date            "12022021",
+                  :iowa-transaction-control-number "62133600780000005",
+                  :line-number                     "00",
+                  :mco-claim-number                "30000062649897",
+                  :mco-paid-date                   "11242021",
+                  :member-id                       "4037045B",
+                  :total-paid-amount               "000000034574"})
+
+      (is (->> data-recs
+            (wild-match?
+              [rec-1
+               :*
+               :*
+               :*
+               rec-5])))
+      (let [conn  (d/connect db-uri-disk-test)
+            resp1 @(d/transact conn enc-response-schema)
+            ; >>          (pp/pprint resp1)
+            resp2 @(d/transact conn data-recs)]
+        (let [db     (d/db conn)
+              result (only2 (d/q '[:find (pull ?e [*])
+                                   :where [?e :mco-claim-number "30000000100601"]]
+                              db))]
+          (is (submatch? rec-1 result)))
+        (let [db     (d/db conn)
+              result (only2 (d/q '[:find (pull ?e [*])
+                                   :where [?e :mco-claim-number "30000062649897"]]
+                              db))]
+          (is (submatch? rec-5 result)))
+        )
+
+      )))
+
+
 
 

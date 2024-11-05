@@ -30,10 +30,21 @@
    :tx-size-limit               500 ; The maxinum number of entity maps to include in a single Datomic transaction.
    })
 
+;---------------------------------------------------------------------------------------------------
 (s/def encounter-response-filename-patt
   "Regex pattern for encounter response files (no parent dirs!)"
   #"^ENC_RESPONSE_D_.*.TXT$") ; eg `ENC_RESPONSE_D_20200312_062014.TXT`
 
+(s/defn enc-resp-file-name? :- s/Bool
+  [fname :- s/Str]
+  (boolean (re-matches encounter-response-filename-patt fname)))
+
+(s/defn enc-resp-file? :- s/Bool
+  [file :- File]
+  (enc-resp-file-name?
+    (.getName file))) ; returns string w/o parent dirs
+
+;---------------------------------------------------------------------------------------------------
 (s/def spec-opts-default :- tsk/KeyMap
   "Default options for field specs"
   {:trim?          true ; trim leading/trailing blanks from returned string
@@ -156,16 +167,6 @@
         (recur specs-next chars-next result-next)))))
 
 ;---------------------------------------------------------------------------------------------------
-(s/defn enc-resp-file-name? :- s/Bool
-  [fname :- s/Str]
-  (boolean (re-matches encounter-response-filename-patt fname)))
-
-(s/defn enc-resp-file? :- s/Bool
-  [file :- File]
-  (enc-resp-file-name?
-    (.getName file) ; returns string w/o parent dirs
-    ))
-
 (s/defn parse-grep-result :- tsk/KeyMap
   [out :- s/Str]
   (let [out         (str/trim out)
