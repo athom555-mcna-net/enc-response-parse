@@ -150,7 +150,7 @@
        "./enc-response-files-test-small/ENC_RESPONSE_D_20211211_061725.TXT"
        "./enc-response-files-test-small/ENC_RESPONSE_D_20211216_070153.TXT"
        "./enc-response-files-test-small/ENC_RESPONSE_D_20220106_062929.TXT"])
-    (let [lines           (fname->lines fname-first)
+    (let [lines           (enc-response-fname->lines fname-first)
           lines-collapsed (mapv str/whitespace-collapse lines)]
       (is= lines-collapsed
         ["30000000100601 6213360078000000112022021D12610850C0630202119527117800820202100000000476300A00PAID"
@@ -158,7 +158,7 @@
          "30000062649895 6213360078000000312022021D12906224H1025202119527117801124202100000002492400A00PAID"
          "30000062649896 6213360078000000412022021D11574993J1025202119527117801124202100000000800000A00PAID"
          "30000062649897 6213360078000000512022021D14037045B1027202119527117801124202100000003457400A00PAID"]))
-    (let [data-recs (parse-file fname-first)
+    (let [data-recs (enc-response-fname->parsed fname-first)
           rec-1     (xfirst data-recs)
           rec-5     (xlast data-recs)]
       (is= 5 (count data-recs))
@@ -202,21 +202,18 @@
       (let [conn  (d/connect db-uri-disk-test)
             resp1 @(d/transact conn enc-response-schema)
             ; >>          (pp/pprint resp1)
-            resp2 @(d/transact conn data-recs)]
-        (let [db     (d/db conn)
-              result (only2 (d/q '[:find (pull ?e [*])
+            resp2 @(d/transact conn data-recs)
+            ; >>          (pp/pprint resp2)
+            db     (d/db conn)]
+        (let [result (only2 (d/q '[:find (pull ?e [*])
                                    :where [?e :mco-claim-number "30000000100601"]]
                               db))]
           (is (submatch? rec-1 result)))
-        (let [db     (d/db conn)
-              result (only2 (d/q '[:find (pull ?e [*])
+        (let [result (only2 (d/q '[:find (pull ?e [*])
                                    :where [?e :mco-claim-number "30000062649897"]]
                               db))]
           (is (submatch? rec-5 result)))
         )
 
       )))
-
-
-
 

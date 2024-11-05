@@ -61,7 +61,7 @@
                           {:db/ident     :error-field-value
                            :db/valueType :db.type/string :db/cardinality :db.cardinality/one}])
 
-(s/defn fname->lines :- [s/Str]
+(s/defn enc-response-fname->lines :- [s/Str]
   [fname :- s/Str]
   (let [lines (it-> fname
                 (slurp it)
@@ -69,13 +69,13 @@
                 (drop-if #(str/whitespace? % ) it))]
     lines))
 
-(s/defn parse-file ; :- [tsk/KeyMap]
+(s/defn enc-response-fname->parsed :- [tsk/KeyMap]
   [fname :- s/Str]
-  (let [data-recs (forv [line (fname->lines fname)]
+  (let [data-recs (forv [line (enc-response-fname->lines fname)]
                     (core/parse-string-fields core/iowa-encounter-response-specs line))]
     data-recs))
 
-(s/defn load-commit-resp-file  :- s/Any
+(s/defn enc-resp-recs->datomic  :- s/Any
   [fname :- s/Str]
 
   )
