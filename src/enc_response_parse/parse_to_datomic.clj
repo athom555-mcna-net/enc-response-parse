@@ -12,7 +12,7 @@
     [tupelo.test.jvm :as ttj]
     ))
 
-(def verbose? true)
+(def verbose? false)
 
 ; Defines URI for local transactor in `dev` mode. Uses `data-dir` in transactor *.properties file.
 ; Default entry `data-dir=data` => /opt/datomic/data/...
@@ -76,6 +76,6 @@
     data-recs))
 
 (s/defn enc-resp-recs->datomic  :- s/Any
-  [fname :- s/Str]
+  [enc-resp-recs :- [tsk/KeyMap]]
 
   )

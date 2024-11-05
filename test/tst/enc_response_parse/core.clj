@@ -31,7 +31,7 @@
 
 ;---------------------------------------------------------------------------------------------------
 (verify
-  (is= :dummy-fn--result (enc-response-parse.core/dummy-fn))
+  (is= :dummy-fn--result (enc-response-parse.util/dummy-fn))
 
   ; verify config-load->ctx works
   (let [config-fname "config-tmp.edn"]
@@ -45,7 +45,7 @@
              :encounter-response-root-dir "/some/path/to/root"
              }))))
 
-    (let [ctx (config-load->ctx config-fname)]
+    (let [ctx (util/config-load->ctx config-fname)]
       (is= ctx
         (quote
           {:db-uri                      "datomic:sql://encounters?jdbc:postgresql://postgres.qa:5432/topaz?user=datomic&password=geheim"
@@ -63,12 +63,12 @@
           (quote
             {:datomic-uri  "aaa"
              :postgres-uri "bbb"
-             :invoke-fn    enc-response-parse.core/dummy-fn}))))
-    (let [ctx (config-load->ctx config-fname)]
+             :invoke-fn    enc-response-parse.util/dummy-fn}))))
+    (let [ctx (util/config-load->ctx config-fname)]
       (is (submatch? '{:db-uri    "aaa?bbb"
-                       :invoke-fn enc-response-parse.core/dummy-fn}
+                       :invoke-fn enc-response-parse.util/dummy-fn}
             ctx))
-      (is= (dispatch ctx) :dummy-fn--result))
+      (is= (util/dispatch ctx) :dummy-fn--result))
 
     ; verify -main calls :invoke-fn & returns result
     (let [out-txt (with-out-str

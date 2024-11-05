@@ -16,7 +16,7 @@
     [tupelo.test.jvm :as ttj]
     ))
 
-(def verbose? true)
+(def verbose? false)
 
 ; Defines URI for local transactor in `dev` mode. Uses `data-dir` in transactor *.properties file.
 ; Default entry `data-dir=data` => /opt/datomic/data/...
@@ -138,7 +138,7 @@
     ))
 
 ; sample output
-(verify-focus
+(verify
   ; full data: "/Users/athom555/work/iowa-response"
   (let [ctx                    (glue ctx-local {:encounter-response-root-dir "./enc-response-files-test-small"})
         enc-resp-root-dir-File (io/file (:encounter-response-root-dir ctx))
