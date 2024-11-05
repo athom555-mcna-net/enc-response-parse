@@ -1,10 +1,10 @@
-(ns enc-response.parse-to-datomic
+(ns enc-response.datomic
   (:use tupelo.core
         tupelo.test)
   (:require
     [clojure.pprint :as pp]
     [datomic.api :as d.peer]
-    [enc-response.core :as core]
+    [enc-response.parse :as parse]
     [enc-response.util :as util]
     [schema.core :as s]
     [tupelo.core :as t]
@@ -99,7 +99,7 @@
 (s/defn enc-response-fname->parsed :- [tsk/KeyMap]
   [fname :- s/Str]
   (let [data-recs (forv [line (enc-response-fname->lines fname)]
-                    (core/parse-string-fields core/iowa-encounter-response-specs line))]
+                    (parse/parse-string-fields parse/iowa-encounter-response-specs line))]
     data-recs))
 
 (s/defn enc-response-recs->datomic :- s/Any

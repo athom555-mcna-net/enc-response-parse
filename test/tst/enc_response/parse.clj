@@ -1,12 +1,10 @@
-(ns tst.enc-response.core
-  (:use tupelo.core
-        tupelo.test)
+(ns tst.enc-response.parse
+  (:use enc-response.parse tupelo.core tupelo.test)
   (:require
     [clojure.data :as data]
     [clojure.java.io :as io]
     [clojure.pprint :as pp]
     [clojure.tools.reader.edn :as edn]
-    [enc-response.core :refer :all]
     [enc-response.util :as util]
     [schema.core :as s]
     [tupelo.parse :as parse]

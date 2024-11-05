@@ -1,6 +1,6 @@
 (ns       ;    ^:test-refresh/focus
-  tst.enc-response.parse-to-datomic
-  (:use enc-response.parse-to-datomic
+  tst.enc-response.datomic
+  (:use enc-response.datomic
         tupelo.core
         tupelo.test)
   (:require
@@ -8,7 +8,7 @@
     [clojure.java.io :as io]
     [clojure.pprint :as pp]
     [datomic.api :as d]
-    [enc-response.core :as core]
+    [enc-response.parse :as parse]
     [schema.core :as s]
     [tupelo.core :as t]
     [tupelo.schema :as tsk]
@@ -124,7 +124,7 @@
   ; full data: "/Users/athom555/work/iowa-response"
   (let [enc-resp-root-dir-File (io/file (:encounter-response-root-dir ctx-local))
         all-files              (file-seq enc-resp-root-dir-File) ; returns a tree like `find`
-        enc-resp-fnames        (sort (mapv str (keep-if core/enc-resp-file? all-files)))
+        enc-resp-fnames        (sort (mapv str (keep-if parse/enc-resp-file? all-files)))
         fname-first            (xfirst enc-resp-fnames)]
     (is= enc-resp-fnames
       ["./enc-response-files-test-small/ENC_RESPONSE_D_20211202_065818.TXT"

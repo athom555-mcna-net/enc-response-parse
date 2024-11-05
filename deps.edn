@@ -29,7 +29,7 @@
              tupelo/tupelo             {:mvn/version "24.09.30"}
              }
  :aliases   {
-             :run          {:exec-fn enc-response.core/-main
+             :run          {:exec-fn enc-response.parse/-main
                             }
              :test         {:extra-deps  {io.github.cognitect-labs/test-runner {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
                             :extra-paths ["test-resources"] ; testing data files

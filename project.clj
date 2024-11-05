@@ -9,7 +9,7 @@
                  ]
 
   :jvm-opts ["-Xmx4g"]
-  :main enc-response.core
+  :main enc-response.parse
 
   )
 
