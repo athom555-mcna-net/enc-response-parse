@@ -8,6 +8,7 @@
     [flatland.ordered.map :as omap]
     [schema.core :as s]
     [tupelo.misc :as misc]
+    [tupelo.profile :as prof]
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
     )
@@ -205,9 +206,10 @@
 
 (s/defn enc-response-fname->parsed :- [tsk/KeyMap]
   [fname :- s/Str]
-  (let [data-recs (forv [line (enc-response-fname->lines fname)]
-                    (parse-string-fields iowa-encounter-response-specs line))]
-    data-recs))
+  (prof/with-timer-accum :enc-response-fname->parsed
+    (let [data-recs (forv [line (enc-response-fname->lines fname)]
+                      (parse-string-fields iowa-encounter-response-specs line))]
+      data-recs)))
 
 (s/defn get-enc-response-fnames :- [s/Str]
   [ctx :- tsk/KeyMap]
@@ -223,18 +225,19 @@
 
   Assumes schema has already been transacted into Datomic. "
   [ctx :- tsk/KeyMap]
-  (let [enc-resp-fnames (get-enc-response-fnames ctx)]
-    (nl)
-    (prn :enc-response-files->datomic--num-files (count enc-resp-fnames))
-    (nl)
-    (doseq [fname enc-resp-fnames]
-      (prn :enc-response-files->datomic--parsing fname)
-      (let [data-recs (enc-response-fname->parsed fname)]
-        (comment)
-        (prn :enc-response-files->datomic--saving fname)
-        (datomic/enc-response-recs->datomic ctx data-recs)))
-    (nl)
-    (prn :enc-response-files->datomic--num-recs (datomic/count-enc-response-recs ctx))
-    (nl)
-    enc-resp-fnames))
+  (prof/with-timer-accum :enc-response-files->datomic
+    (let [enc-resp-fnames (get-enc-response-fnames ctx)]
+      (nl)
+      (prn :enc-response-files->datomic--num-files (count enc-resp-fnames))
+      (nl)
+      (doseq [fname enc-resp-fnames]
+        (prn :enc-response-files->datomic--processing fname)
+        (let [data-recs (enc-response-fname->parsed fname)]
+          (datomic/enc-response-recs->datomic ctx data-recs)))
+      (nl)
+      (prn :enc-response-files->datomic--num-recs (datomic/count-enc-response-recs ctx))
+      (nl)
+      enc-resp-fnames))
+  (prof/print-profile-stats!)
+  (nl))
 

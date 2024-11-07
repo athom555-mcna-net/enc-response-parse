@@ -8,6 +8,7 @@
     [schema.core :as s]
     [tupelo.core :as t]
     [tupelo.math :as math]
+    [tupelo.profile :as prof]
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
     ))
@@ -244,9 +245,10 @@
   as specified by :tx-size-limit. "
   [ctx :- tsk/KeyMap
    enc-resp-recs :- [tsk/KeyMap]]
-  (with-map-vals ctx [db-uri tx-size-limit]
-    (let [enc-resp-rec-chunked (partition-all tx-size-limit enc-resp-recs)
-          conn                 (d.peer/connect db-uri)
-          resp                 (transact-seq-peer conn enc-resp-rec-chunked)]
-      ; (pp/pprint resp )
-      resp)))
+  (prof/with-timer-accum :enc-response-recs->datomic
+    (with-map-vals ctx [db-uri tx-size-limit]
+      (let [enc-resp-rec-chunked (partition-all tx-size-limit enc-resp-recs)
+            conn                 (d.peer/connect db-uri)
+            resp                 (transact-seq-peer conn enc-resp-rec-chunked)]
+        ; (pp/pprint resp )
+        resp))))

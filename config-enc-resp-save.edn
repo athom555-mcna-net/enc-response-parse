@@ -1,13 +1,12 @@
 {
  :encounter-response-root-dir "/Users/athom555/work/iowa-response"
  :db-uri                      "datomic:dev://localhost:4334/enc-response"
- :tx-size-limit               100
+ :tx-size-limit               500
  
  :icn-maps-aug-fname          "icn-maps-aug.edn"
  :missing-icn-fname           "missing-icns.edn"
  :tx-data-chunked-fname       "tx-data-chuncked.edn"
 
-;:invoke-fn                   enc-response.parse/enc-response-files->datomic
- :invoke-fn                   enc-response.datomic/enc-response-datomic-init
-;:invoke-fn                   enc-response.datomic/enc-response-datomic-clear
+ :invoke-fn                   enc-response.parse/enc-response-files->datomic
+;:invoke-fn                   enc-response.datomic/enc-response-datomic-init
  }
