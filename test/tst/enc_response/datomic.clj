@@ -171,7 +171,7 @@
                               db))]
           (is (submatch? rec-5 result)))))))
 
-(verify-focus
+(verify
   ; full data: "/Users/athom555/work/iowa-response"
   (enc-response-schema->datomic ctx-local) ; commit schema
   (parse/enc-response-files->datomic ctx-local)
@@ -179,11 +179,13 @@
   ; verify can retrieve first & last records from datomic
   (let [conn (d/connect db-uri-disk-test)
         db   (d/db conn)]
-    (let [result (onlies (d/q '[:find (pull ?e [*])
+    (let [enc-resp-recs (onlies (d/q '[:find (pull ?e [*])
                                 :where [?e :mco-claim-number]]
-                           db))]
-      (is= (count result) 14)
-      (is= (xfirst result)
+                           db))
+          recs-sorted (vec (sort-by  :mco-claim-number enc-resp-recs))
+          ]
+      (is= (count enc-resp-recs) 14)
+      (is= (xfirst recs-sorted)
         {:billing-provider-npi            "1952711780"
          :claim-frequency-code            "1"
          :claim-type                      "D"
@@ -199,7 +201,7 @@
          :member-id                       "2610850C"
          :total-paid-amount               "000000004763"
          :db/id                           17592186045418})
-      (is= (xlast result)
+      (is= (xlast recs-sorted)
         {:billing-provider-npi            "1952711780"
          :claim-frequency-code            "7"
          :claim-type                      "D"
