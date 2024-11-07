@@ -1,9 +1,9 @@
 (ns enc-response.parse
   (:use tupelo.core)
   (:require
+    [clojure.java.io :as io]
     [clojure.pprint :as pp]
     [clojure.tools.reader.edn :as edn]
-    [datomic.api :as d.peer]
     [enc-response.datomic :as datomic]
     [flatland.ordered.map :as omap]
     [schema.core :as s]
@@ -149,78 +149,6 @@
           enc-response-parsed (extract-enc-resp-fields shell-result)]
       enc-response-parsed)))
 
-(s/defn query-missing-icns :- [[s/Any]]
-  [db :- datomic.db.Db]
-  (let [missing-icns (vec (d.peer/q '[:find ?eid ?icn ?previous-icn
-                                      :where
-                                      [(missing? $ ?eid :encounter-transmission/plan-icn)]
-                                      [?eid :encounter-transmission/icn ?icn]
-                                      [?eid :encounter-transmission/previous-icn ?previous-icn]]
-                            db))]
-    missing-icns))
-
-(s/defn query-missing-icns-iowa-narrow :- [[s/Any]]
-  [db :- datomic.db.Db]
-  (let [missing-icns (mapv only
-                       (d.peer/q '[:find (pull ?eid [:db/id
-                                                     :encounter-transmission/icn
-                                                     :encounter-transmission/previous-icn
-                                                     :encounter-transmission/plan
-                                                     {:encounter-transmission/status [*]}])
-                                   :where
-                                   [(missing? $ ?eid :encounter-transmission/plan-icn)]
-                                   [?eid :encounter-transmission/icn ?icn]
-                                   (or
-                                     [?eid :encounter-transmission/status :encounter-transmission.status/accepted]
-                                     [?eid :encounter-transmission/status :encounter-transmission.status/rejected])
-                                   [?eid :encounter-transmission/plan ?plan]
-                                   [(enc-response-parse.util/iowa-prefix? ?plan)]
-                                   ]
-                         db))]
-    missing-icns))
-
-;---------------------------------------------------------------------------------------------------
-
-(s/defn find-missing-icns :- [[s/Any]]
-  [ctx]
-  (with-map-vals ctx [db-uri]
-    (let [conn         (d.peer/connect db-uri)
-          db           (d.peer/db conn)
-          missing-icns (query-missing-icns db)]
-      (println "Number Missing ICNs:  " (count missing-icns))
-      missing-icns)))
-
-(s/defn find-missing-icns-iowa-narrow :- [[s/Any]]
-  [ctx]
-  (with-map-vals ctx [db-uri]
-    (let [conn         (d.peer/connect db-uri)
-          db           (d.peer/db conn)
-          missing-icns (query-missing-icns-iowa-narrow db)]
-      (println "Number Missing ICNs Iowa Narrow:  " (count missing-icns))
-      missing-icns)))
-
-(defn save-missing-icns
-  [ctx]
-  (prn :save-missing-icns--enter)
-  (let [missing-icns (find-missing-icns ctx)]
-    (with-map-vals ctx [missing-icn-fname]
-      (spit missing-icn-fname
-        (with-out-str
-          (pp/pprint
-            (vec missing-icns))))))
-  (prn :save-missing-icns--leave))
-
-(defn save-missing-icns-iowa-narrow
-  [ctx]
-  (prn :save-missing-icns-iowa-narrow--enter)
-  (let [missing-icn-recs (find-missing-icns-iowa-narrow ctx)]
-    (with-map-vals ctx [missing-icn-fname]
-      (spit missing-icn-fname
-        (with-out-str
-          (pp/pprint
-            (vec missing-icn-recs))))))
-  (prn :save-missing-icns-iowa-narrow--leave))
-
 (s/defn load-missing-icns :- [tsk/KeyMap]
   [ctx :- tsk/KeyMap]
   (with-map-vals ctx [missing-icn-fname]
@@ -265,29 +193,6 @@
       (with-result tx-data-chunked
         (prn :create-tx-data-chunked--leave)))))
 
-(s/defn load-commit-transactions :- s/Any
-  [ctx]
-  (with-map-vals ctx [tx-data-chunked-fname]
-    (let [conn (d.peer/connect (grab :db-uri ctx))
-          txs  (edn/read-string (slurp tx-data-chunked-fname))]
-      (datomic/transact-seq-peer conn txs))))
-
-(s/defn load-commit-transactions-with :- datomic.db.Db
-  [ctx]
-  (prn :-----------------------------------------------------------------------------)
-  (prn :load-commit-transactions-with--enter)
-  (with-map-vals ctx [tx-data-chunked-fname]
-    (let [txs                 (edn/read-string (slurp tx-data-chunked-fname))
-          conn                (d.peer/connect (grab :db-uri ctx))
-          db-before           (d.peer/db conn)
-          missing-icns-before (query-missing-icns-iowa-narrow db-before)
-          db-after            (datomic/transact-seq-peer-with conn txs)
-          missing-icns-after  (query-missing-icns-iowa-narrow db-after)]
-      (println "Missing ICNs before = " (count missing-icns-before))
-      (println "Missing ICNs after  = " (count missing-icns-after))))
-  (prn :load-commit-transactions-with--leave)
-  (prn :-----------------------------------------------------------------------------))
-
 (s/defn enc-response-fname->lines :- [s/Str]
   [fname :- s/Str]
   (let [lines (it-> fname
@@ -302,3 +207,24 @@
                     (parse-string-fields iowa-encounter-response-specs line))]
     data-recs))
 
+(s/defn get-enc-response-fnames :- [s/Str]
+  [ctx :- tsk/KeyMap]
+  (let [enc-resp-root-dir-File (io/file (grab :encounter-response-root-dir ctx))
+        all-files              (file-seq enc-resp-root-dir-File) ; returns a tree like `find`
+        enc-resp-fnames        (sort (mapv str (keep-if enc-resp-file? all-files)))]
+    enc-resp-fnames))
+
+(s/defn enc-response-files->datomic :- [s/Str]
+  "Uses `:encounter-response-root-dir` from map `ctx` to specify a directory of
+  Encounter Response files. For each file in turn, loads/parses the file and commits the data
+  into Datomic. Returns a vector of the filenames processed.
+
+  Assumes schema has already been transacted into Datomic. "
+  [ctx :- tsk/KeyMap]
+  (let [enc-resp-fnames (get-enc-response-fnames ctx)]
+    (doseq [fname enc-resp-fnames]
+      (prn :enc-response-files->datomic--parsing fname)
+      (let [data-recs (enc-response-fname->parsed fname)]
+        (prn :enc-response-files->datomic--saving fname)
+        (datomic/enc-response-recs->datomic ctx data-recs)))
+    enc-resp-fnames))
