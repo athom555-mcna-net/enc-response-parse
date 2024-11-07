@@ -1,5 +1,7 @@
 (ns tst.enc-response.core
-  (:use enc-response.core tupelo.core tupelo.test)
+  (:use enc-response.core
+        tupelo.core
+        tupelo.test)
   (:require
     [clojure.pprint :as pp]
     [schema.core :as s]
@@ -11,12 +13,11 @@
 (def ^:dynamic verbose-tests?
   false)
 
-;---------------------------------------------------------------------------------------------------
 (verify
   (is= :dummy-fn--result (enc-response.core/dummy-fn))
 
   ; verify config-load->ctx works
-  (let [config-fname "config-tmp.edn"]
+  (let [config-fname "config-tst.edn"]
     (spit config-fname
       (with-out-str
         (pp/pprint
@@ -35,7 +36,8 @@
            :icn-maps-aug-fname          "icn-maps-aug.edn"
            :invoke-fn                   tupelo.core/noop
            :missing-icn-fname           "missing-icns.edn"
-           :tx-data-chunked-fname       "tx-data-chuncked.edn" :tx-size-limit 500}
+           :tx-data-chunked-fname       "tx-data-chuncked.edn"
+           :tx-size-limit               500}
           )))
 
     ; verify `dispatch` works
@@ -62,3 +64,30 @@
             ":main--leave")))
     ))
 
+(verify
+  (let [config-fname "config-tst.edn"]
+    (spit config-fname
+      (with-out-str
+        (pp/pprint
+          (quote
+            {:db-uri                      "some-preexisting-uri"
+             :datomic-uri                 "aaa"
+             :postgres-uri                "bbbb"
+             :encounter-response-root-dir "/some/path/to/root"
+             :icn-maps-aug-fname          "icn-maps-aug.edn"
+             :invoke-fn                   tupelo.core/noop
+             :missing-icn-fname           "missing-icns.edn"
+             :tx-size-limit               500}
+            ))))
+
+    (let [ctx (config-load->ctx config-fname)]
+      (is= ctx
+        (quote
+          {:db-uri                      "some-preexisting-uri"
+           :encounter-response-root-dir "/some/path/to/root"
+           :icn-maps-aug-fname          "icn-maps-aug.edn"
+           :invoke-fn                   tupelo.core/noop
+           :missing-icn-fname           "missing-icns.edn"
+           :tx-size-limit               500
+
+           :tx-data-chunked-fname "tx-data-chuncked.edn"}) ))))

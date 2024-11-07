@@ -30,10 +30,11 @@
   [config-fname :- s/Str]
   (let [config (edn/read-string (slurp config-fname))
         ;  >>     (spyx-pretty :config-read config)
-        ctx    (it-> ctx-default
-                 (glue it config)
-                 (glue it {:db-uri (str (grab :datomic-uri config) \? (grab :postgres-uri config))})
-                 (dissoc it :datomic-uri :postgres-uri))]
+        c1     (glue ctx-default config)
+        c2     (if (:db-uri c1)
+                 c1 ; do not overwrite pre-existing value
+                 (glue c1 {:db-uri (str (grab :datomic-uri config) \? (grab :postgres-uri config))}))
+        ctx    (dissoc c2 :datomic-uri :postgres-uri)] ; always remove component URI values
     (spyx-pretty :loaded ctx)
     ctx))
 

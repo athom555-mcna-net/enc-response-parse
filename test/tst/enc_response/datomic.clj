@@ -171,7 +171,7 @@
                               db))]
           (is (submatch? rec-5 result)))))))
 
-(verify-focus ; full data: "/Users/athom555/work/iowa-response"
+(verify
   (enc-response-schema->datomic ctx-local) ; commit schema
   (parse/enc-response-files->datomic ctx-local)
 
