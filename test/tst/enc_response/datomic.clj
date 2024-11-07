@@ -11,7 +11,6 @@
     [enc-response.parse :as parse]
     [schema.core :as s]
     [tupelo.core :as t]
-    [tupelo.schema :as tsk]
     [tupelo.string :as str]
     [tupelo.test.jvm :as ttj]
     ))
@@ -131,7 +130,7 @@
        "./enc-response-files-test-small/ENC_RESPONSE_D_20211211_061725.TXT"
        "./enc-response-files-test-small/ENC_RESPONSE_D_20211216_070153.TXT"
        "./enc-response-files-test-small/ENC_RESPONSE_D_20220106_062929.TXT"])
-    (let [lines           (enc-response-fname->lines fname-first)
+    (let [lines           (parse/enc-response-fname->lines fname-first)
           lines-collapsed (mapv str/whitespace-collapse lines)]
       (is= lines-collapsed
         ["30000000100601 6213360078000000112022021D12610850C0630202119527117800820202100000000476300A00PAID"
@@ -139,7 +138,7 @@
          "30000062649895 6213360078000000312022021D12906224H1025202119527117801124202100000002492400A00PAID"
          "30000062649896 6213360078000000412022021D11574993J1025202119527117801124202100000000800000A00PAID"
          "30000062649897 6213360078000000512022021D14037045B1027202119527117801124202100000003457400A00PAID"]))
-    (let [data-recs (enc-response-fname->parsed fname-first)
+    (let [data-recs (parse/enc-response-fname->parsed fname-first)
           rec-1     (xfirst data-recs)
           rec-5     (xlast data-recs)]
       (is= 5 (count data-recs))

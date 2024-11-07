@@ -5,6 +5,7 @@
     [clojure.pprint :as pp]
     [clojure.tools.reader.edn :as edn]
     [datomic.api :as d.peer]
+    [enc-response.datomic :as datomic]
     [enc-response.util :as util]
     [flatland.ordered.map :as omap]
     [schema.core :as s]
@@ -272,7 +273,7 @@
   (with-map-vals ctx [tx-data-chunked-fname]
     (let [conn (d.peer/connect (grab :db-uri ctx))
           txs  (edn/read-string (slurp tx-data-chunked-fname))]
-      (util/transact-seq-peer conn txs))))
+      (datomic/transact-seq-peer conn txs))))
 
 (s/defn load-commit-transactions-with :- datomic.db.Db
   [ctx]
@@ -283,26 +284,24 @@
           conn                (d.peer/connect (grab :db-uri ctx))
           db-before           (d.peer/db conn)
           missing-icns-before (query-missing-icns-iowa-narrow db-before)
-          db-after            (util/transact-seq-peer-with conn txs)
+          db-after            (datomic/transact-seq-peer-with conn txs)
           missing-icns-after  (query-missing-icns-iowa-narrow db-after)]
       (println "Missing ICNs before = " (count missing-icns-before))
       (println "Missing ICNs after  = " (count missing-icns-after))))
   (prn :load-commit-transactions-with--leave)
   (prn :-----------------------------------------------------------------------------))
 
-;---------------------------------------------------------------------------------------------------
-(defn -main
-  [config-fname]
-  (spy :main--enter)
-  (spyx :-main config-fname)
-  (assert (not-nil? config-fname))
+(s/defn enc-response-fname->lines :- [s/Str]
+  [fname :- s/Str]
+  (let [lines (it-> fname
+                (slurp it)
+                (str/split-lines it)
+                (drop-if #(str/whitespace? %) it))]
+    lines))
 
-  (with-result
-    (let [ctx    (util/config-load->ctx config-fname)
-          >>     (spyx-pretty ctx)
-          result (util/dispatch ctx)]
-      (spy :main--dispatch-post)
-      (spyx (type result))
-      ; (spyx-pretty :main-result result)
-      (spy :main--leave)
-      result)))
+(s/defn enc-response-fname->parsed :- [tsk/KeyMap]
+  [fname :- s/Str]
+  (let [data-recs (forv [line (enc-response-fname->lines fname)]
+                    (parse-string-fields iowa-encounter-response-specs line))]
+    data-recs))
+

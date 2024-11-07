@@ -1,11 +1,13 @@
 (ns tst.enc-response.parse
-  (:use enc-response.parse tupelo.core tupelo.test)
+  (:use enc-response.parse
+        tupelo.core
+        tupelo.test)
   (:require
     [clojure.data :as data]
     [clojure.java.io :as io]
     [clojure.pprint :as pp]
     [clojure.tools.reader.edn :as edn]
-    [enc-response.util :as util]
+    [enc-response.datomic :as datomic]
     [schema.core :as s]
     [tupelo.parse :as parse]
     [tupelo.schema :as tsk]
@@ -26,57 +28,6 @@
    :tx-data-chunked-fname       "tx-data-chuncked.edn"
    :tx-size-limit               2
    })
-
-;---------------------------------------------------------------------------------------------------
-(verify
-  (is= :dummy-fn--result (enc-response.util/dummy-fn))
-
-  ; verify config-load->ctx works
-  (let [config-fname "config-tmp.edn"]
-    (spit config-fname
-      (with-out-str
-        (pp/pprint
-          (quote
-            {:datomic-uri                 "datomic:sql://encounters"
-             :postgres-uri                "jdbc:postgresql://postgres.qa:5432/topaz?user=datomic&password=geheim"
-             :invoke-fn                   tupelo.core/noop
-             :encounter-response-root-dir "/some/path/to/root"
-             }))))
-
-    (let [ctx (util/config-load->ctx config-fname)]
-      (is= ctx
-        (quote
-          {:db-uri                      "datomic:sql://encounters?jdbc:postgresql://postgres.qa:5432/topaz?user=datomic&password=geheim"
-           :encounter-response-root-dir "/some/path/to/root"
-           :icn-maps-aug-fname          "icn-maps-aug.edn"
-           :invoke-fn                   tupelo.core/noop
-           :missing-icn-fname           "missing-icns.edn"
-           :tx-data-chunked-fname       "tx-data-chuncked.edn" :tx-size-limit 500}
-          )))
-
-    ; verify `dispatch` works
-    (spit config-fname
-      (with-out-str
-        (pp/pprint
-          (quote
-            {:datomic-uri  "aaa"
-             :postgres-uri "bbb"
-             :invoke-fn    enc-response.util/dummy-fn}))))
-    (let [ctx (util/config-load->ctx config-fname)]
-      (is (submatch? '{:db-uri    "aaa?bbb"
-                       :invoke-fn enc-response.util/dummy-fn}
-            ctx))
-      (is= (util/dispatch ctx) :dummy-fn--result))
-
-    ; verify -main calls :invoke-fn & returns result
-    (let [out-txt (with-out-str
-                    (let [result (-main config-fname)]
-                      (is= result :dummy-fn--result)))]
-      ; (spyx-pretty  out-txt)
-      (is (str/contains-str-frags? out-txt
-            ":main--enter"
-            ":main--leave")))
-    ))
 
 ;-----------------------------------------------------------------------------
 (verify
@@ -289,11 +240,11 @@
 
 (verify
   (when false
-  ; (prn :-----------------------------------------------------------------------------)
-  (with-redefs [verbose? verbose-tests?]
-    (load-missing-icns ctx-local))
-  ; (prn :-----------------------------------------------------------------------------)
-  ))
+    ; (prn :-----------------------------------------------------------------------------)
+    (with-redefs [verbose? verbose-tests?]
+      (load-missing-icns ctx-local))
+    ; (prn :-----------------------------------------------------------------------------)
+    ))
 
 (verify
   (prn :-----------------------------------------------------------------------------)
@@ -302,12 +253,12 @@
       ; (spyx-pretty icn-maps-aug)
       (is (->> icn-maps-aug
             (wild-submatch?
-              [{:db/id  util/eid?
+              [{:db/id                           datomic/eid?
                 :encounter-transmission/icn      "30000000100601",
                 :encounter-transmission/plan     "id-medicaid",
                 :encounter-transmission/plan-icn "62133600780000001",
                 :encounter-transmission/status
-                #:db{:db/id  util/eid?
+                #:db{:db/id datomic/eid?
                      :ident :encounter-transmission.status/rejected-by-validation}}
                {:db/id                           17592186047700,
                 :encounter-transmission/icn      "30000000102936",
@@ -334,17 +285,17 @@
                 #:db{:ident :encounter-transmission.status/accepted}}]))))
 
     (let [tx-data-chunked (create-tx-data-chunked ctx-local)]
-      (is (->>  tx-data-chunked ; alternate style with variable "first"
+      (is (->> tx-data-chunked ; alternate style with variable "first"
             (wild-match?
-              [[{:db/id  util/eid?
+              [[{:db/id                           datomic/eid?
                  :encounter-transmission/plan-icn "62133600780000001"}
-                {:db/id util/eid?
+                {:db/id                           datomic/eid?
                  :encounter-transmission/plan-icn "62133600780000002"}]
-               [{:db/id util/eid?
+               [{:db/id                           datomic/eid?
                  :encounter-transmission/plan-icn "62134500780000003"}
-                {:db/id  util/eid?
+                {:db/id                           datomic/eid?
                  :encounter-transmission/plan-icn "62135000780000004"}]
-               [{:db/id util/eid?
+               [{:db/id                           datomic/eid?
                  :encounter-transmission/plan-icn "62200600780000005"}]]
               )))))
   (prn :-----------------------------------------------------------------------------)
