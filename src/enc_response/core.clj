@@ -48,12 +48,12 @@
         ctx       (dissoc ctx :invoke-fn)
         form      (list invoke-fn ctx)]
     (spyxx invoke-fn)
-    (prn :92 (find-var invoke-fn))
-    (prn :93 (requiring-resolve invoke-fn))
-    (prn :94 (qualified-symbol? invoke-fn))
-    (prn :95 (simple-symbol? invoke-fn))
-    (prn :form)
-    (pp/pprint form)
+  ; (prn :92 (find-var invoke-fn))
+  ; (prn :93 (requiring-resolve invoke-fn))
+  ; (prn :94 (qualified-symbol? invoke-fn))
+  ; (prn :95 (simple-symbol? invoke-fn))
+  ; (prn :form)
+  ; (pp/pprint form)
     (eval form)))
 
 ;---------------------------------------------------------------------------------------------------

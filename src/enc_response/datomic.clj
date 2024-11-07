@@ -107,27 +107,6 @@
     :db/valueType :db.type/string :db/cardinality :db.cardinality/one}])
 
 ;-----------------------------------------------------------------------------
-(s/defn enc-response-schema->datomic :- s/Any
-  "Transact the schema for encounter response records into Datomic"
-  [ctx :- tsk/KeyMap]
-  (with-map-vals ctx [db-uri]
-    (let [conn (d.peer/connect db-uri)
-          resp @(d.peer/transact conn enc-response-schema)]
-      resp)))
-
-(s/defn enc-response-recs->datomic :- s/Any
-  "Transact encounter response records into Datomic, using a block size from `ctx`
-  as specified by :tx-size-limit. "
-  [ctx :- tsk/KeyMap
-   enc-resp-recs :- [tsk/KeyMap]]
-  (with-map-vals ctx [db-uri tx-size-limit]
-    (let [enc-resp-rec-chunked (partition-all tx-size-limit enc-resp-recs)
-          conn                 (d.peer/connect db-uri)
-          resp                 (transact-seq-peer conn enc-resp-rec-chunked)]
-      ; (pp/pprint resp )
-      resp)))
-
-;-----------------------------------------------------------------------------
 (s/defn query-missing-icns :- [[s/Any]]
   [db :- datomic.db.Db]
   (let [missing-icns (vec (d.peer/q '[:find ?eid ?icn ?previous-icn
@@ -233,3 +212,44 @@
       (if (empty? num-recs)
         0
         (only2 num-recs)))))
+
+;-----------------------------------------------------------------------------
+(s/defn enc-response-datomic-clear :- [s/Str]
+  "Deletes all data and schema for Encounter Response files from Datomic. "
+  [ctx :- tsk/KeyMap]
+  (nl)
+  (prn :enc-response-datomic-clear)
+  (nl)
+  (with-map-vals ctx [db-uri]
+    (validate boolean? (d.peer/delete-database db-uri))
+    (println "  Deleting db: " db-uri)))
+
+(s/defn enc-response-schema->datomic :- s/Any
+  "Transact the schema for encounter response records into Datomic"
+  [ctx :- tsk/KeyMap]
+  (with-map-vals ctx [db-uri]
+    (let [conn (d.peer/connect db-uri)
+          resp @(d.peer/transact conn enc-response-schema)]
+      resp)))
+
+(s/defn enc-response-datomic-init :- s/Any
+  "Transact the schema for encounter response records into Datomic"
+  [ctx :- tsk/KeyMap]
+  (nl)
+  (prn :enc-response-datomic-init)
+  (nl)
+  (with-map-vals ctx [db-uri]
+    (d.peer/create-database db-uri)
+    (enc-response-schema->datomic ctx)))
+
+(s/defn enc-response-recs->datomic :- s/Any
+  "Transact encounter response records into Datomic, using a block size from `ctx`
+  as specified by :tx-size-limit. "
+  [ctx :- tsk/KeyMap
+   enc-resp-recs :- [tsk/KeyMap]]
+  (with-map-vals ctx [db-uri tx-size-limit]
+    (let [enc-resp-rec-chunked (partition-all tx-size-limit enc-resp-recs)
+          conn                 (d.peer/connect db-uri)
+          resp                 (transact-seq-peer conn enc-resp-rec-chunked)]
+      ; (pp/pprint resp )
+      resp)))
