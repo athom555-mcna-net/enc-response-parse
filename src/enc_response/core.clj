@@ -2,6 +2,7 @@
   (:use tupelo.core)
   (:require
     [clojure.tools.reader.edn :as edn]
+    [clojure.pprint :as pp]
     [schema.core :as s]
     [tupelo.core :as t]
     [tupelo.schema :as tsk]
@@ -46,14 +47,13 @@
         ; >>>       (spyx invoke-fn)
         ctx       (dissoc ctx :invoke-fn)
         form      (list invoke-fn ctx)]
-    ; (spyxx invoke-fn)
-    ; (prn :92 (find-var invoke-fn))
-    ; (prn :93 (requiring-resolve invoke-fn))
-    ; (prn :94 (qualified-symbol? invoke-fn))
-    ; (prn :95 (simple-symbol? invoke-fn))
-    ; (prn :var (var invoke-fn))
-    ; (prn :form)
-    ; (pp/pprint form)
+    (spyxx invoke-fn)
+    (prn :92 (find-var invoke-fn))
+    (prn :93 (requiring-resolve invoke-fn))
+    (prn :94 (qualified-symbol? invoke-fn))
+    (prn :95 (simple-symbol? invoke-fn))
+    (prn :form)
+    (pp/pprint form)
     (eval form)))
 
 ;---------------------------------------------------------------------------------------------------
