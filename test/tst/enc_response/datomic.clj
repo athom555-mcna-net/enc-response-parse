@@ -171,8 +171,7 @@
                               db))]
           (is (submatch? rec-5 result)))))))
 
-(verify
-  ; full data: "/Users/athom555/work/iowa-response"
+(verify-focus ; full data: "/Users/athom555/work/iowa-response"
   (enc-response-schema->datomic ctx-local) ; commit schema
   (parse/enc-response-files->datomic ctx-local)
 
@@ -180,10 +179,9 @@
   (let [conn (d/connect db-uri-disk-test)
         db   (d/db conn)]
     (let [enc-resp-recs (onlies (d/q '[:find (pull ?e [*])
-                                :where [?e :mco-claim-number]]
-                           db))
-          recs-sorted (vec (sort-by  :mco-claim-number enc-resp-recs))
-          ]
+                                       :where [?e :mco-claim-number]]
+                                  db))
+          recs-sorted   (vec (sort-by :mco-claim-number enc-resp-recs))]
       (is= (count enc-resp-recs) 14)
       (is= (xfirst recs-sorted)
         {:billing-provider-npi            "1952711780"
@@ -216,7 +214,5 @@
          :mco-paid-date                   "12292021"
          :member-id                       "3382022I"
          :total-paid-amount               "000000000000"
-         :db/id                           17592186045438})
-      )
-    )
-  )
+         :db/id                           17592186045438}))))
+

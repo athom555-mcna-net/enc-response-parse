@@ -46,7 +46,7 @@
      :char            - string of [a-zA-Z] chars
      :numeric         - string of [0-9] chars
      :alphanumeric    - string of [0-9a-zA-Z] chars
-  "
+     :text            - string of ASCII characters  "
   [
    {:name :mco-claim-number :format :numeric :length 30} ; #todo it is a number like "30000062649905                "
    {:name :iowa-transaction-control-number :format :numeric :length 17}
@@ -59,9 +59,9 @@
    {:name :mco-paid-date :format :numeric :length 8}
    {:name :total-paid-amount :format :numeric :length 12}
    {:name :line-number :format :numeric :length 2}
-   {:name :error-code :format :alphanumeric :length 3} ; #todo always "A00"
-   {:name :field :format :alphanumeric :length 24 :length-strict? false}
-   {:name :error-field-value :format :alphanumeric :length 80 :length-strict? false} ; #todo seems to be missing (all blanks!)
+   {:name :error-code :format :alphanumeric :length 3} ; #todo almost always "A00" (alt: "A45", "B01")
+   {:name :field :format :text :length 24 :length-strict? false}
+   {:name :error-field-value :format :text :length 80 :length-strict? false} ; #todo seems to be missing (all blanks!)
    ])
 
 ;---------------------------------------------------------------------------------------------------
@@ -70,6 +70,7 @@
   {:char         #"\p{Alpha}*" ; *** empty string allowed ***
    :numeric      #"\p{Digit}*" ; *** empty string allowed ***
    :alphanumeric #"\p{Alnum}*" ; *** empty string allowed ***
+   :text         #"\p{ASCII}*" ; *** empty string allowed ***
    })
 
 (s/defn validate-format :- s/Str
@@ -222,9 +223,17 @@
   Assumes schema has already been transacted into Datomic. "
   [ctx :- tsk/KeyMap]
   (let [enc-resp-fnames (get-enc-response-fnames ctx)]
+    (nl)
+    (prn :enc-response-files->datomic--num-files (count enc-resp-fnames))
+    (nl)
     (doseq [fname enc-resp-fnames]
       (prn :enc-response-files->datomic--parsing fname)
       (let [data-recs (enc-response-fname->parsed fname)]
+        (comment)
         (prn :enc-response-files->datomic--saving fname)
         (datomic/enc-response-recs->datomic ctx data-recs)))
+    (nl)
+    (prn :enc-response-files->datomic--num-recs (datomic/count-enc-response-recs ctx))
+    (nl)
     enc-resp-fnames))
+

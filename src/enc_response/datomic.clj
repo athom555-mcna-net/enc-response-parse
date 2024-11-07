@@ -222,3 +222,14 @@
   (prn :load-commit-transactions-with--leave)
   (prn :-----------------------------------------------------------------------------))
 
+(s/defn count-enc-response-recs :- s/Int
+  [ctx]
+  (with-map-vals ctx [db-uri]
+    (let [conn     (d.peer/connect db-uri)
+          db       (d.peer/db conn)
+          num-recs (d.peer/q '[:find (count ?e)
+                                       :where [?e :mco-claim-number]]
+                             db)]
+      (if (empty? num-recs)
+        0
+        (only2 num-recs)))))

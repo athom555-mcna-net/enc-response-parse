@@ -47,7 +47,14 @@
   (is= "9" (validate-format :numeric "9")) ; numeric
   (is= "123" (validate-format :numeric "123"))
   (throws? (validate-format :numeric "abc"))
-  (throws? (validate-format :numeric "abc9")))
+  (throws? (validate-format :numeric "abc9"))
+
+  (is= "a" (validate-format :text "a")) ; any ASCII character
+  (is= "9" (validate-format :text "9"))
+  (is= "abc9" (validate-format :text "abc9"))
+  (is= "#abc" (validate-format :text "#abc"))
+  (is= "#ab,c!" (validate-format :text "#ab,c!"))
+  (is= "#ab, c!" (validate-format :text "#ab, c!")))
 
 (verify
   (throws? (spec-slice {:name :xxx :format :char :length 0} (vec "abcdefg"))) ; zero length
