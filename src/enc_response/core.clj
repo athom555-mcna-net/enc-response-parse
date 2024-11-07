@@ -18,6 +18,14 @@
    })
 
 ;-----------------------------------------------------------------------------
+(defn dummy-fn
+  [& args]
+  ; (prn :dummy-fn--enter)
+  (with-result :dummy-fn--result
+    ; (prn :dummy-fn--leave)
+    (+ 2 3)))
+
+;-----------------------------------------------------------------------------
 (s/defn config-load->ctx :- tsk/KeyMap
   [config-fname :- s/Str]
   (let [config (edn/read-string (slurp config-fname))
@@ -28,12 +36,6 @@
                  (dissoc it :datomic-uri :postgres-uri))]
     (spyx-pretty :loaded ctx)
     ctx))
-
-(defn dummy-fn
-  [& args]
-  (prn :dummy-fn--enter)
-  (with-result :dummy-fn--result
-    (prn :dummy-fn--leave)))
 
 (s/defn dispatch :- s/Any
   [ctx :- tsk/KeyMap]

@@ -28,8 +28,9 @@
 
 (s/defn enc-resp-file? :- s/Bool
   [file :- java.io.File]
-  (enc-resp-file-name?
-    (.getName file))) ; returns string w/o parent dirs
+  (it-> file
+    (.getName it) ; returns string w/o parent dirs
+    (enc-resp-file-name? it)))
 
 ;---------------------------------------------------------------------------------------------------
 (s/def spec-opts-default :- tsk/KeyMap
