@@ -217,17 +217,15 @@
 (s/defn enc-response-datomic-clear :- [s/Str]
   "Deletes all data and schema for Encounter Response files from Datomic. "
   [ctx :- tsk/KeyMap]
-  (nl)
-  (prn :enc-response-datomic-clear)
-  (nl)
   (with-map-vals ctx [db-uri]
-    (validate boolean? (d.peer/delete-database db-uri))
-    (println "  Deleting db: " db-uri)))
+    (prn :enc-response-datomic-clear db-uri)
+    (d.peer/delete-database db-uri)))
 
 (s/defn enc-response-schema->datomic :- s/Any
   "Transact the schema for encounter response records into Datomic"
   [ctx :- tsk/KeyMap]
   (with-map-vals ctx [db-uri]
+    (prn :enc-response-schema->datomic db-uri)
     (let [conn (d.peer/connect db-uri)
           resp @(d.peer/transact conn enc-response-schema)]
       resp)))
@@ -235,10 +233,9 @@
 (s/defn enc-response-datomic-init :- s/Any
   "Transact the schema for encounter response records into Datomic"
   [ctx :- tsk/KeyMap]
-  (nl)
-  (prn :enc-response-datomic-init)
-  (nl)
   (with-map-vals ctx [db-uri]
+    (prn :enc-response-datomic-init db-uri)
+    (enc-response-datomic-clear ctx)
     (d.peer/create-database db-uri)
     (enc-response-schema->datomic ctx)))
 

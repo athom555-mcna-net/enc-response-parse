@@ -47,7 +47,7 @@
         ; >>>       (spyx invoke-fn)
         ctx       (dissoc ctx :invoke-fn)
         form      (list invoke-fn ctx)]
-    (spyxx invoke-fn)
+  ; (spyxx invoke-fn)
   ; (prn :92 (find-var invoke-fn))
   ; (prn :93 (requiring-resolve invoke-fn))
   ; (prn :94 (qualified-symbol? invoke-fn))
