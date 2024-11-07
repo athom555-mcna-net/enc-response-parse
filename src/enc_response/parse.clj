@@ -1,20 +1,16 @@
 (ns enc-response.parse
   (:use tupelo.core)
   (:require
-    [clojure.java.io :as io]
     [clojure.pprint :as pp]
     [clojure.tools.reader.edn :as edn]
     [datomic.api :as d.peer]
     [enc-response.datomic :as datomic]
-    [enc-response.util :as util]
     [flatland.ordered.map :as omap]
     [schema.core :as s]
     [tupelo.misc :as misc]
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
     )
-  (:import
-    [java.io File])
   (:gen-class))
 
 (def ^:dynamic verbose?
@@ -31,7 +27,7 @@
   (boolean (re-matches encounter-response-filename-patt fname)))
 
 (s/defn enc-resp-file? :- s/Bool
-  [file :- File]
+  [file :- java.io.File]
   (enc-resp-file-name?
     (.getName file))) ; returns string w/o parent dirs
 

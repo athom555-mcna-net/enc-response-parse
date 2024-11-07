@@ -2,15 +2,12 @@
   (:use tupelo.core
         tupelo.test)
   (:require
-    [clojure.pprint :as pp]
     [datomic.api :as d.peer]
-    [enc-response.util :as util]
     [schema.core :as s]
     [tupelo.core :as t]
     [tupelo.math :as math]
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
-    [tupelo.test.jvm :as ttj]
     ))
 
 (def ^:dynamic verbose?

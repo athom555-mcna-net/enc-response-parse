@@ -9,7 +9,6 @@
     [clojure.pprint :as pp]
     [datomic.api :as d]
     [enc-response.parse :as parse]
-    [schema.core :as s]
     [tupelo.core :as t]
     [tupelo.string :as str]
     [tupelo.test.jvm :as ttj]
