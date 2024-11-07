@@ -173,7 +173,7 @@
 
 (verify
   (enc-response-schema->datomic ctx-local) ; commit schema
-  (parse/enc-response-files->datomic ctx-local)
+  (parse/enc-response-files-2-datomic ctx-local)
 
   ; verify can retrieve first & last records from datomic
   (let [conn (d/connect db-uri-disk-test)

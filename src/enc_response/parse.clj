@@ -11,7 +11,8 @@
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
     )
-  (:gen-class))
+  ; (:gen-class)
+  )
 
 (def ^:dynamic verbose?
   "Enable to see progress printouts"
@@ -215,7 +216,7 @@
         enc-resp-fnames        (sort (mapv str (keep-if enc-resp-file? all-files)))]
     enc-resp-fnames))
 
-(s/defn enc-response-files->datomic :- [s/Str]
+(s/defn enc-response-files-2-datomic :- [s/Str]
   "Uses `:encounter-response-root-dir` from map `ctx` to specify a directory of
   Encounter Response files. For each file in turn, loads/parses the file and commits the data
   into Datomic. Returns a vector of the filenames processed.

@@ -5,7 +5,8 @@
     [schema.core :as s]
     [tupelo.core :as t]
     [tupelo.schema :as tsk]
-    ))
+    )
+  (:gen-class))
 
 (def ^:dynamic ctx-default
   {

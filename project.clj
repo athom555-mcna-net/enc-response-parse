@@ -5,11 +5,17 @@
   ;-----------------------------------------------------------------------------
 
   :dependencies [
-                 [org.clojure/clojure "1.12.0"]
+                 [com.datomic/local         "1.0.285"]
+                 [com.datomic/peer          "1.0.7187"]
+                 [org.clojure/clojure       "1.12.0"]
+                 [org.flatland/ordered      "1.15.12"]
+                 [org.postgresql/postgresql "42.5.1"]
+                 [prismatic/schema          "1.4.1"]
+                 [tupelo/tupelo             "24.09.30"]
                  ]
 
   :jvm-opts ["-Xmx4g"]
-  :main enc-response.parse
+  :main enc-response.core
 
   )
 
