@@ -3,8 +3,8 @@
   (:require
     [clojure.tools.reader.edn :as edn]
     [clojure.pprint :as pp]
+    [enc-response.parse :as parse]
     [schema.core :as s]
-    [tupelo.core :as t]
     [tupelo.schema :as tsk]
     )
   (:gen-class))
