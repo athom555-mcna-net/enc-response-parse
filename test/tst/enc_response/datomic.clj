@@ -1,5 +1,4 @@
-(ns       ;    ^:test-refresh/focus
-  tst.enc-response.datomic
+(ns tst.enc-response.datomic
   (:use enc-response.datomic
         tupelo.core
         tupelo.test)
@@ -7,9 +6,8 @@
     [clojure.data :as data]
     [clojure.java.io :as io]
     [clojure.pprint :as pp]
-    [datomic.api :as d]
+    [datomic.api :as d.peer]
     [enc-response.parse :as parse]
-    [tupelo.core :as t]
     [tupelo.string :as str]
     [tupelo.test.jvm :as ttj]
     ))
@@ -25,18 +23,18 @@
 
 (ttj/define-fixture :each
   {:enter (fn [ctx]
-            (cond-it-> (validate boolean? (d/delete-database db-uri-disk-test)) ; returns true/false
+            (cond-it-> (validate boolean? (d.peer/delete-database db-uri-disk-test)) ; returns true/false
               verbose-tests? (println "  Deleted prior db: " it))
-            (cond-it-> (validate boolean? (d/create-database db-uri-disk-test))
+            (cond-it-> (validate boolean? (d.peer/create-database db-uri-disk-test))
               verbose-tests? (println "  Creating db:      " it)))
    :leave (fn [ctx]
-            (cond-it-> (validate boolean? (d/delete-database db-uri-disk-test))
+            (cond-it-> (validate boolean? (d.peer/delete-database db-uri-disk-test))
               verbose-tests? (println "  Deleting db:      " it)))
    })
 
 (def ctx-local
   {:encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
-   :missing-icn-fname           "resources/missing-icns-5.edn"
+   :missing-icn-fname           "resources/missing-icns-prod-small.edn"
    :icn-maps-aug-fname          "icn-maps-aug.edn"
    :tx-data-chunked-fname       "tx-data-chuncked.edn"
    :tx-size-limit               2
@@ -82,14 +80,14 @@
         ]
     ; Query datomic to verify can retrieve records
     (with-map-vals ctx-local [db-uri]
-      (let [conn (d/connect db-uri)
-            db   (d/db conn)]
-        (let [raw-result (only2 (d/q '[:find (pull ?e [*])
-                                       :where [?e :mco-claim-number "30000062649905"]]
+      (let [conn (d.peer/connect db-uri)
+            db   (d.peer/db conn)]
+        (let [raw-result (only2 (d.peer/q '[:find (pull ?e [*])
+                                            :where [?e :mco-claim-number "30000062649905"]]
                                   db))]
           (is (submatch? rec-1 raw-result)))
-        (let [raw-result (only2 (d/q '[:find (pull ?e [*])
-                                       :where [?e :mco-claim-number "30000062649906"]]
+        (let [raw-result (only2 (d.peer/q '[:find (pull ?e [*])
+                                            :where [?e :mco-claim-number "30000062649906"]]
                                   db))]
           (is (submatch? rec-2 raw-result)))))))
 
@@ -160,14 +158,14 @@
       (enc-response-recs->datomic ctx-local data-recs) ; commit records
 
       ; verify can retrieve first & last records from datomic
-      (let [conn (d/connect db-uri-disk-test)
-            db   (d/db conn)]
-        (let [result (only2 (d/q '[:find (pull ?e [*])
-                                   :where [?e :mco-claim-number "30000000100601"]]
+      (let [conn (d.peer/connect db-uri-disk-test)
+            db   (d.peer/db conn)]
+        (let [result (only2 (d.peer/q '[:find (pull ?e [*])
+                                        :where [?e :mco-claim-number "30000000100601"]]
                               db))]
           (is (submatch? rec-1 result)))
-        (let [result (only2 (d/q '[:find (pull ?e [*])
-                                   :where [?e :mco-claim-number "30000062649897"]]
+        (let [result (only2 (d.peer/q '[:find (pull ?e [*])
+                                        :where [?e :mco-claim-number "30000062649897"]]
                               db))]
           (is (submatch? rec-5 result)))))))
 
@@ -176,10 +174,10 @@
   (parse/enc-response-files->datomic ctx-local)
 
   ; verify can retrieve first & last records from datomic
-  (let [conn (d/connect db-uri-disk-test)
-        db   (d/db conn)]
-    (let [enc-resp-recs (onlies (d/q '[:find (pull ?e [*])
-                                       :where [?e :mco-claim-number]]
+  (let [conn (d.peer/connect db-uri-disk-test)
+        db   (d.peer/db conn)]
+    (let [enc-resp-recs (onlies (d.peer/q '[:find (pull ?e [*])
+                                            :where [?e :mco-claim-number]]
                                   db))
           recs-sorted   (vec (sort-by :mco-claim-number enc-resp-recs))]
       (is= (count enc-resp-recs) 14)
@@ -216,3 +214,15 @@
          :total-paid-amount               "000000000000"
          :db/id                           17592186045438}))))
 
+(verify-focus
+  (let [ctx {:db-uri             "datomic:dev://localhost:4334/enc-response"
+             :tx-size-limit      500
+             :missing-icn-fname  "resources/missing-icns-prod-small.edn"
+             :icn-maps-aug-fname "icn-maps-aug.edn"}]
+    (with-map-vals ctx [db-uri]
+      (let [conn (d.peer/connect db-uri)
+            db   (d.peer/db conn)
+            rec  (enc-response-find-icn db "30000019034534") ; missing file => :encounter-transmission/icn
+            ]
+        (spyx-pretty rec)
+        ))))

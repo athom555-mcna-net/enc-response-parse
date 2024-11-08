@@ -208,8 +208,8 @@
     (let [conn     (d.peer/connect db-uri)
           db       (d.peer/db conn)
           num-recs (d.peer/q '[:find (count ?e)
-                                       :where [?e :mco-claim-number]]
-                             db)]
+                               :where [?e :mco-claim-number]]
+                     db)]
       (if (empty? num-recs)
         0
         (only2 num-recs)))))
@@ -252,3 +252,10 @@
             resp                 (transact-seq-peer conn enc-resp-rec-chunked)]
         ; (pp/pprint resp )
         resp))))
+
+(s/defn enc-response-find-icn
+  [db :- s/Any
+   icn :- s/Str]
+  (let [result (d.peer/q '[:find (pull ?e [*])
+                                   :where [?e :mco-claim-number icn]]
+                         db icn)]))
