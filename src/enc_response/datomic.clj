@@ -253,9 +253,15 @@
         ; (pp/pprint resp )
         resp))))
 
-(s/defn enc-response-find-icn
+(s/defn enc-response-query-icn->plan-icn :- [s/Str]
   [db :- s/Any
    icn :- s/Str]
-  (let [result (d.peer/q '[:find (pull ?e [*])
-                                   :where [?e :mco-claim-number icn]]
-                         db icn)]))
+  ; query might return more than 1 result => vec of maps
+  (let [recs      (onlies (d.peer/q '[:find (pull ?e [*])
+                                      :in $ ?icn
+                                      :where [?e :mco-claim-number ?icn]]
+                            db icn))
+        plan-icns (vec (distinct
+                         (for [rec recs]
+                           (grab :iowa-transaction-control-number rec))))]
+    plan-icns))
