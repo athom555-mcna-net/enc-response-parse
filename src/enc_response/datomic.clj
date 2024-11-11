@@ -253,7 +253,7 @@
         ; (pp/pprint resp )
         resp))))
 
-(s/defn icn->enc-response-recs :- [s/Str]
+(s/defn icn->enc-response-recs :- [tsk/KeyMap]
   [db :- s/Any
    icn :- s/Str]
   ; query might return more than 1 result => vec of maps

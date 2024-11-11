@@ -215,34 +215,3 @@
          :total-paid-amount               "000000000000"
          :db/id                           17592186045438}))))
 
-(comment
-  (verify
-    (let [ctx {:db-uri             "datomic:dev://localhost:4334/enc-response"
-               :tx-size-limit      500
-               :missing-icn-fname  "resources/missing-icns-prod-small.edn"
-               :icn-maps-aug-fname "icn-maps-aug.edn"}]
-      (with-map-vals ctx [db-uri]
-        (spyx (count-enc-response-recs ctx))
-        (let [conn (d.peer/connect db-uri)
-              db   (d.peer/db conn)
-              rec  (enc-response-query-icn->plan-icn db "30000019034534") ; missing file => :encounter-transmission/icn
-              ]
-          (spyx-pretty rec)
-          )))))
-
-; search for ICNs with multiple encounter response records
-#_(verify-focus
-  (let [ctx {:db-uri             "datomic:dev://localhost:4334/enc-response"
-             :tx-size-limit      500
-             :missing-icn-fname  "resources/missing-icns-prod-small.edn"
-             :icn-maps-aug-fname "icn-maps-aug.edn"}]
-    (with-map-vals ctx [db-uri]
-      (spyx (count-enc-response-recs ctx))
-      #_(let [missing-recs (loadmis)
-            conn (d.peer/connect db-uri)
-            db   (d.peer/db conn)
-            rec  (enc-response-query-icn->plan-icn db "30000019034534") ; missing file => :encounter-transmission/icn
-            ]
-        (spyx-pretty rec)
-        )
-      )))
