@@ -142,7 +142,7 @@
           enc-response-parsed (parse-string-fields iowa-encounter-response-specs enc-response-line)]
       enc-response-parsed)))
 
-(s/defn orig-icn->response-parsed :- tsk/KeyMap
+(s/defn grep-orig-icn->response-parsed :- tsk/KeyMap
   [ctx :- tsk/KeyMap
    icn-str :- s/Str]
   (with-map-vals ctx [encounter-response-root-dir]
@@ -168,7 +168,7 @@
                                (nl)
                                (println "seaching ENC_RESPONSE_*.TXT for icn:" icn-map))
                              (let [icn         (grab :encounter-transmission/icn icn-map)
-                                   enc-resp    (->sorted-map (orig-icn->response-parsed ctx icn))
+                                   enc-resp    (->sorted-map (grep-orig-icn->response-parsed ctx icn))
                                    iowa-tcn    (grab :iowa-transaction-control-number enc-resp)
                                    icn-map-aug (glue icn-map {:encounter-transmission/plan-icn iowa-tcn})]
                                icn-map-aug))]

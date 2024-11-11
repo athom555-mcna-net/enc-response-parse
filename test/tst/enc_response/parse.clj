@@ -198,7 +198,7 @@
 (verify
   (with-redefs [verbose? verbose-tests?]
     (let [icn-str         "30000062649906"
-          enc-resp-parsed (orig-icn->response-parsed ctx-local icn-str)]
+          enc-resp-parsed (grep-orig-icn->response-parsed ctx-local icn-str)]
       (is= enc-resp-parsed
         {:mco-claim-number                "30000062649906"
          :iowa-transaction-control-number "62133600780000014"
@@ -238,7 +238,7 @@
   (when false
     (let [icn-str         "30000062649906"
           ; Each call requires about 0.5 sec for full data search
-          enc-resp-parsed (orig-icn->response-parsed ctx-local icn-str)]
+          enc-resp-parsed (grep-orig-icn->response-parsed ctx-local icn-str)]
       (pp/pprint enc-resp-parsed))))
 
 (verify
