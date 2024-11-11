@@ -7,6 +7,7 @@
     [clojure.java.io :as io]
     [clojure.pprint :as pp]
     [enc-response.datomic :as datomic]
+    [enc-response.proc :as proc]
     [tupelo.parse :as parse]
     )
   (:import
@@ -245,14 +246,14 @@
   (when false
     ; (prn :-----------------------------------------------------------------------------)
     (with-redefs [verbose? verbose-tests?]
-      (load-missing-icns ctx-local))
+      (proc/load-missing-icns ctx-local))
     ; (prn :-----------------------------------------------------------------------------)
     ))
 
 (verify
   (prn :-----------------------------------------------------------------------------)
   (with-redefs [verbose? verbose-tests?]
-    (let [icn-maps-aug (create-icn-maps-aug ctx-local)]
+    (let [icn-maps-aug (proc/create-icn-maps-aug ctx-local)]
       ; (spyx-pretty icn-maps-aug)
       (is (->> icn-maps-aug
             (wild-submatch?
@@ -287,7 +288,7 @@
                 :encounter-transmission/status
                 #:db{:ident :encounter-transmission.status/accepted}}]))))
 
-    (let [tx-data-chunked (create-tx-data-chunked ctx-local)]
+    (let [tx-data-chunked (proc/create-tx-data-chunked ctx-local)]
       (is (->> tx-data-chunked ; alternate style with variable "first"
             (wild-match?
               [[{:db/id                           datomic/eid?

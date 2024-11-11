@@ -8,6 +8,7 @@
     [clojure.pprint :as pp]
     [datomic.api :as d.peer]
     [enc-response.parse :as parse]
+    [enc-response.proc :as proc]
     [tupelo.string :as str]
     [tupelo.test.jvm :as ttj]
     ))
@@ -94,7 +95,7 @@
 ; #todo move parsing tests => tst.enc-response/parse
 (verify
   ; full data: "/Users/athom555/work/iowa-response"
-  (let [enc-resp-fnames (parse/get-enc-response-fnames ctx-local)
+  (let [enc-resp-fnames (proc/get-enc-response-fnames ctx-local)
         fname-first     (xfirst enc-resp-fnames)]
     ; verify found all files in dir
     (is= enc-resp-fnames
@@ -171,7 +172,7 @@
 
 (verify
   (enc-response-schema->datomic ctx-local) ; commit schema
-  (parse/enc-response-files->datomic ctx-local)
+  (proc/enc-response-files->datomic ctx-local)
 
   ; verify can retrieve first & last records from datomic
   (let [conn (d.peer/connect db-uri-disk-test)
@@ -230,7 +231,7 @@
           )))))
 
 ; search for ICNs with multiple encounter response records
-(verify-focus
+#_(verify-focus
   (let [ctx {:db-uri             "datomic:dev://localhost:4334/enc-response"
              :tx-size-limit      500
              :missing-icn-fname  "resources/missing-icns-prod-small.edn"
