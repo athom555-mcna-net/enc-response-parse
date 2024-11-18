@@ -37,7 +37,7 @@
       (spyx (datomic/count-enc-response-recs ctx))
       (enc-resp-disp-diff ctx))))
 
-(verify-focus
+(verify
   (let [response-rec-1     {:billing-provider-npi            "1952711780"
                              :claim-frequency-code            "1"
                              :claim-type                      "D"
@@ -84,6 +84,12 @@
                }]
       ; (spyx-pretty (enc-resp-disp-diff ctx))
 
-      (spyx-pretty (create-icn-maps-aug-datomic ctx))
+      (let [icn-maps-aug (create-icn-maps-aug-datomic ctx)]
+        (is (->> (xlast icn-maps-aug)
+              (submatch? {:encounter-transmission/icn      "30000019034555",
+                          :encounter-transmission/plan     "ia-medicaid",
+                          :encounter-transmission/plan-icn "61927400780000019",
+                          :encounter-transmission/status
+                          #:db{:ident :encounter-transmission.status/accepted}}))))
 
       ))
