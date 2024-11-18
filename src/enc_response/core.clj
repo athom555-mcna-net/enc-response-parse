@@ -3,7 +3,9 @@
   (:require
     [clojure.tools.reader.edn :as edn]
     [clojure.pprint :as pp]
-    [enc-response.parse :as parse]
+    [enc-response.datomic :as datomic] ; required to make `eval` work
+    [enc-response.parse :as parse] ; required to make `eval` work
+    [enc-response.proc :as proc] ; required to make `eval` work
     [schema.core :as s]
     [tupelo.schema :as tsk]
     )
@@ -63,12 +65,11 @@
   (spyx :-main config-fname)
   (assert (not-nil? config-fname))
 
-  (with-result
-    (let [ctx    (config-load->ctx config-fname)
-          >>     (spyx-pretty ctx)
-          result (dispatch ctx)]
-      (spy :main--dispatch-post)
-      (spyx (type result))
-      ; (spyx-pretty :main-result result)
-      (spy :main--leave)
-      result)))
+  (let [ctx    (config-load->ctx config-fname)
+        >>     (spyx-pretty ctx)
+        result (dispatch ctx)]
+    (spy :main--dispatch-post)
+    (spyx (type result))
+    ; (spyx-pretty :main-result result)
+    (spy :main--leave))
+  (System/exit 0))

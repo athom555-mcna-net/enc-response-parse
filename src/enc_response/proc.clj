@@ -1,19 +1,20 @@
 (ns enc-response.proc
   (:use tupelo.core)
   (:require
+    [clojure.data :as data]
     [clojure.java.io :as io]
     [clojure.pprint :as pp]
     [clojure.tools.reader.edn :as edn]
+    [datomic.api :as d.peer]
     [enc-response.datomic :as datomic]
     [enc-response.parse :as parse]
-    [flatland.ordered.map :as omap]
     [schema.core :as s]
     [tupelo.misc :as misc]
     [tupelo.profile :as prof]
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
     )
-  ; (:gen-class)
+ ;(:gen-class)
   )
 
 (def ^:dynamic verbose?
@@ -94,3 +95,44 @@
   (prof/print-profile-stats!)
   (nl))
 
+(defn enc-resp-disp-diff
+  [ctx]
+  (spyx (datomic/count-enc-response-recs ctx))
+  (with-map-vals ctx [db-uri]
+    (let [missing-recs (load-missing-icns ctx)
+          conn         (d.peer/connect db-uri)
+          db           (d.peer/db conn)]
+      (prn :num-missing-icns (count missing-recs))
+      (doseq [missing-rec missing-recs]
+        (nl)
+        (println ":-----------------------------------------------------------------------------")
+        (prn :missing-icn-begin)
+
+        (let [icn               (grab :encounter-transmission/icn missing-rec)
+              enc-resp-recs     (datomic/icn->enc-response-recs db icn)
+              num-enc-resp-recs (count enc-resp-recs)]
+          (spyx-pretty enc-resp-recs)
+          (when (pos? num-enc-resp-recs)
+            (prn :multiple-icn num-enc-resp-recs)
+            (doseq [alt (xrest enc-resp-recs)]
+              (nl)
+              (spyx-pretty (data/diff (xfirst enc-resp-recs) alt)))))))))
+
+(defn enc-resp-mult-count
+  [ctx]
+  (spyx (datomic/count-enc-response-recs ctx))
+  (with-map-vals ctx [db-uri]
+    (let [missing-recs       (load-missing-icns ctx)
+          >>                 (prn :num-missing-icns (count missing-recs))
+          conn               (d.peer/connect db-uri)
+          db                 (d.peer/db conn)
+          icns-duplicate     (keep-if not-nil?
+                               (forv [[idx missing-rec] (indexed missing-recs)]
+                                 (let [icn               (grab :encounter-transmission/icn missing-rec)
+                                       enc-resp-recs     (datomic/icn->enc-response-recs db icn)
+                                       num-enc-resp-recs (count enc-resp-recs)]
+                                   (println idx icn num-enc-resp-recs)
+                                   (when (< 1 num-enc-resp-recs)
+                                     icn))))
+          num-icns-duplicate (count icns-duplicate)]
+      (spyx num-icns-duplicate))))

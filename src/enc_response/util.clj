@@ -4,6 +4,7 @@
     [schema.core :as s]
     [tupelo.core :as t]
     [tupelo.schema :as tsk]
+    [tupelo.string :as str]
     ))
 
 ;-----------------------------------------------------------------------------
@@ -32,3 +33,17 @@
   [seq-2d :- [[s/Any]]]
   (apply glue seq-2d))
 
+;-----------------------------------------------------------------------------
+(s/defn date-str-mmddyyyy->iso :- s/Str
+  "Convert a date string like `07142024` to ISO format like `2024-07-14`"
+  [date-str :- s/Str]
+  (let [date-str (str/trim date-str)
+        nchars (count date-str)]
+    (assert-info (= 8 nchars) "Invalid length" (vals->map date-str nchars))
+    (assert-info (re-matches #"\p{Digit}+" date-str)
+      "date string must be all digits" (vals->map date-str))
+    (let [mm     (subs date-str 0 2)
+          dd     (subs date-str 2 4)
+          yyyy   (subs date-str 4 8)
+          result (str yyyy "-" mm "-" dd)]
+      result)))

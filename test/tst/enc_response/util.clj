@@ -46,3 +46,9 @@
                    [5]])
     (is= seq1-inc-b [1 2 3 4 5])))
 
+(verify
+  (is= "2024-07-14" (date-str-mmddyyyy->iso "07142024"))
+  (throws? (date-str-mmddyyyy->iso "7142024"))
+  (throws-not? (date-str-mmddyyyy->iso "99887766")) ; no validaion of reasonable date
+  (throws? (date-str-mmddyyyy->iso "xxyy7766")) ; invalid chars
+  )
