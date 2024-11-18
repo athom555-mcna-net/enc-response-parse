@@ -8,13 +8,14 @@
     [datomic.api :as d.peer]
     [enc-response.datomic :as datomic]
     [enc-response.parse :as parse]
+    [enc-response.util :as util]
     [schema.core :as s]
     [tupelo.misc :as misc]
     [tupelo.profile :as prof]
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
     )
- ;(:gen-class)
+  ;(:gen-class)
   )
 
 (def ^:dynamic verbose?
@@ -72,6 +73,18 @@
         enc-resp-fnames        (sort (mapv str (keep-if parse/enc-resp-file? all-files)))]
     enc-resp-fnames))
 
+(s/defn resp-recs->newest :- tsk/KeyMap
+  "Accepts a vec of Encounter Response records from Datomic, returning the one with the
+  latest value for :iowa-processing-date"
+  [resp-recs :- [tsk/KeyMap]]
+  (let [rec->iso-date-str (s/fn [resp-rec :- tsk/KeyMap]
+                            (let [datestr-mmddyyyy (grab :iowa-processing-date resp-rec)
+                                  result           (util/date-str-mmddyyyy->iso datestr-mmddyyyy)]
+                              result))
+        recs-sorted       (sort-by rec->iso-date-str resp-recs)
+        result            (xlast recs-sorted)]
+    result))
+
 (s/defn enc-response-files->datomic :- [s/Str]
   "Uses `:encounter-response-root-dir` from map `ctx` to specify a directory of
   Encounter Response files. For each file in turn, loads/parses the file and commits the data
@@ -99,24 +112,17 @@
   [ctx]
   (spyx (datomic/count-enc-response-recs ctx))
   (with-map-vals ctx [db-uri]
-    (let [missing-recs (load-missing-icns ctx)
-          conn         (d.peer/connect db-uri)
-          db           (d.peer/db conn)]
-      (prn :num-missing-icns (count missing-recs))
-      (doseq [missing-rec missing-recs]
-        (nl)
-        (println ":-----------------------------------------------------------------------------")
-        (prn :missing-icn-begin)
-
-        (let [icn               (grab :encounter-transmission/icn missing-rec)
-              enc-resp-recs     (datomic/icn->enc-response-recs db icn)
-              num-enc-resp-recs (count enc-resp-recs)]
-          (spyx-pretty enc-resp-recs)
-          (when (pos? num-enc-resp-recs)
-            (prn :multiple-icn num-enc-resp-recs)
-            (doseq [alt (xrest enc-resp-recs)]
-              (nl)
-              (spyx-pretty (data/diff (xfirst enc-resp-recs) alt)))))))))
+    (let [missing-recs      (load-missing-icns ctx)
+          >>                (prn :num-missing-icns (count missing-recs))
+          conn              (d.peer/connect db-uri)
+          db                (d.peer/db conn)
+          ; for each rec with missing ICN, find only the newest encounter response record
+          enc-response-recs (forv [missing-rec missing-recs]
+                              (let [icn                 (grab :encounter-transmission/icn missing-rec)
+                                    enc-resp-recs       (datomic/icn->enc-response-recs db icn)
+                                    enc-resp-rec-newest (resp-recs->newest enc-resp-recs)]
+                                enc-resp-rec-newest))]
+      enc-response-recs)))
 
 (defn enc-resp-mult-count
   [ctx]
