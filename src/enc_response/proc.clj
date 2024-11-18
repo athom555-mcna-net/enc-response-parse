@@ -30,42 +30,23 @@
       (let [missing-data (edn/read-string (slurp missing-icn-fname))]
         missing-data))))
 
-(s/defn create-icn-maps-aug-grep :- [tsk/KeyMap]
-  [ctx :- tsk/KeyMap]
-  (with-map-vals ctx [icn-maps-aug-fname]
-    (let [missing-icn-maps (load-missing-icns ctx)
-          icn-maps-aug     (forv [icn-map missing-icn-maps]
-                             (when verbose?
-                               (nl)
-                               (println "seaching ENC_RESPONSE_*.TXT for icn:" icn-map))
-                             (let [icn         (grab :encounter-transmission/icn icn-map)
-                                   enc-resp    (->sorted-map (parse/grep-orig-icn->response-parsed ctx icn))
-                                   iowa-tcn    (grab :iowa-transaction-control-number enc-resp)
-                                   icn-map-aug (glue icn-map {:encounter-transmission/plan-icn iowa-tcn})]
-                               icn-map-aug))]
-      (println "Writing: " icn-maps-aug-fname)
-      (spit icn-maps-aug-fname (with-out-str (pp/pprint icn-maps-aug)))
-      icn-maps-aug)))
-
-(s/defn create-tx-data-chunked :- [[tsk/KeyMap]]
-  [ctx]
-  (prn :create-tx-data-chunked--enter)
-  (with-map-vals ctx [icn-maps-aug-fname tx-data-chunked-fname tx-size-limit]
-    (let [icn-maps-aug    (edn/read-string (slurp icn-maps-aug-fname))
-          tx-data         (keep-if not-nil? ; skip if plan-icn not found #todo unnecessary?
-                            (forv [icn-map-aug icn-maps-aug]
-                              (let [eid      (grab :db/id icn-map-aug)
-                                    icn      (grab :encounter-transmission/icn icn-map-aug)
-                                    plan-icn (grab :encounter-transmission/plan-icn icn-map-aug)]
-                                (if (truthy? plan-icn) ; skip if plan-icn not found #todo unnecessary?
-                                  {:db/id                           eid
-                                   :encounter-transmission/plan-icn plan-icn}
-                                  (prn :skipping-nil--plan-icn icn)))))
-          tx-data-chunked (unlazy (partition-all tx-size-limit tx-data))]
-      (println "Writing: " tx-data-chunked-fname)
-      (spit tx-data-chunked-fname (with-out-str (pp/pprint tx-data-chunked)))
-      (with-result tx-data-chunked
-        (prn :create-tx-data-chunked--leave)))))
+(comment
+  (s/defn create-icn-maps-aug-grep :- [tsk/KeyMap]
+    [ctx :- tsk/KeyMap]
+    (with-map-vals ctx [icn-maps-aug-fname]
+      (let [missing-icn-maps (load-missing-icns ctx)
+            icn-maps-aug     (forv [icn-map missing-icn-maps]
+                               (when verbose?
+                                 (nl)
+                                 (println "seaching ENC_RESPONSE_*.TXT for icn:" icn-map))
+                               (let [icn         (grab :encounter-transmission/icn icn-map)
+                                     enc-resp    (->sorted-map (parse/grep-orig-icn->response-parsed ctx icn))
+                                     iowa-tcn    (grab :iowa-transaction-control-number enc-resp)
+                                     icn-map-aug (glue icn-map {:encounter-transmission/plan-icn iowa-tcn})]
+                                 icn-map-aug))]
+        (println "Writing: " icn-maps-aug-fname)
+        (spit icn-maps-aug-fname (with-out-str (pp/pprint icn-maps-aug)))
+        icn-maps-aug))))
 
 (s/defn get-enc-response-fnames :- [s/Str]
   [ctx :- tsk/KeyMap]
@@ -147,6 +128,26 @@
       (prof/with-timer-print :writing-file
         (spit icn-maps-aug-fname (with-out-str (pp/pprint icn-maps-aug))))
       icn-maps-aug)))
+
+(s/defn create-tx-data-chunked :- [[tsk/KeyMap]]
+  [ctx]
+  (prn :create-tx-data-chunked--enter)
+  (with-map-vals ctx [icn-maps-aug-fname tx-data-chunked-fname tx-size-limit]
+    (let [icn-maps-aug    (edn/read-string (slurp icn-maps-aug-fname))
+          tx-data         (keep-if not-nil? ; skip if plan-icn not found #todo unnecessary?
+                            (forv [icn-map-aug icn-maps-aug]
+                              (let [eid      (grab :db/id icn-map-aug)
+                                    icn      (grab :encounter-transmission/icn icn-map-aug)
+                                    plan-icn (grab :encounter-transmission/plan-icn icn-map-aug)]
+                                (if (truthy? plan-icn) ; skip if plan-icn not found #todo unnecessary?
+                                  {:db/id                           eid
+                                   :encounter-transmission/plan-icn plan-icn}
+                                  (prn :skipping-nil--plan-icn icn)))))
+          tx-data-chunked (unlazy (partition-all tx-size-limit tx-data))]
+      (println "Writing: " tx-data-chunked-fname)
+      (spit tx-data-chunked-fname (with-out-str (pp/pprint tx-data-chunked)))
+      (with-result tx-data-chunked
+        (prn :create-tx-data-chunked--leave)))))
 
 (comment
   (defn enc-resp-mult-count

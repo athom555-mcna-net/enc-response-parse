@@ -56,12 +56,16 @@
 
     ; verify -main calls :invoke-fn & returns result
     (let [out-txt (with-out-str
-                    (let [result (-main config-fname)]
+                    (let [result (main-impl config-fname)]
+                      (spyx-pretty result )
                       (is= result :dummy-fn--result)))]
-      ; (spyx-pretty  out-txt)
+      (when false
+        (nl)
+        (prn :-----------------------------------------------------------------------------)
+        (println out-txt))
       (is (str/contains-str-frags? out-txt
-            ":main--enter"
-            ":main--leave")))
+            ":main-impl--enter"
+            ":main-impl--leave")))
     ))
 
 (verify

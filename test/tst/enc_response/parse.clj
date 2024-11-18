@@ -250,57 +250,58 @@
     ; (prn :-----------------------------------------------------------------------------)
     ))
 
-(verify
-  (prn :-----------------------------------------------------------------------------)
-  (with-redefs [verbose? verbose-tests?]
-    (let [icn-maps-aug (proc/create-icn-maps-aug-grep ctx-local)]
-      ; (spyx-pretty icn-maps-aug)
-      (is (->> icn-maps-aug
-            (wild-submatch?
-              [{:db/id                           datomic/eid?
-                :encounter-transmission/icn      "30000000100601",
-                :encounter-transmission/plan     "id-medicaid",
-                :encounter-transmission/plan-icn "62133600780000001",
-                :encounter-transmission/status
-                #:db{:db/id datomic/eid?
-                     :ident :encounter-transmission.status/rejected-by-validation}}
-               {:db/id                           17592186047700,
-                :encounter-transmission/icn      "30000000102936",
-                :encounter-transmission/plan     "id-medicaid",
-                :encounter-transmission/plan-icn "62133600780000002",
-                :encounter-transmission/status
-                #:db{:ident :encounter-transmission.status/accepted}}
-               {:db/id                           17592186047701,
-                :encounter-transmission/icn      "30000000102990",
-                :encounter-transmission/plan     "id-medicaid",
-                :encounter-transmission/plan-icn "62134500780000003",
-                :encounter-transmission/status
-                #:db{:ident :encounter-transmission.status/accepted}}
-               {:db/id                           17592186126919,
-                :encounter-transmission/icn      "30000000217708",
-                :encounter-transmission/plan     "ut-medicaid",
-                :encounter-transmission/plan-icn "62135000780000004",
-                :encounter-transmission/status
-                #:db{:ident :encounter-transmission.status/rejected}}
-               {:encounter-transmission/icn      "30000000222291",
-                :encounter-transmission/plan     "tx-medicaid",
-                :encounter-transmission/plan-icn "62200600780000005",
-                :encounter-transmission/status
-                #:db{:ident :encounter-transmission.status/accepted}}]))))
+(comment
+  (verify
+    (prn :-----------------------------------------------------------------------------)
+    (with-redefs [verbose? verbose-tests?]
+      (let [icn-maps-aug (proc/create-icn-maps-aug-grep ctx-local)]
+        ; (spyx-pretty icn-maps-aug)
+        (is (->> icn-maps-aug
+              (wild-submatch?
+                [{:db/id                           datomic/eid?
+                  :encounter-transmission/icn      "30000000100601",
+                  :encounter-transmission/plan     "id-medicaid",
+                  :encounter-transmission/plan-icn "62133600780000001",
+                  :encounter-transmission/status
+                  #:db{:db/id datomic/eid?
+                       :ident :encounter-transmission.status/rejected-by-validation}}
+                 {:db/id                           17592186047700,
+                  :encounter-transmission/icn      "30000000102936",
+                  :encounter-transmission/plan     "id-medicaid",
+                  :encounter-transmission/plan-icn "62133600780000002",
+                  :encounter-transmission/status
+                  #:db{:ident :encounter-transmission.status/accepted}}
+                 {:db/id                           17592186047701,
+                  :encounter-transmission/icn      "30000000102990",
+                  :encounter-transmission/plan     "id-medicaid",
+                  :encounter-transmission/plan-icn "62134500780000003",
+                  :encounter-transmission/status
+                  #:db{:ident :encounter-transmission.status/accepted}}
+                 {:db/id                           17592186126919,
+                  :encounter-transmission/icn      "30000000217708",
+                  :encounter-transmission/plan     "ut-medicaid",
+                  :encounter-transmission/plan-icn "62135000780000004",
+                  :encounter-transmission/status
+                  #:db{:ident :encounter-transmission.status/rejected}}
+                 {:encounter-transmission/icn      "30000000222291",
+                  :encounter-transmission/plan     "tx-medicaid",
+                  :encounter-transmission/plan-icn "62200600780000005",
+                  :encounter-transmission/status
+                  #:db{:ident :encounter-transmission.status/accepted}}]))))
 
-    (let [tx-data-chunked (proc/create-tx-data-chunked ctx-local)]
-      (is (->> tx-data-chunked ; alternate style with variable "first"
-            (wild-match?
-              [[{:db/id                           datomic/eid?
-                 :encounter-transmission/plan-icn "62133600780000001"}
-                {:db/id                           datomic/eid?
-                 :encounter-transmission/plan-icn "62133600780000002"}]
-               [{:db/id                           datomic/eid?
-                 :encounter-transmission/plan-icn "62134500780000003"}
-                {:db/id                           datomic/eid?
-                 :encounter-transmission/plan-icn "62135000780000004"}]
-               [{:db/id                           datomic/eid?
-                 :encounter-transmission/plan-icn "62200600780000005"}]]
-              )))))
-  (prn :-----------------------------------------------------------------------------)
-  )
+      (let [tx-data-chunked (proc/create-tx-data-chunked ctx-local)]
+        (is (->> tx-data-chunked ; alternate style with variable "first"
+              (wild-match?
+                [[{:db/id                           datomic/eid?
+                   :encounter-transmission/plan-icn "62133600780000001"}
+                  {:db/id                           datomic/eid?
+                   :encounter-transmission/plan-icn "62133600780000002"}]
+                 [{:db/id                           datomic/eid?
+                   :encounter-transmission/plan-icn "62134500780000003"}
+                  {:db/id                           datomic/eid?
+                   :encounter-transmission/plan-icn "62135000780000004"}]
+                 [{:db/id                           datomic/eid?
+                   :encounter-transmission/plan-icn "62200600780000005"}]]
+                )))))
+    (prn :-----------------------------------------------------------------------------)
+    ))

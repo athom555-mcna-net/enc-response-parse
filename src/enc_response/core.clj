@@ -59,17 +59,26 @@
     (eval form)))
 
 ;---------------------------------------------------------------------------------------------------
-(defn -main
-  [config-fname]
-  (spy :main--enter)
-  (spyx :-main config-fname)
+(s/defn main-impl
+  [config-fname :- s/Str]
+  (spy :main-impl--enter)
+  (spyx :main-impl config-fname)
   (assert (not-nil? config-fname))
 
   (let [ctx    (config-load->ctx config-fname)
         >>     (spyx-pretty ctx)
         result (dispatch ctx)]
-    (spy :main--dispatch-post)
+    (spy :main-impl--dispatch-post)
     (spyx (type result))
     ; (spyx-pretty :main-result result)
-    (spy :main--leave))
+    (with-result result
+      (spy :main-impl--leave))))
+
+(defn -main
+  [config-fname]
+  (spy :main--enter)
+  (main-impl config-fname)
+  (spy :main--leave)
+
+  (spy :calling-system-exit)
   (System/exit 0))
