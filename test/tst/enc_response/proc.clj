@@ -75,7 +75,7 @@
     (is= result response-rec-2)))
 
 ; #working
-(verify
+(verify-focus
     (let [ctx {:db-uri            "datomic:dev://localhost:4334/enc-response"
                :tx-size-limit     500
                :missing-icn-fname "/Users/athom555/work/missing-icns-prod-small.edn"
