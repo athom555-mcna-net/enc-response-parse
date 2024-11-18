@@ -26,10 +26,11 @@
   [ctx :- tsk/KeyMap]
   (with-map-vals ctx [missing-icn-fname]
     (println "Reading: " missing-icn-fname)
-    (let [missing-data (edn/read-string (slurp missing-icn-fname))]
-      missing-data)))
+    (prof/with-timer-print :reading-file
+      (let [missing-data (edn/read-string (slurp missing-icn-fname))]
+        missing-data))))
 
-(s/defn create-icn-maps-aug :- [tsk/KeyMap]
+(s/defn create-icn-maps-aug-grep :- [tsk/KeyMap]
   [ctx :- tsk/KeyMap]
   (with-map-vals ctx [icn-maps-aug-fname]
     (let [missing-icn-maps (load-missing-icns ctx)
@@ -108,8 +109,8 @@
   (prof/print-profile-stats!)
   (nl))
 
-(defn enc-resp-disp-diff
-  [ctx]
+(s/defn enc-resp-disp-diff :- [tsk/KeyMap]
+  [ctx :- tsk/KeyMap]
   (spyx (datomic/count-enc-response-recs ctx))
   (with-map-vals ctx [db-uri]
     (let [missing-recs      (load-missing-icns ctx)
@@ -124,21 +125,45 @@
                                 enc-resp-rec-newest))]
       enc-response-recs)))
 
-(defn enc-resp-mult-count
-  [ctx]
+(s/defn create-icn-maps-aug-datomic :- [tsk/KeyMap]
+  [ctx :- tsk/KeyMap]
   (spyx (datomic/count-enc-response-recs ctx))
-  (with-map-vals ctx [db-uri]
-    (let [missing-recs       (load-missing-icns ctx)
-          >>                 (prn :num-missing-icns (count missing-recs))
-          conn               (d.peer/connect db-uri)
-          db                 (d.peer/db conn)
-          icns-duplicate     (keep-if not-nil?
-                               (forv [[idx missing-rec] (indexed missing-recs)]
-                                 (let [icn               (grab :encounter-transmission/icn missing-rec)
-                                       enc-resp-recs     (datomic/icn->enc-response-recs db icn)
-                                       num-enc-resp-recs (count enc-resp-recs)]
-                                   (println idx icn num-enc-resp-recs)
-                                   (when (< 1 num-enc-resp-recs)
-                                     icn))))
-          num-icns-duplicate (count icns-duplicate)]
-      (spyx num-icns-duplicate))))
+  (with-map-vals ctx [db-uri icn-maps-aug-fname]
+    (let [missing-recs (load-missing-icns ctx)
+          >>           (prn :num-missing-icns (count missing-recs))
+          conn         (d.peer/connect db-uri)
+          db           (d.peer/db conn)
+          ; for each rec with missing ICN, find only the newest encounter response record
+          icn-maps-aug (forv [missing-rec missing-recs]
+                         (let [icn                 (grab :encounter-transmission/icn missing-rec)
+                               enc-resp-recs       (datomic/icn->enc-response-recs db icn)
+                               enc-resp-rec-newest (resp-recs->newest enc-resp-recs)
+
+                               iowa-tcn            (grab :iowa-transaction-control-number enc-resp-rec-newest)
+                               icn-map-aug         (glue missing-rec {:encounter-transmission/plan-icn iowa-tcn})]
+                           icn-map-aug))]
+
+      (println "Writing: " icn-maps-aug-fname)
+      (prof/with-timer-print :writing-file
+        (spit icn-maps-aug-fname (with-out-str (pp/pprint icn-maps-aug))))
+      icn-maps-aug)))
+
+(comment
+  (defn enc-resp-mult-count
+    [ctx]
+    (spyx (datomic/count-enc-response-recs ctx))
+    (with-map-vals ctx [db-uri]
+      (let [missing-recs       (load-missing-icns ctx)
+            >>                 (prn :num-missing-icns (count missing-recs))
+            conn               (d.peer/connect db-uri)
+            db                 (d.peer/db conn)
+            icns-duplicate     (keep-if not-nil?
+                                 (forv [[idx missing-rec] (indexed missing-recs)]
+                                   (let [icn               (grab :encounter-transmission/icn missing-rec)
+                                         enc-resp-recs     (datomic/icn->enc-response-recs db icn)
+                                         num-enc-resp-recs (count enc-resp-recs)]
+                                     (println idx icn num-enc-resp-recs)
+                                     (when (< 1 num-enc-resp-recs)
+                                       icn))))
+            num-icns-duplicate (count icns-duplicate)]
+        (spyx num-icns-duplicate)))))

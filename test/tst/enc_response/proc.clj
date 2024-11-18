@@ -79,7 +79,11 @@
     (let [ctx {:db-uri            "datomic:dev://localhost:4334/enc-response"
                :tx-size-limit     500
                :missing-icn-fname "/Users/athom555/work/missing-icns-prod-small.edn"
-               ; :missing-icn-fname  "/Users/athom555/work/missing-icns-prod-orig.edn"
+             ; :missing-icn-fname  "/Users/athom555/work/missing-icns-prod-orig.edn"
+               :icn-maps-aug-fname "icn-maps-aug.edn"
                }]
-      (spyx-pretty (enc-resp-disp-diff ctx))
+      ; (spyx-pretty (enc-resp-disp-diff ctx))
+
+      (spyx-pretty (create-icn-maps-aug-datomic ctx))
+
       ))

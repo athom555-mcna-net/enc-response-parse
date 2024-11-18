@@ -253,7 +253,7 @@
 (verify
   (prn :-----------------------------------------------------------------------------)
   (with-redefs [verbose? verbose-tests?]
-    (let [icn-maps-aug (proc/create-icn-maps-aug ctx-local)]
+    (let [icn-maps-aug (proc/create-icn-maps-aug-grep ctx-local)]
       ; (spyx-pretty icn-maps-aug)
       (is (->> icn-maps-aug
             (wild-submatch?
