@@ -35,21 +35,47 @@
   [v :- s/Int] (<= eid-min-value v))
 
 ;-----------------------------------------------------------------------------
-(s/defn transact-seq-peer :- tsk/Vec
-  "Accepts a sequence of transactions into Datomic, which are committed in order.
-  Each transaction is a vector of entity maps."
-  [conn :- s/Any ; Datomic connection
+
+(s/defn datomic-peer-delete-db :- [s/Str]
+  "Deletes all data and schema for Encounter Response files from Datomic. "
+  [ctx :- tsk/KeyMap]
+  (with-map-vals ctx [db-uri]
+    (when verbose?
+      (prn :datomic-peer-delete-db db-uri))
+    (d.peer/delete-database db-uri)))
+
+(s/defn datomic-peer-transact-entities :- s/Any
+  "Accepts a 1D sequence of entity maps, and commits them into Datomic as a single transaction. "
+  [db-uri :- s/Str
+   data :- [tsk/KeyMap]]
+  (let [conn (d.peer/connect db-uri)
+        resp @(d.peer/transact conn data)]
+    resp))
+
+(s/defn datomic-peer-transact-entities-chunked :- tsk/Vec
+  "Accepts a 2D array of entity maps. Each row of data, in order, is committed into Datomic
+  as a separate transaction.  Returns a vector of transacton results."
+  [conn :- datomic.peer.Connection
    txs :- [[tsk/KeyMap]]]
-  (reduce
-    (fn [cum tx]
-      (conj cum
-        @(d.peer/transact conn tx))) ; uses Datomic Peer API
-    []
-    txs))
+  (when verbose?
+    (prn :datomic-peer-transact-chunked--enter))
+  (let [tx-results (reduce
+                     (fn [cum tx]
+                       (when verbose?
+                         (println :datomic-peer-transact-chunked--dbg-tx (count cum)))
+                       (conj cum
+                         @(d.peer/transact conn tx))) ; uses Datomic Peer API
+                     []
+                     txs)]
+    (when verbose?
+      (prn :datomic-peer-transact-chunked--leave))
+    tx-results))
 
 (s/defn transact-seq-peer-with :- datomic.db.Db
-  "Accepts a sequence of transactions into Datomic, which are committed in order.
-  Each transaction is a vector of entity maps."
+  "Accepts a 2D array of entity maps.  First takes a snapshot of Datomic.
+  Then, each row of data is committed onto the snapshot using `(d.peer/with ...)`,
+  as a separate transaction.  Returns the snapshot as modified by the transactions,
+  but without modifying the actual Datomic state."
   [conn :- s/Any ; Datomic connection
    txs :- [[tsk/KeyMap]]]
   (loop [db-curr  (d.peer/db conn)
@@ -185,7 +211,7 @@
   (with-map-vals ctx [tx-data-chunked-fname]
     (let [conn (d.peer/connect (grab :db-uri ctx))
           txs  (edn/read-string (slurp tx-data-chunked-fname))]
-      (transact-seq-peer conn txs))))
+      (datomic-peer-transact-entities-chunked conn txs))))
 
 (s/defn load-commit-transactions-with :- datomic.db.Db
   [ctx]
@@ -216,28 +242,20 @@
         (only2 num-recs)))))
 
 ;-----------------------------------------------------------------------------
-(s/defn enc-response-datomic-clear :- [s/Str]
-  "Deletes all data and schema for Encounter Response files from Datomic. "
-  [ctx :- tsk/KeyMap]
-  (with-map-vals ctx [db-uri]
-    (prn :enc-response-datomic-clear db-uri)
-    (d.peer/delete-database db-uri)))
-
 (s/defn enc-response-schema->datomic :- s/Any
   "Transact the schema for encounter response records into Datomic"
   [ctx :- tsk/KeyMap]
   (with-map-vals ctx [db-uri]
     (prn :enc-response-schema->datomic db-uri)
-    (let [conn (d.peer/connect db-uri)
-          resp @(d.peer/transact conn enc-response-schema)]
-      resp)))
+    (with-result (datomic-peer-transact-entities db-uri enc-response-schema)
+      (prn :enc-response-schema->datomic db-uri))))
 
 (s/defn enc-response-datomic-init :- s/Any
   "Transact the schema for encounter response records into Datomic"
   [ctx :- tsk/KeyMap]
   (with-map-vals ctx [db-uri]
     (prn :enc-response-datomic-init db-uri)
-    (enc-response-datomic-clear ctx)
+    (datomic-peer-delete-db ctx)
     (d.peer/create-database db-uri)
     (enc-response-schema->datomic ctx)))
 
@@ -250,7 +268,7 @@
     (with-map-vals ctx [db-uri tx-size-limit]
       (let [enc-resp-rec-chunked (partition-all tx-size-limit enc-resp-recs)
             conn                 (d.peer/connect db-uri)
-            resp                 (transact-seq-peer conn enc-resp-rec-chunked)]
+            resp                 (datomic-peer-transact-entities-chunked conn enc-resp-rec-chunked)]
         ; (pp/pprint resp )
         resp))))
 
