@@ -17,28 +17,63 @@
 (s/defn fn->vec-fn :- tsk/Fn
   "Vectorize a function, so that instead of operating on a scalar value,
   it operates on each value in a 1D array. Used twice, the resulting function operates
-  on each value in a 2D array."
+  on each value in a 2D array. Not lazy."
   [f :- tsk/Fn]
   (s/fn [block :- [s/Any]]
     (mapv f block)))
 
-(s/defn array-1d->2d :- [[s/Any]]
-  "Convert a 1D sequence to a 2D array (possibly ragged)."
+(s/defn array-1d->2d-lazy :- [[s/Any]]
+  "Convert a 1D sequence to a lazy 2D array (possibly ragged) in row-major order."
   [row-size :- s/Int
    seq-1d :- [s/Any]]
   (partition-all row-size seq-1d))
+
+(s/defn array-1d->2d :- [[s/Any]]
+  "Convert a 1D sequence to a 2D array (possibly ragged) in row-major order."
+  [row-size :- s/Int
+   seq-1d :- [s/Any]]
+  (unlazy (array-1d->2d-lazy row-size seq-1d)))
 
 (s/defn array-2d->1d :- [s/Any]
   "Concatenate rows of a 2D array (possibly ragged), returning a 1-D vector."
   [seq-2d :- [[s/Any]]]
   (apply glue seq-2d))
 
+(s/defn array-2d->1d-lazy-concat :- [s/Any]
+  "Concatenate rows of a 2D array (possibly ragged), returning a 1-D vector."
+  [seq-2d :- [[s/Any]]]
+  (apply concat seq-2d))
+
+(comment  ; #awt 2024-11-19 works, but no advantage to `(apply concat seq-2d)`
+  (s/defn array-2d->1d-lazy-gen :- [s/Any]
+    "Concatenate rows of a 2D array (possibly ragged), returning a 1-D vector."
+    [seq-2d :- [[s/Any]]]
+    (lazy-gen
+      (doseq [row seq-2d]
+        (doseq [item row]
+          (yield item))))))
+
+#_(s/defn array-2d->1d-lazy-recur :- [s/Any]
+    "Concatenate rows of a 2D array (possibly ragged), returning a 1-D vector."
+    [seq-2d :- [[s/Any]]]
+    (loop [rows seq-2d]
+      (let [row-curr  (first rows)
+            rows-next (rest rows)]
+
+        )
+      )
+
+    (lazy-gen
+      (doseq [row seq-2d]
+        (doseq [item row]
+          (yield item)))))
+
 ;-----------------------------------------------------------------------------
 (s/defn date-str-mmddyyyy->iso :- s/Str
   "Convert a date string like `07142024` to ISO format like `2024-07-14`"
   [date-str :- s/Str]
   (let [date-str (str/trim date-str)
-        nchars (count date-str)]
+        nchars   (count date-str)]
     (assert-info (= 8 nchars) "Invalid length" (vals->map date-str nchars))
     (assert-info (re-matches #"\p{Digit}+" date-str)
       "date string must be all digits" (vals->map date-str))

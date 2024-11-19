@@ -3,9 +3,9 @@
   (:require
     [clojure.tools.reader.edn :as edn]
     [clojure.pprint :as pp]
-    [enc-response.datomic :as datomic] ; required to make `eval` work
-    [enc-response.parse :as parse] ; required to make `eval` work
-    [enc-response.proc :as proc] ; required to make `eval` work
+    [enc-response.datomic] ; required to make `eval` work
+    [enc-response.parse] ; required to make `eval` work
+    [enc-response.proc] ; required to make `eval` work
     [schema.core :as s]
     [tupelo.schema :as tsk]
     )

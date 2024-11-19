@@ -11,7 +11,8 @@
     [tupelo.profile :as prof]
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
-    ))
+    )
+  (:gen-class))
 
 (def ^:dynamic verbose?
   "Enable to see progress printouts"
