@@ -95,8 +95,7 @@
   (with-map-vals ctx [db-uri]
     (let [missing-recs      (load-missing-icns ctx)
           >>                (prn :num-missing-icns (count missing-recs))
-          conn              (d.peer/connect db-uri)
-          db                (d.peer/db conn)
+          db                (datomic/curr-db db-uri)
           ; for each rec with missing ICN, find only the newest encounter response record
           enc-response-recs (forv [missing-rec missing-recs]
                               (let [icn                 (grab :encounter-transmission/icn missing-rec)
@@ -111,8 +110,7 @@
   (with-map-vals ctx [db-uri icn-maps-aug-fname]
     (let [missing-recs (load-missing-icns ctx)
           >>           (prn :num-missing-icns (count missing-recs))
-          conn         (d.peer/connect db-uri)
-          db           (d.peer/db conn)
+          db           (datomic/curr-db db-uri)
           ; for each rec with missing ICN, find only the newest encounter response record
           icn-maps-aug (forv [missing-rec missing-recs]
                          (let [icn                 (grab :encounter-transmission/icn missing-rec)
@@ -155,8 +153,7 @@
     (with-map-vals ctx [db-uri]
       (let [missing-recs       (load-missing-icns ctx)
             >>                 (prn :num-missing-icns (count missing-recs))
-            conn               (d.peer/connect db-uri)
-            db                 (d.peer/db conn)
+            db                 (curr-db db-uri)
             icns-duplicate     (keep-if not-nil?
                                  (forv [[idx missing-rec] (indexed missing-recs)]
                                    (let [icn               (grab :encounter-transmission/icn missing-rec)

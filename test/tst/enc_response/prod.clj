@@ -5,6 +5,7 @@
         tupelo.test)
   (:require
     [clojure.data :as data]
+    [clojure.edn :as edn]
     [clojure.java.io :as io]
     [clojure.pprint :as pp]
     [datomic.api :as d.peer]
@@ -43,101 +44,65 @@
    :tx-size-limit               2
    :db-uri                      db-uri-disk-test})
 
+(def missing-icns-schema [
+                          {:db/ident :encounter-transmission.status/accepted
+                           ; :db/unique :db.unique/value
+                           ; :db/unique :db.unique/identity
+                           }
+                          {:db/ident :encounter-transmission.status/rejected
+                           ; :db/unique :db.unique/value
+                           ; :db/unique :db.unique/identity
+                           }
+
+                          {:db/ident       :encounter-transmission/icn :db/valueType :db.type/string
+                           :db/cardinality :db.cardinality/one}
+
+                          {:db/ident       :encounter-transmission/plan :db/valueType :db.type/string
+                           :db/cardinality :db.cardinality/one}
+
+                          {:db/ident       :encounter-transmission/status :db/valueType :db.type/ref
+                           :db/cardinality :db.cardinality/one}])
+
 (verify
-  (let [resp1       (datomic/enc-response-schema->datomic ctx-local) ; commit schema into datomic
-        ; >>          (pp/pprint resp1)
+  (datomic/datomic-peer-transact-entities db-uri-disk-test missing-icns-schema)
+  (let [rec1  {:encounter-transmission/icn    "30000019034534"
+               :encounter-transmission/plan   "ia-medicaid"
+               :encounter-transmission/status :encounter-transmission.status/accepted}
+        rec2  {:encounter-transmission/icn    "30000019034535"
+               :encounter-transmission/plan   "ia-medicaid"
+               :encounter-transmission/status :encounter-transmission.status/rejected}
+        resp1 (datomic/datomic-peer-transact-entities db-uri-disk-test [rec1 rec2])
+        ]
 
-        rec-1       {:mco-claim-number                "30000062649905"
-                     :iowa-transaction-control-number "62133600780000013"
-                     :iowa-processing-date            "12022021"
-                     :claim-type                      "D"
-                     :claim-frequency-code            "7"
-                     :member-id                       "1704114C"
-                     :first-date-of-service           "03112021"
-                     :billing-provider-npi            "1952711780"
-                     :mco-paid-date                   "11242021"
-                     :total-paid-amount               "000000022968"
-                     :line-number                     "00"
-                     :error-code                      "A00"
-                     :field                           "PAID"
-                     :error-field-value               ""}
-        rec-2       {:mco-claim-number                "30000062649906"
-                     :iowa-transaction-control-number "62133600780000014"
-                     :iowa-processing-date            "12022021"
-                     :claim-type                      "D"
-                     :claim-frequency-code            "1"
-                     :member-id                       "1704114C"
-                     :first-date-of-service           "07012021"
-                     :billing-provider-npi            "1952711780"
-                     :mco-paid-date                   "11242021"
-                     :total-paid-amount               "000000000000"
-                     :line-number                     "00"
-                     :error-code                      "A00"
-                     :field                           "DENIED"
-                     :error-field-value               ""}
-        sample-recs [rec-1
-                     rec-2]]
-    (datomic/enc-response-recs->datomic ctx-local sample-recs)
-
-    ; Query datomic to verify can retrieve records
-    (with-map-vals ctx-local [db-uri]
-      (let [conn (d.peer/connect db-uri)
-            db   (d.peer/db conn)]
-        (let [raw-result (only2 (d.peer/q '[:find (pull ?e [*])
-                                            :where [?e :mco-claim-number "30000062649905"]]
-                                  db))]
-          (is (submatch? rec-1 raw-result)))
-        (let [raw-result (only2 (d.peer/q '[:find (pull ?e [*])
-                                            :where [?e :mco-claim-number "30000062649906"]]
-                                  db))]
-          (is (submatch? rec-2 raw-result)))))))
+    (let [conn   (d.peer/connect db-uri-disk-test)
+          db     (d.peer/db conn)
+          result (onlies (d.peer/q '[:find (pull ?eid [:db/id
+                                                       :encounter-transmission/icn
+                                                       :encounter-transmission/plan
+                                                       {:encounter-transmission/status [*]}])
+                                     :where [?eid :encounter-transmission/icn]]
+                           db))]
+      (is (submatch? [{:encounter-transmission/icn  "30000019034534"
+                       :encounter-transmission/plan "ia-medicaid"
+                       :encounter-transmission/status
+                       #:db{:ident :encounter-transmission.status/accepted}}
+                      {:encounter-transmission/icn  "30000019034535"
+                       :encounter-transmission/plan "ia-medicaid"
+                       :encounter-transmission/status
+                       #:db{:ident :encounter-transmission.status/rejected}}]
+            result)))))
 
 (verify-focus
-  (datomic/enc-response-schema->datomic ctx-local)
-  (let [
-        rec-1       {:mco-claim-number                "30000062649905"
-                     :iowa-transaction-control-number "62133600780000013"
-                     :iowa-processing-date            "12022021"
-                     :claim-type                      "D"
-                     :claim-frequency-code            "7"
-                     :member-id                       "1704114C"
-                     :first-date-of-service           "03112021"
-                     :billing-provider-npi            "1952711780"
-                     :mco-paid-date                   "11242021"
-                     :total-paid-amount               "000000022968"
-                     :line-number                     "00"
-                     :error-code                      "A00"
-                     :field                           "PAID"
-                     :error-field-value               ""}
-        rec-2       {:mco-claim-number                "30000062649906"
-                     :iowa-transaction-control-number "62133600780000014"
-                     :iowa-processing-date            "12022021"
-                     :claim-type                      "D"
-                     :claim-frequency-code            "1"
-                     :member-id                       "1704114C"
-                     :first-date-of-service           "07012021"
-                     :billing-provider-npi            "1952711780"
-                     :mco-paid-date                   "11242021"
-                     :total-paid-amount               "000000000000"
-                     :line-number                     "00"
-                     :error-code                      "A00"
-                     :field                           "DENIED"
-                     :error-field-value               ""}
-        sample-recs [rec-1
-                     rec-2]]
-    (datomic/enc-response-recs->datomic ctx-local sample-recs)
+  (datomic/datomic-peer-transact-entities db-uri-disk-test missing-icns-schema)
+  (let [txdata (edn/read-string (slurp "/Users/athom555/work/missing-icns-prod-small-txdata.edn"))
+        resp1  (datomic/datomic-peer-transact-entities db-uri-disk-test txdata)
 
-    ; Query datomic to verify can retrieve records
-    (with-map-vals ctx-local [db-uri]
-      (let [conn (d.peer/connect db-uri)
-            db   (d.peer/db conn)]
-        (let [raw-result (only2 (d.peer/q '[:find (pull ?e [*])
-                                            :where [?e :mco-claim-number "30000062649905"]]
-                                  db))]
-          (is (submatch? rec-1 raw-result)))
-        (let [raw-result (only2 (d.peer/q '[:find (pull ?e [*])
-                                            :where [?e :mco-claim-number "30000062649906"]]
-                                  db))]
-          (is (submatch? rec-2 raw-result)))))))
-
-
+        db     (datomic/curr-db db-uri-disk-test)
+        found  (onlies (d.peer/q '[:find (pull ?eid [:db/id
+                                                     :encounter-transmission/icn
+                                                     :encounter-transmission/plan
+                                                     {:encounter-transmission/status [*]}])
+                                   :where [?eid :encounter-transmission/icn]]
+                         db))]
+    (spyx-pretty found)
+    ))

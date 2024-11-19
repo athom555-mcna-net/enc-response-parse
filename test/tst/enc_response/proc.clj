@@ -21,8 +21,7 @@
                :icn-maps-aug-fname "icn-maps-aug.edn"}]
       (with-map-vals ctx [db-uri]
         (spyx (count-enc-response-recs ctx))
-        (let [conn (d.peer/connect db-uri)
-              db   (d.peer/db conn)
+        (let [db   (datomic/curr-db db-uri)
               rec  (enc-response-query-icn->plan-icn db "30000019034534") ; missing file => :encounter-transmission/icn
               ]
           (spyx-pretty rec)

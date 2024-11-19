@@ -35,6 +35,12 @@
   [v :- s/Int] (<= eid-min-value v))
 
 ;-----------------------------------------------------------------------------
+(s/defn curr-db :- datomic.db.Db
+  [db-uri :- s/Str]
+  (let [conn (d.peer/connect db-uri)
+        db   (d.peer/db conn)]
+    db))
+
 
 (s/defn datomic-peer-delete-db :- [s/Str]
   "Deletes all data and schema for Encounter Response files from Datomic. "
@@ -90,6 +96,8 @@
         (recur db-next txs-next)))))
 
 ;---------------------------------------------------------------------------------------------------
+
+
 (def enc-response-schema
   "Encounter Response file fields (see NS enc-response.parse)"
   [{:db/ident     :mco-claim-number
