@@ -289,7 +289,7 @@
                   :encounter-transmission/status
                   #:db{:ident :encounter-transmission.status/accepted}}]))))
 
-      (let [tx-data-chunked (proc/create-tx-data-chunked ctx-local)]
+      (let [tx-data-chunked (proc/icn-maps-aug->tx-data-chunked ctx-local)]
         (is (->> tx-data-chunked ; alternate style with variable "first"
               (wild-match?
                 [[{:db/id                           datomic/eid?

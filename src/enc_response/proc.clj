@@ -128,7 +128,7 @@
         (spit icn-maps-aug-fname (with-out-str (pp/pprint icn-maps-aug))))
       icn-maps-aug)))
 
-(s/defn create-tx-data-chunked :- [[tsk/KeyMap]]
+(s/defn icn-maps-aug->tx-data-chunked :- [[tsk/KeyMap]]
   [ctx]
   (prn :create-tx-data-chunked--enter)
   (with-map-vals ctx [icn-maps-aug-fname tx-data-chunked-fname tx-size-limit]

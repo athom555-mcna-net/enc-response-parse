@@ -71,7 +71,7 @@
       (prn :datomic-peer-transact-chunked--leave))
     tx-results))
 
-(s/defn transact-seq-peer-with :- datomic.db.Db
+(s/defn datomic-peer-transact-entities-chunked-with :- datomic.db.Db
   "Accepts a 2D array of entity maps.  First takes a snapshot of Datomic.
   Then, each row of data is committed onto the snapshot using `(d.peer/with ...)`,
   as a separate transaction.  Returns the snapshot as modified by the transactions,
@@ -206,14 +206,14 @@
             (vec missing-icn-recs))))))
   (prn :save-missing-icns-iowa-narrow--leave))
 
-(s/defn load-commit-transactions :- s/Any
+(s/defn load-commit-transactions-chunked :- s/Any
   [ctx]
   (with-map-vals ctx [tx-data-chunked-fname]
     (let [conn (d.peer/connect (grab :db-uri ctx))
           txs  (edn/read-string (slurp tx-data-chunked-fname))]
       (datomic-peer-transact-entities-chunked conn txs))))
 
-(s/defn load-commit-transactions-with :- datomic.db.Db
+(s/defn load-commit-transactions-chunked-with :- datomic.db.Db
   [ctx]
   (prn :-----------------------------------------------------------------------------)
   (prn :load-commit-transactions-with--enter)
@@ -222,7 +222,7 @@
           conn                (d.peer/connect (grab :db-uri ctx))
           db-before           (d.peer/db conn)
           missing-icns-before (query-missing-icns-iowa-narrow db-before)
-          db-after            (transact-seq-peer-with conn txs)
+          db-after            (datomic-peer-transact-entities-chunked-with conn txs)
           missing-icns-after  (query-missing-icns-iowa-narrow db-after)]
       (println "Missing ICNs before = " (count missing-icns-before))
       (println "Missing ICNs after  = " (count missing-icns-after))))
@@ -247,8 +247,7 @@
   [ctx :- tsk/KeyMap]
   (with-map-vals ctx [db-uri]
     (prn :enc-response-schema->datomic db-uri)
-    (with-result (datomic-peer-transact-entities db-uri enc-response-schema)
-      (prn :enc-response-schema->datomic db-uri))))
+    (datomic-peer-transact-entities db-uri enc-response-schema)))
 
 (s/defn enc-response-datomic-init :- s/Any
   "Transact the schema for encounter response records into Datomic"
