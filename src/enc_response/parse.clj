@@ -121,36 +121,6 @@
         (recur specs-next chars-next result-next)))))
 
 ;---------------------------------------------------------------------------------------------------
-(s/defn parse-grep-result :- tsk/KeyMap
-  [out :- s/Str]
-  (let [out         (str/trim out)
-        matches-out (re-matches #"(^.*ENC_RESPONSE_.*.TXT):(.*)$" out)
-        result      {:fname   (xsecond matches-out)
-                     :content (xthird matches-out)}]
-    result))
-
-(s/defn extract-enc-resp-fields ; :- s/Str
-  [shell-result :- tsk/KeyMap]
-  (with-map-vals shell-result [exit out err]
-    (assert (= 0 exit))
-    (assert (= "" err))
-    (let [grep-result         (parse-grep-result out)
-          >>                  (when verbose?
-                                (println "                      found file: " (grab :fname grep-result)))
-          enc-response-line   (grab :content grep-result)
-          enc-response-parsed (parse-string-fields iowa-encounter-response-specs enc-response-line)]
-      enc-response-parsed)))
-
-(s/defn grep-orig-icn->response-parsed :- tsk/KeyMap
-  [ctx :- tsk/KeyMap
-   icn-str :- s/Str]
-  (with-map-vals ctx [encounter-response-root-dir]
-    (let [icn-str             (str/trim icn-str)
-          shell-cmd-str       (format "grep '^%s' %s/ENC_*.TXT" icn-str encounter-response-root-dir)
-          shell-result        (misc/shell-cmd shell-cmd-str)
-          enc-response-parsed (extract-enc-resp-fields shell-result)]
-      enc-response-parsed)))
-
 (s/defn enc-response-fname->lines :- [s/Str]
   [fname :- s/Str]
   (let [lines (it-> fname

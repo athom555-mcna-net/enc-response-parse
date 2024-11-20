@@ -144,79 +144,27 @@
 
 ;---------------------------------------------------------------------------------------------------
 (verify
-  (let [out      "./iowa-response/ENC_RESPONSE_D_20211202_065818.TXT:30000062649906                6213360078000001412022021D1170411          \r\n"
-        actual   (parse-grep-result out)
-        expected {:content "30000062649906                6213360078000001412022021D1170411",
-                  :fname   "./iowa-response/ENC_RESPONSE_D_20211202_065818.TXT"}]
-    (is= actual expected)))
+  (let [encounter-response-root-dir "./enc-response-files-test"
+        enc-resp-root-dir-File      (io/file encounter-response-root-dir)
+        all-files                   (file-seq enc-resp-root-dir-File) ; returns a tree of File objects like `find`
+        enc-resp-fnames             (vec (sort (mapv str (keep-if enc-resp-file? all-files))))
+        ]
+    (is (it-> all-files
+          (mapv type it)
+          (every? #(= % File) it)))
+    ; (spyx-pretty all-files)
+    ; all-files =>
+    ; [#object[java.io.File 0x4f39a53 "./enc-response-files-test"]
+    ;  #object[java.io.File 0x436528c3 "./enc-response-files-test/ENC_RESPONSE_D_20220106_062929.TXT"]
+    ;  #object[java.io.File 0x33e76e5 "./enc-response-files-test/ENC_RESPONSE_D_20211211_061725.TXT"]
+    ;  #object[java.io.File 0x27f6d10a "./enc-response-files-test/ENC_RESPONSE_D_20211216_070153.TXT"]
+    ;  #object[java.io.File 0x527e2e3e "./enc-response-files-test/ENC_RESPONSE_D_20211202_065818.TXT"]]
 
-;---------------------------------------------------------------------------------------------------
-(comment  ; sample output
-  (verify
-    (with-redefs [encounter-response-root-dir "./enc-response-files-test" ; full data:  "/Users/athom555/work/iowa-response"
-                  ]
-      (let [enc-resp-root-dir-File (io/file encounter-response-root-dir)
-            all-files              (file-seq enc-resp-root-dir-File) ; returns a tree like `find`
-            enc-resp-files         (vec (sort-by str (keep-if enc-resp-file? all-files)))
-            ]
-        ;(take 5 all-files) =>
-        ;[#object[java.io.File 0x15fd8daa "/Users/athom555/work/iowa-response"]
-        ; #object[java.io.File 0x762b698 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20200312_062014.TXT"]
-        ; #object[java.io.File 0x5ee9866c "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20180104_065621.TXT"]
-        ; #object[java.io.File 0x2f6268d9 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20181108_061817.TXT"]
-        ; #object[java.io.File 0x6d244c88 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20210715_115630.TXT"]]
-        ;(take 5 enc-resp-files) =>
-        ;[#object[java.io.File 0x66a9013e "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170413_132207.TXT"]
-        ; #object[java.io.File 0x65236427 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170424_125320.TXT"]
-        ; #object[java.io.File 0x425c5389 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170505_160755.TXT"]
-        ; #object[java.io.File 0x3f348a38 "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170509_144929.TXT"]
-        ; #object[java.io.File 0x1e7822fb "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20170515_094001.TXT"]]
-        ))))
-
-(verify
-  (with-redefs [verbose? verbose-tests?]
-    (let [shell-result        {:exit     0
-                               :out      "./iowa-response/ENC_RESPONSE_D_20211202_065818.TXT:30000062649906                6213360078000001412022021D11704114C0701202119527117801124202100000000000000A00DENIED                                                                                                  \r\n"
-                               :err      ""
-                               :cmd-str  "grep '^30000062649906' ./iowa-response/ENC_*.TXT"
-                               :os-shell "/bin/bash"}
-          enc-response-parsed (extract-enc-resp-fields shell-result)]
-      (is= enc-response-parsed {:mco-claim-number                "30000062649906"
-                                :iowa-transaction-control-number "62133600780000014"
-                                :iowa-processing-date            "12022021"
-                                :claim-type                      "D"
-                                :claim-frequency-code            "1"
-                                :member-id                       "1704114C"
-                                :first-date-of-service           "07012021"
-                                :billing-provider-npi            "1952711780"
-                                :mco-paid-date                   "11242021"
-                                :total-paid-amount               "000000000000"
-                                :line-number                     "00"
-                                :error-code                      "A00"
-                                :field                           "DENIED"
-                                :error-field-value               ""}))))
-
-(verify
-  (with-redefs [verbose? verbose-tests?]
-    (let [icn-str         "30000062649906"
-          enc-resp-parsed (grep-orig-icn->response-parsed ctx-local icn-str)]
-      (is= enc-resp-parsed
-        {:mco-claim-number                "30000062649906"
-         :iowa-transaction-control-number "62133600780000014"
-         :iowa-processing-date            "12022021"
-         :claim-type                      "D"
-         :claim-frequency-code            "1"
-         :member-id                       "1704114C"
-         :first-date-of-service           "07012021"
-         :billing-provider-npi            "1952711780"
-         :mco-paid-date                   "11242021"
-         :total-paid-amount               "000000000000"
-         :line-number                     "00"
-         :error-code                      "A00"
-         :field                           "DENIED"
-         :error-field-value               ""})
-      ))
-  )
+    (is= enc-resp-fnames
+      ["./enc-response-files-test/ENC_RESPONSE_D_20211202_065818.TXT"
+       "./enc-response-files-test/ENC_RESPONSE_D_20211211_061725.TXT"
+       "./enc-response-files-test/ENC_RESPONSE_D_20211216_070153.TXT"
+       "./enc-response-files-test/ENC_RESPONSE_D_20220106_062929.TXT"])))
 
 (comment  ; sample datomic record from heron-qa
   (pp/pprint (d/pull db '[*] 17592186108600))
@@ -236,72 +184,28 @@
   )
 
 (verify
-  (when false
-    (let [icn-str         "30000062649906"
-          ; Each call requires about 0.5 sec for full data search
-          enc-resp-parsed (grep-orig-icn->response-parsed ctx-local icn-str)]
-      (pp/pprint enc-resp-parsed))))
+  (with-redefs [verbose? verbose-tests?]
+    (let [result (proc/load-missing-icns ctx-local)]
+      (is (->> result
+            (submatch? [{:encounter-transmission/icn  "30000000100601"
+                         :encounter-transmission/plan "id-medicaid"
+                         :encounter-transmission/status
+                         #:db{:ident :encounter-transmission.status/rejected-by-validation}}
+                        {:encounter-transmission/icn  "30000000102936"
+                         :encounter-transmission/plan "id-medicaid"
+                         :encounter-transmission/status
+                         #:db{:ident :encounter-transmission.status/accepted}}
+                        {:encounter-transmission/icn  "30000000102990"
+                         :encounter-transmission/plan "id-medicaid"
+                         :encounter-transmission/status
+                         #:db{:ident :encounter-transmission.status/accepted}}
+                        {:encounter-transmission/icn  "30000000217708"
+                         :encounter-transmission/plan "ut-medicaid"
+                         :encounter-transmission/status
+                         #:db{:ident :encounter-transmission.status/rejected}}
+                        {:encounter-transmission/icn  "30000000222291"
+                         :encounter-transmission/plan "tx-medicaid"
+                         :encounter-transmission/status
+                         #:db{:ident :encounter-transmission.status/accepted}}])))
+      )))
 
-(verify
-  (when false
-    ; (prn :-----------------------------------------------------------------------------)
-    (with-redefs [verbose? verbose-tests?]
-      (proc/load-missing-icns ctx-local))
-    ; (prn :-----------------------------------------------------------------------------)
-    ))
-
-(comment
-  (verify
-    (prn :-----------------------------------------------------------------------------)
-    (with-redefs [verbose? verbose-tests?]
-      (let [icn-maps-aug (proc/create-icn-maps-aug-grep ctx-local)]
-        ; (spyx-pretty icn-maps-aug)
-        (is (->> icn-maps-aug
-              (wild-submatch?
-                [{:db/id                           datomic/eid?
-                  :encounter-transmission/icn      "30000000100601",
-                  :encounter-transmission/plan     "id-medicaid",
-                  :encounter-transmission/plan-icn "62133600780000001",
-                  :encounter-transmission/status
-                  #:db{:db/id datomic/eid?
-                       :ident :encounter-transmission.status/rejected-by-validation}}
-                 {:db/id                           17592186047700,
-                  :encounter-transmission/icn      "30000000102936",
-                  :encounter-transmission/plan     "id-medicaid",
-                  :encounter-transmission/plan-icn "62133600780000002",
-                  :encounter-transmission/status
-                  #:db{:ident :encounter-transmission.status/accepted}}
-                 {:db/id                           17592186047701,
-                  :encounter-transmission/icn      "30000000102990",
-                  :encounter-transmission/plan     "id-medicaid",
-                  :encounter-transmission/plan-icn "62134500780000003",
-                  :encounter-transmission/status
-                  #:db{:ident :encounter-transmission.status/accepted}}
-                 {:db/id                           17592186126919,
-                  :encounter-transmission/icn      "30000000217708",
-                  :encounter-transmission/plan     "ut-medicaid",
-                  :encounter-transmission/plan-icn "62135000780000004",
-                  :encounter-transmission/status
-                  #:db{:ident :encounter-transmission.status/rejected}}
-                 {:encounter-transmission/icn      "30000000222291",
-                  :encounter-transmission/plan     "tx-medicaid",
-                  :encounter-transmission/plan-icn "62200600780000005",
-                  :encounter-transmission/status
-                  #:db{:ident :encounter-transmission.status/accepted}}]))))
-
-      (let [tx-data-chunked (proc/icn-maps-aug->tx-data-chunked ctx-local)]
-        (is (->> tx-data-chunked ; alternate style with variable "first"
-              (wild-match?
-                [[{:db/id                           datomic/eid?
-                   :encounter-transmission/plan-icn "62133600780000001"}
-                  {:db/id                           datomic/eid?
-                   :encounter-transmission/plan-icn "62133600780000002"}]
-                 [{:db/id                           datomic/eid?
-                   :encounter-transmission/plan-icn "62134500780000003"}
-                  {:db/id                           datomic/eid?
-                   :encounter-transmission/plan-icn "62135000780000004"}]
-                 [{:db/id                           datomic/eid?
-                   :encounter-transmission/plan-icn "62200600780000005"}]]
-                )))))
-    (prn :-----------------------------------------------------------------------------)
-    ))

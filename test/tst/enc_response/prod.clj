@@ -84,5 +84,25 @@
                                                      {:encounter-transmission/status [*]}])
                                    :where [?eid :encounter-transmission/icn]]
                          db))]
-    (spyx-pretty found)
-    ))
+    (is (->> (xtake 5 found)
+          (submatch?
+            [{:encounter-transmission/icn  "30000019034534"
+              :encounter-transmission/plan "ia-medicaid"
+              :encounter-transmission/status
+              #:db{:ident :encounter-transmission.status/accepted}}
+             {:encounter-transmission/icn  "30000019034535"
+              :encounter-transmission/plan "ia-medicaid"
+              :encounter-transmission/status
+              #:db{:ident :encounter-transmission.status/accepted}}
+             {:encounter-transmission/icn  "30000019034536"
+              :encounter-transmission/plan "ia-medicaid"
+              :encounter-transmission/status
+              #:db{:ident :encounter-transmission.status/accepted}}
+             {:encounter-transmission/icn  "30000019034537"
+              :encounter-transmission/plan "ia-medicaid"
+              :encounter-transmission/status
+              #:db{:ident :encounter-transmission.status/accepted}}
+             {:encounter-transmission/icn  "30000019034538"
+              :encounter-transmission/plan "ia-medicaid"
+              :encounter-transmission/status
+              #:db{:ident :encounter-transmission.status/accepted}}])))))

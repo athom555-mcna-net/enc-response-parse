@@ -24,28 +24,10 @@
 (s/defn load-missing-icns :- [tsk/KeyMap]
   [ctx :- tsk/KeyMap]
   (with-map-vals ctx [missing-icn-fname]
-    (println "Reading: " missing-icn-fname)
-    (prof/with-timer-print :reading-file
+    (println :load-missing-icns missing-icn-fname)
+    (prof/with-timer-print :load-missing-icns
       (let [missing-data (edn/read-string (slurp missing-icn-fname))]
         missing-data))))
-
-(comment
-  (s/defn create-icn-maps-aug-grep :- [tsk/KeyMap]
-    [ctx :- tsk/KeyMap]
-    (with-map-vals ctx [icn-maps-aug-fname]
-      (let [missing-icn-maps (load-missing-icns ctx)
-            icn-maps-aug     (forv [icn-map missing-icn-maps]
-                               (when verbose?
-                                 (nl)
-                                 (println "seaching ENC_RESPONSE_*.TXT for icn:" icn-map))
-                               (let [icn         (grab :encounter-transmission/icn icn-map)
-                                     enc-resp    (->sorted-map (parse/grep-orig-icn->response-parsed ctx icn))
-                                     iowa-tcn    (grab :iowa-transaction-control-number enc-resp)
-                                     icn-map-aug (glue icn-map {:encounter-transmission/plan-icn iowa-tcn})]
-                                 icn-map-aug))]
-        (println "Writing: " icn-maps-aug-fname)
-        (spit icn-maps-aug-fname (with-out-str (pp/pprint icn-maps-aug)))
-        icn-maps-aug))))
 
 (s/defn get-enc-response-fnames :- [s/Str]
   [ctx :- tsk/KeyMap]

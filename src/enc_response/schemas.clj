@@ -2,12 +2,10 @@
   (:use tupelo.core
         tupelo.test)
   (:require
-    [clojure.tools.reader.edn :as edn]
     [schema.core :as s]
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
-    )
-  (:gen-class))
+    ))
 
 
 (s/def prod-missing-icns :- [tsk/KeyMap]
