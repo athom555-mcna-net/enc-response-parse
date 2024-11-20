@@ -3,6 +3,7 @@
         tupelo.core
         tupelo.test)
   (:require
+    [clojure.data :as data]
     [clojure.pprint :as pp]
     [schema.core :as s]
     [tupelo.schema :as tsk]
@@ -36,7 +37,7 @@
            :icn-maps-aug-fname          "icn-maps-aug.edn"
            :invoke-fn                   tupelo.core/noop
            :missing-icn-fname           "missing-icns.edn"
-           :tx-data-chunked-fname       "tx-data-chuncked.edn"
+           :tx-data-chunked-fname       "tx-data-chunked.edn"
            :tx-size-limit               500}
           )))
 
@@ -57,7 +58,7 @@
     ; verify -main calls :invoke-fn & returns result
     (let [out-txt (with-out-str
                     (let [result (main-impl config-fname)]
-                      (spyx-pretty result )
+                      (spyx-pretty result)
                       (is= result :dummy-fn--result)))]
       (when false
         (nl)
@@ -84,14 +85,15 @@
              :tx-size-limit               500}
             ))))
 
-    (let [ctx (config-load->ctx config-fname)]
-      (is= ctx
-        (quote
-          {:db-uri                      "some-preexisting-uri"
-           :encounter-response-root-dir "/some/path/to/root"
-           :icn-maps-aug-fname          "icn-maps-aug.edn"
-           :invoke-fn                   tupelo.core/noop
-           :missing-icn-fname           "missing-icns.edn"
-           :tx-size-limit               500
+    (let [ctx      (config-load->ctx config-fname)
+          expected (quote
+                     {:db-uri                      "some-preexisting-uri"
+                      :encounter-response-root-dir "/some/path/to/root"
+                      :icn-maps-aug-fname          "icn-maps-aug.edn"
+                      :invoke-fn                   tupelo.core/noop
+                      :missing-icn-fname           "missing-icns.edn"
+                      :tx-size-limit               500
 
-           :tx-data-chunked-fname "tx-data-chuncked.edn"}) ))))
+                      :tx-data-chunked-fname       "tx-data-chunked.edn"})]
+      (spyx-pretty (data/diff ctx expected))
+      (is= ctx expected))))

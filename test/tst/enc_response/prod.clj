@@ -10,8 +10,7 @@
     [clojure.pprint :as pp]
     [datomic.api :as d.peer]
     [enc-response.datomic :as datomic]
-    [enc-response.parse :as parse]
-    [enc-response.proc :as proc]
+    [enc-response.schemas :as schemas]
     [tupelo.string :as str]
     [tupelo.test.jvm :as ttj]
     ))
@@ -44,27 +43,8 @@
    :tx-size-limit               2
    :db-uri                      db-uri-disk-test})
 
-(def missing-icns-schema [
-                          {:db/ident :encounter-transmission.status/accepted
-                           ; :db/unique :db.unique/value
-                           ; :db/unique :db.unique/identity
-                           }
-                          {:db/ident :encounter-transmission.status/rejected
-                           ; :db/unique :db.unique/value
-                           ; :db/unique :db.unique/identity
-                           }
-
-                          {:db/ident       :encounter-transmission/icn :db/valueType :db.type/string
-                           :db/cardinality :db.cardinality/one}
-
-                          {:db/ident       :encounter-transmission/plan :db/valueType :db.type/string
-                           :db/cardinality :db.cardinality/one}
-
-                          {:db/ident       :encounter-transmission/status :db/valueType :db.type/ref
-                           :db/cardinality :db.cardinality/one}])
-
 (verify
-  (datomic/peer-transact-entities db-uri-disk-test missing-icns-schema)
+  (datomic/peer-transact-entities db-uri-disk-test schemas/prod-missing-icns)
   (let [rec1  {:encounter-transmission/icn    "30000019034534"
                :encounter-transmission/plan   "ia-medicaid"
                :encounter-transmission/status :encounter-transmission.status/accepted}
@@ -92,8 +72,8 @@
                        #:db{:ident :encounter-transmission.status/rejected}}]
             result)))))
 
-(verify-focus
-  (datomic/peer-transact-entities db-uri-disk-test missing-icns-schema)
+(verify
+  (datomic/peer-transact-entities db-uri-disk-test schemas/prod-missing-icns)
   (let [txdata (edn/read-string (slurp "/Users/athom555/work/missing-icns-prod-small-txdata.edn"))
         resp1  (datomic/peer-transact-entities db-uri-disk-test txdata)
 

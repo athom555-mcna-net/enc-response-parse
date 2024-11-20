@@ -5,6 +5,7 @@
     [clojure.pprint :as pp]
     [clojure.tools.reader.edn :as edn]
     [datomic.api :as d.peer]
+    [enc-response.schemas :as schemas]
     [schema.core :as s]
     [tupelo.core :as t]
     [tupelo.math :as math]
@@ -94,52 +95,6 @@
          result   (d.peer/with db-curr tx-curr) ; transact data into db-curr
          db-next  (t/grab :db-after result)]
         (recur db-next txs-next)))))
-
-;---------------------------------------------------------------------------------------------------
-
-(def enc-response-schema
-  "Encounter Response file fields (see NS enc-response.parse)"
-  [{:db/ident     :mco-claim-number
-    :db/valueType :db.type/string :db/cardinality :db.cardinality/one}
-
-   {:db/ident     :iowa-transaction-control-number
-    :db/valueType :db.type/string :db/cardinality :db.cardinality/one}
-
-   {:db/ident     :iowa-processing-date
-    :db/valueType :db.type/string :db/cardinality :db.cardinality/one}
-
-   {:db/ident     :claim-type
-    :db/valueType :db.type/string :db/cardinality :db.cardinality/one}
-
-   {:db/ident     :claim-frequency-code
-    :db/valueType :db.type/string :db/cardinality :db.cardinality/one}
-
-   {:db/ident     :member-id
-    :db/valueType :db.type/string :db/cardinality :db.cardinality/one}
-
-   {:db/ident     :first-date-of-service
-    :db/valueType :db.type/string :db/cardinality :db.cardinality/one}
-
-   {:db/ident     :billing-provider-npi
-    :db/valueType :db.type/string :db/cardinality :db.cardinality/one}
-
-   {:db/ident     :mco-paid-date
-    :db/valueType :db.type/string :db/cardinality :db.cardinality/one}
-
-   {:db/ident     :total-paid-amount
-    :db/valueType :db.type/string :db/cardinality :db.cardinality/one}
-
-   {:db/ident     :line-number
-    :db/valueType :db.type/string :db/cardinality :db.cardinality/one}
-
-   {:db/ident     :error-code
-    :db/valueType :db.type/string :db/cardinality :db.cardinality/one}
-
-   {:db/ident     :field
-    :db/valueType :db.type/string :db/cardinality :db.cardinality/one}
-
-   {:db/ident     :error-field-value
-    :db/valueType :db.type/string :db/cardinality :db.cardinality/one}])
 
 ;-----------------------------------------------------------------------------
 (s/defn query-missing-icns :- [[s/Any]]
@@ -254,7 +209,7 @@
   [ctx :- tsk/KeyMap]
   (with-map-vals ctx [db-uri]
     (prn :enc-response-schema->datomic db-uri)
-    (peer-transact-entities db-uri enc-response-schema)))
+    (peer-transact-entities db-uri schemas/encounter-response)))
 
 (s/defn enc-response-datomic-init :- s/Any
   "Transact the schema for encounter response records into Datomic"
