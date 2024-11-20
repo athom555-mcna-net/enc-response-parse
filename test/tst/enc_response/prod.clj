@@ -1,5 +1,5 @@
 ; Test functions & data before commit to production server
-(ns       ; ^:test-refresh/focus
+(ns ^:test-refresh/focus
   tst.enc-response.prod
   (:use tupelo.core
         tupelo.test)
@@ -20,7 +20,7 @@
 
 ; Enable to see progress printouts
 (def ^:dynamic verbose-tests?
-  true)
+  false)
 
 ; Defines URI for local transactor in `dev` mode. Uses `data-dir` in transactor *.properties file.
 ; Default entry `data-dir=data` => /opt/datomic/data/...
@@ -39,7 +39,6 @@
 
 (ttj/define-fixture :each
   {:enter (fn [ctx]
-            (spyx db-uri-disk-test)
             (cond-it-> (validate boolean? (d.peer/delete-database db-uri-disk-test)) ; returns true/false
               verbose-tests? (println "  Deleted prior db: " it))
             (cond-it-> (validate boolean? (d.peer/create-database db-uri-disk-test))
@@ -52,34 +51,33 @@
 (verify
   (with-map-vals ctx-local [db-uri]
     ; create empty db
-    (nl)
-    (spyx (datomic/peer-delete-db ctx-local))
-    (spyx (d.peer/create-database db-uri))
+    (datomic/peer-delete-db ctx-local)
+    (d.peer/create-database db-uri)
 
     ; create schema
     (datomic/peer-transact-entities db-uri schemas/prod-missing-icns)
 
     ; add sample records
-    (let [; specify :encounter-transmission.status/accepted as `ident`
-          rec1   {:encounter-transmission/icn    "30000019034534"
-                  :encounter-transmission/plan   "ia-medicaid"
-                  :encounter-transmission/status :encounter-transmission.status/accepted}
+    (let [test-entities [; specify :encounter-transmission.status/accepted as `ident` value
+                         {:encounter-transmission/icn    "30000019034534"
+                          :encounter-transmission/plan   "ia-medicaid"
+                          :encounter-transmission/status :encounter-transmission.status/accepted}
 
-          ; specify :encounter-transmission.status/rejectet as sub-entity
-          rec2   {:encounter-transmission/icn    "30000019034535"
-                  :encounter-transmission/plan   "ia-medicaid"
-                  :encounter-transmission/status {:db/ident :encounter-transmission.status/rejected}
-                  }
-          resp1  (datomic/peer-transact-entities db-uri [rec1 rec2])
+                         ; specify :encounter-transmission.status/rejected as sub-entity
+                         {:encounter-transmission/icn    "30000019034535"
+                          :encounter-transmission/plan   "ia-medicaid"
+                          :encounter-transmission/status {:db/ident :encounter-transmission.status/rejected}}]
 
-          conn   (d.peer/connect db-uri)
-          db     (d.peer/db conn)
-          result (onlies (d.peer/q '[:find (pull ?eid [:db/id
-                                                       :encounter-transmission/icn
-                                                       :encounter-transmission/plan
-                                                       {:encounter-transmission/status [*]}])
-                                     :where [?eid :encounter-transmission/icn]]
-                           db))]
+          resp1         (datomic/peer-transact-entities db-uri test-entities)
+
+          conn          (d.peer/connect db-uri)
+          db            (d.peer/db conn)
+          result        (onlies (d.peer/q '[:find (pull ?eid [:db/id
+                                                              :encounter-transmission/icn
+                                                              :encounter-transmission/plan
+                                                              {:encounter-transmission/status [*]}])
+                                            :where [?eid :encounter-transmission/icn]]
+                                  db))]
       (is (submatch? [{:encounter-transmission/icn  "30000019034534"
                        :encounter-transmission/plan "ia-medicaid"
                        :encounter-transmission/status
@@ -117,22 +115,21 @@
                                            (datomic/curr-db db-uri-disk-test))))]
       (is (->> (set result)
             (submatch?
-              #{#:encounter-transmission{:icn "30000019034534"
-                                         :plan "ia-medicaid"
+              #{#:encounter-transmission{:icn    "30000019034534"
+                                         :plan   "ia-medicaid"
                                          :status #:db{:ident :encounter-transmission.status/accepted}}
-                #:encounter-transmission{:icn "30000019034535"
-                                         :plan "ia-medicaid"
+                #:encounter-transmission{:icn    "30000019034535"
+                                         :plan   "ia-medicaid"
                                          :status #:db{:ident :encounter-transmission.status/accepted}}
-                #:encounter-transmission{:icn "30000019034536"
-                                         :plan "ia-medicaid"
+                #:encounter-transmission{:icn    "30000019034536"
+                                         :plan   "ia-medicaid"
                                          :status #:db{:ident :encounter-transmission.status/accepted}}
-                #:encounter-transmission{:icn "30000019034537"
-                                         :plan "ia-medicaid"
+                #:encounter-transmission{:icn    "30000019034537"
+                                         :plan   "ia-medicaid"
                                          :status #:db{:ident :encounter-transmission.status/accepted}}
-                #:encounter-transmission{:icn "30000019034538"
-                                         :plan "ia-medicaid"
-                                         :status #:db{:ident :encounter-transmission.status/accepted}}} )))
-
+                #:encounter-transmission{:icn    "30000019034538"
+                                         :plan   "ia-medicaid"
+                                         :status #:db{:ident :encounter-transmission.status/accepted}}})))
 
       )))
 
