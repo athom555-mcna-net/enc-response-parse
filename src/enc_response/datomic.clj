@@ -257,17 +257,6 @@
     (d.peer/create-database db-uri)
     (enc-response-schema->datomic ctx)))
 
-(s/defn enc-response-recs->datomic :- s/Any
-  "Transact encounter response records into Datomic, using a block size from `ctx`
-  as specified by :tx-size-limit. "
-  [ctx :- tsk/KeyMap
-   entity-maps :- [tsk/KeyMap]]
-  (prof/with-timer-accum :enc-response-recs->datomic
-    (with-map-vals ctx [db-uri tx-size-limit]
-      (let [resp (peer-transact-entities db-uri tx-size-limit entity-maps)]
-        ; (pp/pprint resp )
-        resp))))
-
 (s/defn icn->enc-response-recs :- [tsk/KeyMap]
   [db :- s/Any
    icn :- s/Str]

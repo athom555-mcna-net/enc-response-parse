@@ -48,6 +48,15 @@
         result            (xlast recs-sorted)]
     result))
 
+(s/defn enc-response-recs->datomic :- s/Any
+  "Transact encounter response records into Datomic, using a block size from `ctx`
+  as specified by :tx-size-limit. "
+  [ctx :- tsk/KeyMap
+   entity-maps :- [tsk/KeyMap]]
+  (prof/with-timer-accum :enc-response-recs->datomic
+    (with-map-vals ctx [db-uri tx-size-limit]
+      (datomic/peer-transact-entities db-uri tx-size-limit entity-maps))))
+
 (s/defn enc-response-files->datomic :- [s/Str]
   "Uses `:encounter-response-root-dir` from map `ctx` to specify a directory of
   Encounter Response files. For each file in turn, loads/parses the file and commits the data
@@ -63,7 +72,7 @@
       (doseq [fname enc-resp-fnames]
         (prn :enc-response-files->datomic--processing fname)
         (let [data-recs (parse/enc-response-fname->parsed fname)]
-          (datomic/enc-response-recs->datomic ctx data-recs)))
+          (enc-response-recs->datomic ctx data-recs)))
       (nl)
       (prn :enc-response-files->datomic--num-recs (datomic/count-enc-response-recs ctx))
       (nl)

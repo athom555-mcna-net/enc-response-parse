@@ -9,6 +9,7 @@
     [enc-response.datomic :as datomic]
     [enc-response.proc :as proc]
     [tupelo.parse :as parse]
+    [tupelo.string :as str]
     )
   (:import
     [java.io File]
@@ -208,4 +209,76 @@
                          :encounter-transmission/status
                          #:db{:ident :encounter-transmission.status/accepted}}])))
       )))
+
+(verify
+  (let [ctx-local
+        {:encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
+         :missing-icn-fname           "resources/missing-icns-prod-small.edn"
+         :icn-maps-aug-fname          "icn-maps-aug.edn"
+         :tx-data-fname               "tx-data.edn"
+         :tx-size-limit               2
+
+         :db-uri                      "datomic:dev://localhost:4334/enc-response-test"}]
+
+    ; full data: "/Users/athom555/work/iowa-response"
+    (let [enc-resp-fnames (proc/get-enc-response-fnames ctx-local)
+          fname-first     (xfirst enc-resp-fnames)]
+      ; verify found all files in dir
+      (is= enc-resp-fnames
+        ["./enc-response-files-test-small/ENC_RESPONSE_D_20211202_065818.TXT"
+         "./enc-response-files-test-small/ENC_RESPONSE_D_20211211_061725.TXT"
+         "./enc-response-files-test-small/ENC_RESPONSE_D_20211216_070153.TXT"
+         "./enc-response-files-test-small/ENC_RESPONSE_D_20220106_062929.TXT"])
+      ; verify read all lines from first file
+      (let [lines           (enc-response-fname->lines fname-first)
+            lines-collapsed (mapv str/whitespace-collapse lines)]
+        (is= lines-collapsed
+          ["30000000100601 6213360078000000112022021D12610850C0630202119527117800820202100000000476300A00PAID"
+           "30000000102936 6213360078000000212022021D13183010G1025202119527117801124202100000002492400A00PAID"
+           "30000062649895 6213360078000000312022021D12906224H1025202119527117801124202100000002492400A00PAID"
+           "30000062649896 6213360078000000412022021D11574993J1025202119527117801124202100000000800000A00PAID"
+           "30000062649897 6213360078000000512022021D14037045B1027202119527117801124202100000003457400A00PAID"]))
+      ; verify parsed all lines => records from first file
+      (let [data-recs (enc-response-fname->parsed fname-first)
+            rec-1     (xfirst data-recs)
+            rec-5     (xlast data-recs)]
+        (is= 5 (count data-recs))
+
+        (is= rec-1 {:billing-provider-npi            "1952711780",
+                    :claim-frequency-code            "1",
+                    :claim-type                      "D",
+                    :error-code                      "A00",
+                    :error-field-value               "",
+                    :field                           "PAID",
+                    :first-date-of-service           "06302021",
+                    :iowa-processing-date            "12022021",
+                    :iowa-transaction-control-number "62133600780000001",
+                    :line-number                     "00",
+                    :mco-claim-number                "30000000100601",
+                    :mco-paid-date                   "08202021",
+                    :member-id                       "2610850C",
+                    :total-paid-amount               "000000004763"})
+        (is= rec-5 {:billing-provider-npi            "1952711780",
+                    :claim-frequency-code            "1",
+                    :claim-type                      "D",
+                    :error-code                      "A00",
+                    :error-field-value               "",
+                    :field                           "PAID",
+                    :first-date-of-service           "10272021",
+                    :iowa-processing-date            "12022021",
+                    :iowa-transaction-control-number "62133600780000005",
+                    :line-number                     "00",
+                    :mco-claim-number                "30000062649897",
+                    :mco-paid-date                   "11242021",
+                    :member-id                       "4037045B",
+                    :total-paid-amount               "000000034574"})
+
+        ; verify parsed all 5 records from file, first & last match expected values
+        (is (->> data-recs
+              (wild-match?
+                [rec-1
+                 :*
+                 :*
+                 :*
+                 rec-5])))))))
 
