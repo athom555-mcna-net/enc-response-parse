@@ -1,8 +1,7 @@
 ; Test functions & data before commit to production server
 (ns ^:test-refresh/focus
   tst.enc-response.prod
-  (:use tupelo.core
-        tupelo.test)
+  (:use enc-response.prod tupelo.core tupelo.test)
   (:require
     [clojure.data :as data]
     [clojure.edn :as edn]
@@ -89,49 +88,34 @@
             result)))))
 
 (verify
-  (with-map-vals ctx-local [db-uri tx-size-limit]
-    ; create empty db
-    (datomic/peer-delete-db ctx-local)
-    (d.peer/create-database db-uri)
+  (init-missing-icns->datomic ctx-local) ; transact sample records into test DB
 
-    ; create schema
-    (datomic/peer-transact-entities db-uri schemas/prod-missing-icns)
+  (let [result (datomic/elide-db-id
+                 (onlies (d.peer/q '[:find (pull ?eid [:db/id
+                                                       :encounter-transmission/icn
+                                                       :encounter-transmission/plan
+                                                       {:encounter-transmission/status [*]}])
+                                     :where [?eid :encounter-transmission/icn]]
+                           (datomic/curr-db db-uri-disk-test))))]
+    (is (->> (set result)
+          (submatch?
+            #{#:encounter-transmission{:icn    "30000019034534"
+                                       :plan   "ia-medicaid"
+                                       :status #:db{:ident :encounter-transmission.status/accepted}}
+              #:encounter-transmission{:icn    "30000019034535"
+                                       :plan   "ia-medicaid"
+                                       :status #:db{:ident :encounter-transmission.status/accepted}}
+              #:encounter-transmission{:icn    "30000019034536"
+                                       :plan   "ia-medicaid"
+                                       :status #:db{:ident :encounter-transmission.status/accepted}}
+              #:encounter-transmission{:icn    "30000019034537"
+                                       :plan   "ia-medicaid"
+                                       :status #:db{:ident :encounter-transmission.status/accepted}}
+              #:encounter-transmission{:icn    "30000019034538"
+                                       :plan   "ia-medicaid"
+                                       :status #:db{:ident :encounter-transmission.status/accepted}}})))
 
-    ; add sample records
-    (let [conn                 (d.peer/connect db-uri)
-
-          missing-icns         (datomic/elide-db-id
-                                 (proc/load-missing-icns ctx-local))
-          missing-icns-chunked (partition-all tx-size-limit missing-icns)
-          resp1                (datomic/peer-transact-entities-chunked conn missing-icns-chunked)
-
-
-          result               (datomic/elide-db-id
-                                 (onlies (d.peer/q '[:find (pull ?eid [:db/id
-                                                                       :encounter-transmission/icn
-                                                                       :encounter-transmission/plan
-                                                                       {:encounter-transmission/status [*]}])
-                                                     :where [?eid :encounter-transmission/icn]]
-                                           (datomic/curr-db db-uri-disk-test))))]
-      (is (->> (set result)
-            (submatch?
-              #{#:encounter-transmission{:icn    "30000019034534"
-                                         :plan   "ia-medicaid"
-                                         :status #:db{:ident :encounter-transmission.status/accepted}}
-                #:encounter-transmission{:icn    "30000019034535"
-                                         :plan   "ia-medicaid"
-                                         :status #:db{:ident :encounter-transmission.status/accepted}}
-                #:encounter-transmission{:icn    "30000019034536"
-                                         :plan   "ia-medicaid"
-                                         :status #:db{:ident :encounter-transmission.status/accepted}}
-                #:encounter-transmission{:icn    "30000019034537"
-                                         :plan   "ia-medicaid"
-                                         :status #:db{:ident :encounter-transmission.status/accepted}}
-                #:encounter-transmission{:icn    "30000019034538"
-                                         :plan   "ia-medicaid"
-                                         :status #:db{:ident :encounter-transmission.status/accepted}}})))
-
-      )))
+    ))
 
 (verify
   (datomic/peer-transact-entities db-uri-disk-test schemas/prod-missing-icns)
