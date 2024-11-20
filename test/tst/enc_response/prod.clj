@@ -1,5 +1,5 @@
 ; Test functions & data before commit to production server
-(ns ^:test-refresh/focus
+(ns       ; ^:test-refresh/focus
   tst.enc-response.prod
   (:use enc-response.prod tupelo.core tupelo.test)
   (:require
@@ -113,9 +113,7 @@
                                        :status #:db{:ident :encounter-transmission.status/accepted}}
               #:encounter-transmission{:icn    "30000019034538"
                                        :plan   "ia-medicaid"
-                                       :status #:db{:ident :encounter-transmission.status/accepted}}})))
-
-    ))
+                                       :status #:db{:ident :encounter-transmission.status/accepted}}})))))
 
 (verify
   (datomic/peer-transact-entities db-uri-disk-test schemas/prod-missing-icns)
