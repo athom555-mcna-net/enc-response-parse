@@ -11,6 +11,7 @@
 
 
 (s/def prod-missing-icns :- [tsk/KeyMap]
+  "Describes data extracted from prod records with missing value for `plan-icn`"
   [{:db/ident :encounter-transmission.status/accepted}
    {:db/ident :encounter-transmission.status/rejected}
 
@@ -24,9 +25,8 @@
    {:db/ident       :encounter-transmission/status :db/valueType :db.type/ref
     :db/cardinality :db.cardinality/one}])
 
-
 (s/def encounter-response :- [tsk/KeyMap]
-  "Encounter Response file fields (see NS enc-response.parse)"
+  "Describes fields in Encounter Response file (see NS enc-response.parse)"
   [{:db/ident     :mco-claim-number
     :db/valueType :db.type/string :db/cardinality :db.cardinality/one}
 
