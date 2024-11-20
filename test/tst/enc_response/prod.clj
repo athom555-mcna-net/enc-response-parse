@@ -1,5 +1,5 @@
 ; Test functions & data before commit to production server
-(ns ^:test-refresh/focus
+(ns       ; ^:test-refresh/focus
   tst.enc-response.prod
   (:use tupelo.core
         tupelo.test)
@@ -49,7 +49,7 @@
               verbose-tests? (println "  Deleting db:      " it)))
    })
 
-(verify-focus
+(verify
   (with-map-vals ctx-local [db-uri]
     ; create empty db
     (nl)
@@ -90,7 +90,7 @@
                        #:db{:ident :encounter-transmission.status/rejected}}]
             result)))))
 
-(verify-focus
+(verify
   (with-map-vals ctx-local [db-uri tx-size-limit]
     ; create empty db
     (datomic/peer-delete-db ctx-local)

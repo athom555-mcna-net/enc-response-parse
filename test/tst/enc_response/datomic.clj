@@ -42,7 +42,7 @@
 
    :db-uri                      "datomic:dev://localhost:4334/enc-response-test"})
 
-(verify-focus
+(verify
   (let [data     [:a 2 {:c {:db/id 999 :d 4}}]
         expected [:a 2 {:c {:d 4}}]]
     (is= (elide-db-id data) expected)

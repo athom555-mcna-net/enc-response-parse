@@ -69,11 +69,11 @@
                                   (/ it 2))
           first-37              [1 1 2 1 2 3 1 2 3 4 1 2 3 4 5 1 2 3 4 5 6 1 2 3 4 5 6 7 1 2 3 4 5 6 7 8 1]
 
-          lazy-fn               (fn ^:lazy-fn []
+          lazy-fn               (fn lazy-fn []
                                   (let [triangle-2d (map #(range 1 (inc %)) (range 1 (inc N)))
                                         triangle-1d (array-2d->1d-lazy-concat triangle-2d)]
                                     (is= first-37 (take 37 triangle-1d))))
-          eager-fn              (fn ^:eager-fn []
+          eager-fn              (fn eager-fn []
                                   (let [triangle-2d (mapv #(thru 1 %) (thru 1 N))
                                         triangle-1d (array-2d->1d triangle-2d)]
                                     (is= first-37 (take 37 triangle-1d))
@@ -101,18 +101,18 @@
           ncols          (long (Math/round (Math/sqrt N)))
           vals           (range N)
 
-          lazy-fn-concat (fn ^:lazy-fn []
+          lazy-fn-concat (fn lazy-fn []
                            (let [triangle-2d (array-1d->2d-lazy ncols vals)
                                  triangle-1d (array-2d->1d-lazy-concat triangle-2d)]
                              (is= (range 37) (take 37 triangle-1d))))
 
           #_(comment
-              lazy-fn-gen (fn ^:lazy-fn []
+              lazy-fn-gen (fn lazy-fn []
                             (let [triangle-2d (array-1d->2d-lazy ncols vals)
                                   triangle-1d (array-2d->1d-lazy-gen triangle-2d)]
                               (is= (range 37) (take 37 triangle-1d)))))
 
-          eager-fn       (fn ^:eager-fn []
+          eager-fn       (fn eager-fn []
                            (let [triangle-2d (array-1d->2d ncols vals)
                                  triangle-1d (array-2d->1d triangle-2d)]
                              (is= (range 37) (take 37 triangle-1d))))
