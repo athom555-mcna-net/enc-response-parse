@@ -57,22 +57,22 @@
       (is (submatch? '{:db-uri    "aaa?bbb"
                        :invoke-fn enc-response.core/dummy-fn}
             ctx))
-      (is= (dispatch ctx) :dummy-fn--result))
+      (is= (dispatch ctx) :dummy-fn--result)
 
-    ; verify -main calls :invoke-fn & returns result
-    (let [out-txt (with-out-str
-                    (let [result (main-impl config-fname)]
-                      (spyx-pretty result)
-                      (is= result :dummy-fn--result)))]
-      (when false
-        (nl)
-        (prn :-----------------------------------------------------------------------------)
-        (println out-txt))
-      (is (str/contains-str-frags? out-txt
-            ":main-impl--enter"
-            ":main-impl--leave")))
-    ))
+      ; verify -main calls :invoke-fn & returns result
+      (let [out-txt (with-out-str
+                      (let [result (main-impl config-fname)]
+                        (spyx-pretty result)
+                        (is= result :dummy-fn--result)))]
+        (when false
+          (nl)
+          (prn :-----------------------------------------------------------------------------)
+          (println out-txt))
+        (is (str/contains-str-frags? out-txt
+              ":main-impl--enter"
+              ":main-impl--leave"))))))
 
+;-----------------------------------------------------------------------------
 (verify
   (let [config-fname "config-tst.edn"]
     (spit config-fname
@@ -86,8 +86,7 @@
              :icn-maps-aug-fname          "icn-maps-aug.edn"
              :invoke-fn                   tupelo.core/noop
              :missing-icn-fname           "missing-icns.edn"
-             :tx-size-limit               500}
-            ))))
+             :tx-size-limit               500}))))
 
     (let [ctx      (util/discarding-out-str
                      (config-load->ctx config-fname))

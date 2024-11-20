@@ -24,19 +24,19 @@
    :missing-icn-fname           "resources/missing-icns-5.edn"
    :icn-maps-aug-fname          "icn-maps-aug.edn"
    :tx-data-fname               "tx-data.edn"
-   :tx-size-limit               2
+   :tx-size-limit               3
    })
 
 ;-----------------------------------------------------------------------------
 (verify
-  (throws? (validate-format :charxxx "abc")) ; must be valid format
+  (throws? (validate-format :charxxx "abc")) ; format kw must be valid
 
   (throws-not? (validate-format :char "")) ; empty str legal
   (throws-not? (validate-format :numeric ""))
   (throws-not? (validate-format :alphanumeric ""))
   (throws? (validate-format :char (vec "abc"))) ; must be str, not charseq
 
-  (is= "a" (validate-format :char "a")) ; alphabetic
+  (is= "a" (validate-format :char "a")) ; :char => alpha only
   (is= "abc" (validate-format :char "abc"))
   (throws? (validate-format :numeric "abc"))
   (throws? (validate-format :char "abc9"))
@@ -46,7 +46,7 @@
   (is= "abc9" (validate-format :alphanumeric "abc9"))
   (throws? (validate-format :alphanumeric "#abc"))
 
-  (is= "9" (validate-format :numeric "9")) ; numeric
+  (is= "9" (validate-format :numeric "9")) ; numeric only
   (is= "123" (validate-format :numeric "123"))
   (throws? (validate-format :numeric "abc"))
   (throws? (validate-format :numeric "abc9"))
@@ -64,21 +64,21 @@
   (throws? (spec-slice {:name :xxx :format :char :length 3 :length-strict? true} (vec "ab"))) ; insufficient chars
   (throws-not? (spec-slice {:name :xxx :format :char :length 3 :length-strict? false} (vec "ab"))) ; insufficient chars
 
-  (is= (spec-slice {:name :xxx :format :char :length 3} (vec "abc"))
+  (is= (spec-slice {:name :xxx :format :char :length 3} (vec "abc")) ; input str matches expected length
     {:state  {:chars-remaining []}
      :output {:xxx "abc"}})
-  (is= (spec-slice {:name :xxx :format :char :length 3} (vec "abcdefg"))
+  (is= (spec-slice {:name :xxx :format :char :length 3} (vec "abcdefg")) ;input str too long => truncated
     {:state  {:chars-remaining (vec "defg")}
      :output {:xxx "abc"}}))
 
-(verify
+(verify   ; document behavior for normal and failure cases
   (is= 123 (parse/parse-int "123"))
   (is= -1 (with-exception-default -1
             (parse/parse-int "12x")))
   (is= 123 (parse/parse-int "123" :default 0))
   (is= 0 (parse/parse-int "12x" :default 0)))
 
-(verify
+(verify   ; document normal and error cases
   (let [field-specs [{:name :a :format :char :length 1}
                      {:name :bb :format :numeric :length 2}
                      {:name :ccc :format :alphanumeric :length 3 :length-strict? false}]]
@@ -95,7 +95,7 @@
         rec-2    "30000062649906                6213360078000001412022021D11704114C0701202119527117801124202100000000000000A00DENIED        "
         parsed-1 (parse-string-fields iowa-encounter-response-specs rec-1)
         parsed-2 (parse-string-fields iowa-encounter-response-specs rec-2)]
-    ; (pp/pprint parsed-1)
+    ; (spyx-pretty parsed-1)
     (is= parsed-1
       {:mco-claim-number                "30000062649905" ; Note:  numeric fields still returned as strings!
        :iowa-transaction-control-number "62133600780000013"
@@ -112,7 +112,7 @@
        :field                           "PAID"
        :error-field-value               ""})
 
-    ; (pp/pprint parsed-2)
+    ; (spyx-pretty parsed-2)
     (is= parsed-2
       {:mco-claim-number                "30000062649906"
        :iowa-transaction-control-number "62133600780000014"
@@ -127,12 +127,11 @@
        :line-number                     "00"
        :error-code                      "A00"
        :field                           "DENIED"
-       :error-field-value               ""})
-    ))
+       :error-field-value               ""})))
 
 (verify
   ; works only on filename w/o parent dirs
-  (isnt (enc-resp-file-name? "xyzENC_RESPONSE_D_20200312_062014.TXT"))
+  (isnt (enc-resp-file-name? "a/b/ENC_RESPONSE_D_20200312_062014.TXT"))
   (is (enc-resp-file-name? "ENC_RESPONSE_D_20200312_062014.TXT"))
 
   ; ignores parent dirs in path
@@ -140,21 +139,19 @@
 
   ; OK if not exist, as long as pattern matches
   (is (enc-resp-file? (File. "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_xxxxxxx_062014.TXT")))
-  (isnt (enc-resp-file? (File. "/Users/athom555/work/iowa-response/xxxxENC_RESPONSE_D_xxxxxxx_062014.TXT")))
-  )
+  (isnt (enc-resp-file? (File. "/Users/athom555/work/iowa-response/xxxxENC_RESPONSE_D_xxxxxxx_062014.TXT"))))
 
 ;---------------------------------------------------------------------------------------------------
 (verify
   (let [encounter-response-root-dir "./enc-response-files-test"
         enc-resp-root-dir-File      (io/file encounter-response-root-dir)
         all-files                   (file-seq enc-resp-root-dir-File) ; returns a tree of File objects like `find`
-        enc-resp-fnames             (vec (sort (mapv str (keep-if enc-resp-file? all-files))))
-        ]
+        enc-resp-fnames             (vec (sort (mapv str (keep-if enc-resp-file? all-files))))]
     (is (it-> all-files
           (mapv type it)
-          (every? #(= % File) it)))
+          (every? #(= % File) it))) ; every element is a java.io.File
     ; (spyx-pretty all-files)
-    ; all-files =>
+    ; all-files =>   *** sample result ***
     ; [#object[java.io.File 0x4f39a53 "./enc-response-files-test"]
     ;  #object[java.io.File 0x436528c3 "./enc-response-files-test/ENC_RESPONSE_D_20220106_062929.TXT"]
     ;  #object[java.io.File 0x33e76e5 "./enc-response-files-test/ENC_RESPONSE_D_20211211_061725.TXT"]
@@ -181,8 +178,7 @@
    :encounter-transmission/icn                      "30000000165819"
    :inbound-encounter-status/timestamp              #inst "2023-02-08T17:19:12.995-00:00"
    :encounter-transmission/previous-icn             "30000000165694"
-   :encounter-transmission/billing-provider-npi     "1831475300"}
-  )
+   :encounter-transmission/billing-provider-npi     "1831475300"})
 
 (verify
   (with-redefs [verbose? verbose-tests?]
@@ -207,21 +203,19 @@
                         {:encounter-transmission/icn  "30000000222291"
                          :encounter-transmission/plan "tx-medicaid"
                          :encounter-transmission/status
-                         #:db{:ident :encounter-transmission.status/accepted}}])))
-      )))
+                         #:db{:ident :encounter-transmission.status/accepted}}]))))))
 
 (verify
-  (let [ctx-local
-        {:encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
-         :missing-icn-fname           "resources/missing-icns-prod-small.edn"
-         :icn-maps-aug-fname          "icn-maps-aug.edn"
-         :tx-data-fname               "tx-data.edn"
-         :tx-size-limit               2
+  (let [ctx {:db-uri                      "datomic:dev://localhost:4334/enc-response-test"
 
-         :db-uri                      "datomic:dev://localhost:4334/enc-response-test"}]
+             :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
+             :missing-icn-fname           "resources/missing-icns-prod-small.edn"
+             :icn-maps-aug-fname          "icn-maps-aug.edn"
+             :tx-data-fname               "tx-data.edn"
+             }]
 
     ; full data: "/Users/athom555/work/iowa-response"
-    (let [enc-resp-fnames (proc/get-enc-response-fnames ctx-local)
+    (let [enc-resp-fnames (proc/get-enc-response-fnames ctx) ; uses :encounter-response-root-dir
           fname-first     (xfirst enc-resp-fnames)]
       ; verify found all files in dir
       (is= enc-resp-fnames
@@ -281,4 +275,3 @@
                  :*
                  :*
                  rec-5])))))))
-

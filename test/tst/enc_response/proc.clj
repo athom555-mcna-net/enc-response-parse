@@ -8,7 +8,6 @@
     [clojure.pprint :as pp]
     [datomic.api :as d.peer]
     [enc-response.datomic :as datomic]
-    [enc-response.parse :as parse]
     [tupelo.string :as str]
     [tupelo.test.jvm :as ttj]
     ))
@@ -30,8 +29,8 @@
                :icn-maps-aug-fname "icn-maps-aug.edn"}]
       (with-map-vals ctx [db-uri]
         (spyx (count-enc-response-recs ctx))
-        (let [db   (datomic/curr-db db-uri)
-              rec  (enc-response-query-icn->plan-icn db "30000019034534") ; missing file => :encounter-transmission/icn
+        (let [db  (datomic/curr-db db-uri)
+              rec (enc-response-query-icn->plan-icn db "30000019034534") ; missing file => :encounter-transmission/icn
               ]
           (spyx-pretty rec)
           )))))
@@ -53,20 +52,20 @@
               verbose-tests? (println "  Creating db:      " it)))
    :leave (fn [ctx]
             (cond-it-> (validate boolean? (d.peer/delete-database db-uri-disk-test))
-              verbose-tests? (println "  Deleting db:      " it)))
-   })
+              verbose-tests? (println "  Deleting db:      " it)))})
 
 (def ctx-local
-  {:encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
+  {:db-uri                      db-uri-disk-test
+
+   :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
    :missing-icn-fname           "resources/missing-icns-prod-small.edn"
    :icn-maps-aug-fname          "icn-maps-aug.edn"
    :tx-data-fname               "tx-data.edn"
-   :tx-size-limit               2
+   :tx-size-limit               2})
 
-   :db-uri                      db-uri-disk-test})
-
+; check can discard all but newest record
 (verify
-  (let [response-rec-1     {:billing-provider-npi            "1952711780"
+  (let [response-rec-1      {:billing-provider-npi            "1952711780"
                              :claim-frequency-code            "1"
                              :claim-type                      "D"
                              :error-code                      "A00"
@@ -82,7 +81,7 @@
                              :total-paid-amount               "000000017750"
                              :db/id                           17592186045438}
 
-        response-rec-2     {:billing-provider-npi            "1952711780"
+        response-rec-2      {:billing-provider-npi            "1952711780"
                              :claim-frequency-code            "7"
                              :claim-type                      "D"
                              :error-code                      "A00"
@@ -99,12 +98,12 @@
                              :db/id                           17592186233847}
         response-recs-multi [response-rec-1
                              response-rec-2]
-        result      (resp-recs->newest response-recs-multi)]
+        result              (resp-recs->newest response-recs-multi)]
     (is= result response-rec-2)))
 
+; add 2 unique recs to datomic, query and verify
 (verify
   (let [resp1       (datomic/enc-response-schema->datomic ctx-local) ; commit schema into datomic
-        ; >>          (pp/pprint resp1)
 
         rec-1       {:mco-claim-number                "30000062649905"
                      :iowa-transaction-control-number "62133600780000013"
@@ -137,7 +136,6 @@
         sample-recs [rec-1
                      rec-2]
         resp3       (enc-response-recs->datomic ctx-local sample-recs) ; commit records into datomic
-        ; >>          (pp/pprint resp3)
         ]
     ; Query datomic to verify can retrieve records
     (with-map-vals ctx-local [db-uri]
@@ -152,22 +150,21 @@
                                   db))]
           (is (submatch? rec-2 raw-result)))))))
 
-; #working
+; Encounter Response have been parsed & saved to Datomic. Use them to augment
+; entitie-maps with missing ICN values for `:plan-icn`
 (verify
-    (let [ctx {:db-uri            "datomic:dev://localhost:4334/enc-response"
-               :tx-size-limit     500
-               :missing-icn-fname "/Users/athom555/work/missing-icns-prod-small.edn"
+  (let [ctx {:db-uri             "datomic:dev://localhost:4334/enc-response"
+             :tx-size-limit      500
+             :missing-icn-fname  "/Users/athom555/work/missing-icns-prod-small.edn"
              ; :missing-icn-fname  "/Users/athom555/work/missing-icns-prod-orig.edn"
-               :icn-maps-aug-fname "icn-maps-aug.edn"
-               }]
-      ; (spyx-pretty (enc-resp-disp-diff ctx))
+             :icn-maps-aug-fname "icn-maps-aug.edn"
+             }]
+    ; (spyx-pretty (enc-resp-disp-diff ctx))
 
-      (let [icn-maps-aug (create-icn-maps-aug-datomic ctx)]
-        (is (->> (xlast icn-maps-aug)
-              (submatch? {:encounter-transmission/icn      "30000019034555",
-                          :encounter-transmission/plan     "ia-medicaid",
-                          :encounter-transmission/plan-icn "61927400780000019",
-                          :encounter-transmission/status
-                          #:db{:ident :encounter-transmission.status/accepted}}))))
-
-      ))
+    (let [icn-maps-aug (create-icn-maps-aug-datomic ctx)]
+      (is (->> (xlast icn-maps-aug)
+            (submatch? {:encounter-transmission/icn      "30000019034555",
+                        :encounter-transmission/plan     "ia-medicaid",
+                        :encounter-transmission/plan-icn "61927400780000019",
+                        :encounter-transmission/status
+                        #:db{:ident :encounter-transmission.status/accepted}}))))))
