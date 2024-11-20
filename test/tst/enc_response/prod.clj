@@ -64,14 +64,14 @@
                            :db/cardinality :db.cardinality/one}])
 
 (verify
-  (datomic/datomic-peer-transact-entities db-uri-disk-test missing-icns-schema)
+  (datomic/peer-transact-entities db-uri-disk-test missing-icns-schema)
   (let [rec1  {:encounter-transmission/icn    "30000019034534"
                :encounter-transmission/plan   "ia-medicaid"
                :encounter-transmission/status :encounter-transmission.status/accepted}
         rec2  {:encounter-transmission/icn    "30000019034535"
                :encounter-transmission/plan   "ia-medicaid"
                :encounter-transmission/status :encounter-transmission.status/rejected}
-        resp1 (datomic/datomic-peer-transact-entities db-uri-disk-test [rec1 rec2])
+        resp1 (datomic/peer-transact-entities db-uri-disk-test [rec1 rec2])
         ]
 
     (let [conn   (d.peer/connect db-uri-disk-test)
@@ -93,9 +93,9 @@
             result)))))
 
 (verify-focus
-  (datomic/datomic-peer-transact-entities db-uri-disk-test missing-icns-schema)
+  (datomic/peer-transact-entities db-uri-disk-test missing-icns-schema)
   (let [txdata (edn/read-string (slurp "/Users/athom555/work/missing-icns-prod-small-txdata.edn"))
-        resp1  (datomic/datomic-peer-transact-entities db-uri-disk-test txdata)
+        resp1  (datomic/peer-transact-entities db-uri-disk-test txdata)
 
         db     (datomic/curr-db db-uri-disk-test)
         found  (onlies (d.peer/q '[:find (pull ?eid [:db/id

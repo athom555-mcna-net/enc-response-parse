@@ -42,7 +42,7 @@
     db))
 
 
-(s/defn datomic-peer-delete-db :- [s/Str]
+(s/defn peer-delete-db :- [s/Str]
   "Deletes all data and schema for Encounter Response files from Datomic. "
   [ctx :- tsk/KeyMap]
   (with-map-vals ctx [db-uri]
@@ -50,7 +50,7 @@
       (prn :datomic-peer-delete-db db-uri))
     (d.peer/delete-database db-uri)))
 
-(s/defn datomic-peer-transact-entities :- s/Any
+(s/defn peer-transact-entities :- s/Any
   "Accepts a 1D sequence of entity maps, and commits them into Datomic as a single transaction. "
   [db-uri :- s/Str
    data :- [tsk/KeyMap]]
@@ -58,7 +58,7 @@
         resp @(d.peer/transact conn data)]
     resp))
 
-(s/defn datomic-peer-transact-entities-chunked :- tsk/Vec
+(s/defn peer-transact-entities-chunked :- tsk/Vec
   "Accepts a 2D array of entity maps. Each row of data, in order, is committed into Datomic
   as a separate transaction.  Returns a vector of transacton results."
   [conn :- datomic.peer.Connection
@@ -77,7 +77,7 @@
       (prn :datomic-peer-transact-chunked--leave))
     tx-results))
 
-(s/defn datomic-peer-transact-entities-chunked-with :- datomic.db.Db
+(s/defn peer-transact-entities-chunked-with :- datomic.db.Db
   "Accepts a 2D array of entity maps.  First takes a snapshot of Datomic.
   Then, each row of data is committed onto the snapshot using `(d.peer/with ...)`,
   as a separate transaction.  Returns the snapshot as modified by the transactions,
@@ -96,7 +96,6 @@
         (recur db-next txs-next)))))
 
 ;---------------------------------------------------------------------------------------------------
-
 
 (def enc-response-schema
   "Encounter Response file fields (see NS enc-response.parse)"
@@ -219,7 +218,7 @@
   (with-map-vals ctx [tx-data-chunked-fname]
     (let [conn (d.peer/connect (grab :db-uri ctx))
           txs  (edn/read-string (slurp tx-data-chunked-fname))]
-      (datomic-peer-transact-entities-chunked conn txs))))
+      (peer-transact-entities-chunked conn txs))))
 
 (s/defn load-commit-transactions-chunked-with :- datomic.db.Db
   [ctx]
@@ -230,7 +229,7 @@
           conn                (d.peer/connect (grab :db-uri ctx))
           db-before           (d.peer/db conn)
           missing-icns-before (query-missing-icns-iowa-narrow db-before)
-          db-after            (datomic-peer-transact-entities-chunked-with conn txs)
+          db-after            (peer-transact-entities-chunked-with conn txs)
           missing-icns-after  (query-missing-icns-iowa-narrow db-after)]
       (println "Missing ICNs before = " (count missing-icns-before))
       (println "Missing ICNs after  = " (count missing-icns-after))))
@@ -255,14 +254,14 @@
   [ctx :- tsk/KeyMap]
   (with-map-vals ctx [db-uri]
     (prn :enc-response-schema->datomic db-uri)
-    (datomic-peer-transact-entities db-uri enc-response-schema)))
+    (peer-transact-entities db-uri enc-response-schema)))
 
 (s/defn enc-response-datomic-init :- s/Any
   "Transact the schema for encounter response records into Datomic"
   [ctx :- tsk/KeyMap]
   (with-map-vals ctx [db-uri]
     (prn :enc-response-datomic-init db-uri)
-    (datomic-peer-delete-db ctx)
+    (peer-delete-db ctx)
     (d.peer/create-database db-uri)
     (enc-response-schema->datomic ctx)))
 
@@ -275,7 +274,7 @@
     (with-map-vals ctx [db-uri tx-size-limit]
       (let [enc-resp-rec-chunked (partition-all tx-size-limit enc-resp-recs)
             conn                 (d.peer/connect db-uri)
-            resp                 (datomic-peer-transact-entities-chunked conn enc-resp-rec-chunked)]
+            resp                 (peer-transact-entities-chunked conn enc-resp-rec-chunked)]
         ; (pp/pprint resp )
         resp))))
 
