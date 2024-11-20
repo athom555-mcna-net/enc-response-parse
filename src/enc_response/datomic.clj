@@ -92,7 +92,7 @@
                              (when verbose?
                                (prn :peer-transact-entities-impl-chunked--tx (count cum)))
                              (conj cum
-                               @(d.peer/transact conn tx))) ; uses Datomic Peer API
+                               @(d.peer/transact conn tx)))
                            []
                            entities-chunked)]
     (when verbose?

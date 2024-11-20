@@ -24,10 +24,9 @@
 (s/defn load-missing-icns :- [tsk/KeyMap]
   [ctx :- tsk/KeyMap]
   (with-map-vals ctx [missing-icn-fname]
-    (println :load-missing-icns missing-icn-fname)
+    (prn :load-missing-icns missing-icn-fname)
     (prof/with-timer-print :load-missing-icns
-      (let [missing-data (edn/read-string (slurp missing-icn-fname))]
-        missing-data))))
+      (edn/read-string (slurp missing-icn-fname)))))
 
 (s/defn get-enc-response-fnames :- [s/Str]
   [ctx :- tsk/KeyMap]
