@@ -42,6 +42,15 @@
 
    :db-uri                      "datomic:dev://localhost:4334/enc-response-test"})
 
+(verify-focus
+  (let [data     [:a 2 {:c {:db/id 999 :d 4}}]
+        expected [:a 2 {:c {:d 4}}]]
+    (is= (elide-db-id data) expected)
+    (is= (elide-db-id expected) expected)) ; idempotent
+  ; 2-element vector is not a MapEntry, so unaffected
+  (let [data [:a 2 {:c [:db/id 999] :d 4}]]
+    (is= (elide-db-id data) data)))
+
 (verify
   (let [resp1       (enc-response-schema->datomic ctx-local) ; commit schema into datomic
         ; >>          (pp/pprint resp1)

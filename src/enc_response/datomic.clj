@@ -4,6 +4,7 @@
   (:require
     [clojure.pprint :as pp]
     [clojure.tools.reader.edn :as edn]
+    [clojure.walk :as walk]
     [datomic.api :as d.peer]
     [enc-response.schemas :as schemas]
     [schema.core :as s]
@@ -36,14 +37,27 @@
   [v :- s/Int] (<= eid-min-value v))
 
 ;-----------------------------------------------------------------------------
+(defn elide-db-id
+  "Recursively walk a data structure and remove any map entries with the key `:db/id`"
+  [data]
+  (->> data
+    (walk/postwalk (fn elide-db-id-walk-fn
+                     [item]
+                     (let [result (if (and (map-entry? item)
+                                        (= :db/id (key item)))
+                                    nil
+                                    item)]
+                       result)))))
+
+
+;-----------------------------------------------------------------------------
 (s/defn curr-db :- datomic.db.Db
   [db-uri :- s/Str]
   (let [conn (d.peer/connect db-uri)
         db   (d.peer/db conn)]
     db))
 
-
-(s/defn peer-delete-db :- [s/Str]
+(s/defn peer-delete-db :- s/Bool
   "Deletes all data and schema for Encounter Response files from Datomic. "
   [ctx :- tsk/KeyMap]
   (with-map-vals ctx [db-uri]
