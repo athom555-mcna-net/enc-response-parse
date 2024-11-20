@@ -43,12 +43,9 @@
   (->> data
     (walk/postwalk (fn elide-db-id-walk-fn
                      [item]
-                     (let [result (if (and (map-entry? item)
-                                        (= :db/id (key item)))
-                                    nil
-                                    item)]
-                       result)))))
-
+                     (when-not (and (map-entry? item) ; `nil` is ignored when re-building maps
+                           (= :db/id (key item)))
+                       item)))))
 
 ;-----------------------------------------------------------------------------
 (s/defn curr-db :- datomic.db.Db
