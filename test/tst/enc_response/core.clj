@@ -5,6 +5,7 @@
   (:require
     [clojure.data :as data]
     [clojure.pprint :as pp]
+    [enc-response.util :as util]
     [schema.core :as s]
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
@@ -29,7 +30,8 @@
              :encounter-response-root-dir "/some/path/to/root"
              }))))
 
-    (let [ctx (config-load->ctx config-fname)]
+    (let [ctx (util/discarding-out-str
+                (config-load->ctx config-fname))]
       (is= ctx
         (quote
           {:db-uri                      "datomic:sql://encounters?jdbc:postgresql://postgres.qa:5432/topaz?user=datomic&password=geheim"
@@ -49,7 +51,9 @@
             {:datomic-uri  "aaa"
              :postgres-uri "bbb"
              :invoke-fn    enc-response.core/dummy-fn}))))
-    (let [ctx (config-load->ctx config-fname)]
+
+    (let [ctx (util/discarding-out-str
+                (config-load->ctx config-fname))]
       (is (submatch? '{:db-uri    "aaa?bbb"
                        :invoke-fn enc-response.core/dummy-fn}
             ctx))
@@ -85,7 +89,8 @@
              :tx-size-limit               500}
             ))))
 
-    (let [ctx      (config-load->ctx config-fname)
+    (let [ctx      (util/discarding-out-str
+                     (config-load->ctx config-fname))
           expected (quote
                      {:db-uri                      "some-preexisting-uri"
                       :encounter-response-root-dir "/some/path/to/root"
@@ -95,5 +100,5 @@
                       :tx-size-limit               500
 
                       :tx-data-chunked-fname       "tx-data-chunked.edn"})]
-      (spyx-pretty (data/diff ctx expected))
+      ; (spyx-pretty (data/diff ctx expected))
       (is= ctx expected))))

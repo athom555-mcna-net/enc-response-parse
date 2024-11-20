@@ -17,7 +17,7 @@
 
 ; Enable to see progress printouts
 (def ^:dynamic verbose-tests?
-  true)
+  false)
 
 ; Defines URI for local transactor in `dev` mode. Uses `data-dir` in transactor *.properties file.
 ; Default entry `data-dir=data` => /opt/datomic/data/...

@@ -7,6 +7,15 @@
     [tupelo.string :as str]
     ))
 
+; modified from clojure.core/with-out-str
+(defmacro discarding-out-str
+  [& body]
+  "Evaluates exprs in a context in which *out* is bound to a fresh StringWriter.
+  Discards the string created by any nested printing calls."
+  `(let [s# (new java.io.StringWriter)]
+     (binding [*out* s#]
+       ~@body)))
+
 ;-----------------------------------------------------------------------------
 (s/defn iowa-prefix? :- s/Bool
   [s :- s/Str]
