@@ -16,7 +16,7 @@
    :encounter-response-root-dir "/shared/tmp/iowa/iowa_response_files"
    :missing-icn-fname           "missing-icns.edn"
    :icn-maps-aug-fname          "icn-maps-aug.edn"
-   :tx-data-chunked-fname       "tx-data-chunked.edn"
+   :tx-data-fname       "tx-data.edn"
 
    :tx-size-limit               500 ; The maxinum number of entity maps to include in a single Datomic transaction.
    })

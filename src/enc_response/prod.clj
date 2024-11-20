@@ -26,10 +26,7 @@
     (datomic/peer-transact-entities db-uri schemas/prod-missing-icns)
 
     ; add sample records
-    (let [conn                 (d.peer/connect db-uri)
-
-          missing-icns         (datomic/elide-db-id
+    (let [missing-icns         (datomic/elide-db-id
                                  (proc/load-missing-icns ctx))
-          missing-icns-chunked (partition-all tx-size-limit missing-icns)
-          resp1                (datomic/peer-transact-entities-chunked conn missing-icns-chunked)])))
+          resp1                (datomic/peer-transact-entities db-uri tx-size-limit missing-icns)])))
 

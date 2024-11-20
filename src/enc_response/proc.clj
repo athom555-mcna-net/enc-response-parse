@@ -108,10 +108,10 @@
         (spit icn-maps-aug-fname (with-out-str (pp/pprint icn-maps-aug))))
       icn-maps-aug)))
 
-(s/defn icn-maps-aug->tx-data-chunked :- [[tsk/KeyMap]]
+(s/defn icn-maps-aug->tx-data :- [[tsk/KeyMap]]
   [ctx]
-  (prn :create-tx-data-chunked--enter)
-  (with-map-vals ctx [icn-maps-aug-fname tx-data-chunked-fname tx-size-limit]
+  (prn :icn-maps-aug->tx-data--enter)
+  (with-map-vals ctx [icn-maps-aug-fname tx-data-fname tx-size-limit]
     (let [icn-maps-aug    (edn/read-string (slurp icn-maps-aug-fname))
           tx-data         (keep-if not-nil? ; skip if plan-icn not found #todo unnecessary?
                             (forv [icn-map-aug icn-maps-aug]
@@ -121,12 +121,11 @@
                                 (if (truthy? plan-icn) ; skip if plan-icn not found #todo unnecessary?
                                   {:db/id                           eid
                                    :encounter-transmission/plan-icn plan-icn}
-                                  (prn :skipping-nil--plan-icn icn)))))
-          tx-data-chunked (unlazy (partition-all tx-size-limit tx-data))]
-      (println "Writing: " tx-data-chunked-fname)
-      (spit tx-data-chunked-fname (with-out-str (pp/pprint tx-data-chunked)))
-      (with-result tx-data-chunked
-        (prn :create-tx-data-chunked--leave)))))
+                                  (prn :skipping-nil--plan-icn icn)))))]
+      (println "Writing: " tx-data-fname)
+      (spit tx-data-fname (with-out-str (pp/pprint tx-data)))
+      (with-result tx-data
+        (prn :icn-maps-aug->tx-data--leave)))))
 
 (comment
   (defn enc-resp-mult-count

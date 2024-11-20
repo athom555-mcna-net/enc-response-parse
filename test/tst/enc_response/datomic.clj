@@ -37,7 +37,7 @@
   {:encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
    :missing-icn-fname           "resources/missing-icns-prod-small.edn"
    :icn-maps-aug-fname          "icn-maps-aug.edn"
-   :tx-data-chunked-fname       "tx-data-chuncked.edn"
+   :tx-data-fname               "tx-data.edn"
    :tx-size-limit               2
 
    :db-uri                      "datomic:dev://localhost:4334/enc-response-test"})

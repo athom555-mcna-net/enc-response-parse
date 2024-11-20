@@ -18,7 +18,7 @@
 
 (def ^:dynamic verbose?
   "Enable to see progress printouts"
-  false)
+  true)
 
 ;-----------------------------------------------------------------------------
 ; Define an EID-like value from Datomic (aka a :db/id value) as any positive integer with at
@@ -65,34 +65,58 @@
       (prn :datomic-peer-delete-db db-uri))
     (d.peer/delete-database db-uri)))
 
-(s/defn peer-transact-entities :- s/Any
+(s/defn ^:no-doc peer-transact-entities-impl-single :- s/Any
   "Accepts a 1D sequence of entity maps, and commits them into Datomic as a single transaction. "
   [db-uri :- s/Str
-   data :- [tsk/KeyMap]]
-  (let [conn (d.peer/connect db-uri)
-        resp @(d.peer/transact conn data)]
-    resp))
-
-(s/defn peer-transact-entities-chunked :- tsk/Vec
-  "Accepts a 2D array of entity maps. Each row of data, in order, is committed into Datomic
-  as a separate transaction.  Returns a vector of transacton results."
-  [conn :- datomic.peer.Connection
-   txs :- [[tsk/KeyMap]]]
+   entity-maps :- [tsk/KeyMap]]
   (when verbose?
-    (prn :datomic-peer-transact-chunked--enter))
-  (let [tx-results (reduce
-                     (fn [cum tx]
-                       (when verbose?
-                         (println :datomic-peer-transact-chunked--dbg-tx (count cum)))
-                       (conj cum
-                         @(d.peer/transact conn tx))) ; uses Datomic Peer API
-                     []
-                     txs)]
+    (prn :peer-transact-entities-impl-single--enter))
+  (let [conn (d.peer/connect db-uri)
+        resp @(d.peer/transact conn entity-maps)]
+    (with-result resp
+      (when verbose?
+        (prn :peer-transact-entities-impl-single--leave)))))
+
+(s/defn ^:no-doc peer-transact-entities-impl-chunked :- tsk/Vec
+  "Accepts a 2D array of entity maps. Each row of data, in order, is committed into Datomic
+  as a separate transaction.  Returns a vector of transaction results."
+  [db-uri :- s/Str
+   max-tx-size :- s/Int
+   entity-maps :- [tsk/KeyMap]]
+  (when verbose?
+    (prn :peer-transact-entities-impl-chunked--enter))
+  (let [conn             (d.peer/connect db-uri)
+        entities-chunked (partition-all max-tx-size entity-maps)
+        tx-results       (reduce
+                           (fn [cum tx]
+                             (when verbose?
+                               (prn :peer-transact-entities-impl-chunked--tx (count cum)))
+                             (conj cum
+                               @(d.peer/transact conn tx))) ; uses Datomic Peer API
+                           []
+                           entities-chunked)]
     (when verbose?
-      (prn :datomic-peer-transact-chunked--leave))
+      (prn :peer-transact-entities-impl-chunked--leave))
     tx-results))
 
-(s/defn peer-transact-entities-chunked-with :- datomic.db.Db
+(s/defn peer-transact-entities :- s/Any
+  "Accepts a sequence of entity maps, and commits them into Datomic as a transaction. Usage:
+
+       (peer-transact-entities db-uri entity-maps)
+         Commits the entity-maps in a single transaction.
+
+       (peer-transact-entities db-uri max-tx-size entity-maps)
+         Partitions the entity-maps into multiple transactions using max-tx-size, committing them in sequence.
+  "
+  ([db-uri :- s/Str
+    data :- [tsk/KeyMap]]
+   (peer-transact-entities-impl-single db-uri data))
+  ([db-uri :- s/Str
+    max-tx-size :- s/Int
+    data :- [tsk/KeyMap]]
+   (peer-transact-entities-impl-chunked db-uri max-tx-size data)))
+
+(s/defn peer-transact-entities-with :- datomic.db.Db
   "Accepts a 2D array of entity maps.  First takes a snapshot of Datomic.
   Then, each row of data is committed onto the snapshot using `(d.peer/with ...)`,
   as a separate transaction.  Returns the snapshot as modified by the transactions,
@@ -182,23 +206,22 @@
             (vec missing-icn-recs))))))
   (prn :save-missing-icns-iowa-narrow--leave))
 
-(s/defn load-commit-transactions-chunked :- s/Any
+(s/defn load-commit-transactions :- s/Any
   [ctx]
-  (with-map-vals ctx [tx-data-chunked-fname]
-    (let [conn (d.peer/connect (grab :db-uri ctx))
-          txs  (edn/read-string (slurp tx-data-chunked-fname))]
-      (peer-transact-entities-chunked conn txs))))
+  (with-map-vals ctx [tx-data-fname db-uri max-tx-size]
+    (let [entity-maps (edn/read-string (slurp tx-data-fname))]
+      (peer-transact-entities db-uri max-tx-size entity-maps))))
 
-(s/defn load-commit-transactions-chunked-with :- datomic.db.Db
+(s/defn load-commit-transactions-with :- datomic.db.Db
   [ctx]
   (prn :-----------------------------------------------------------------------------)
   (prn :load-commit-transactions-with--enter)
-  (with-map-vals ctx [tx-data-chunked-fname]
-    (let [txs                 (edn/read-string (slurp tx-data-chunked-fname))
+  (with-map-vals ctx [tx-data-fname]
+    (let [txs                 (edn/read-string (slurp tx-data-fname))
           conn                (d.peer/connect (grab :db-uri ctx))
           db-before           (d.peer/db conn)
           missing-icns-before (query-missing-icns-iowa-narrow db-before)
-          db-after            (peer-transact-entities-chunked-with conn txs)
+          db-after            (peer-transact-entities-with conn txs)
           missing-icns-after  (query-missing-icns-iowa-narrow db-after)]
       (println "Missing ICNs before = " (count missing-icns-before))
       (println "Missing ICNs after  = " (count missing-icns-after))))
@@ -238,12 +261,10 @@
   "Transact encounter response records into Datomic, using a block size from `ctx`
   as specified by :tx-size-limit. "
   [ctx :- tsk/KeyMap
-   enc-resp-recs :- [tsk/KeyMap]]
+   entity-maps :- [tsk/KeyMap]]
   (prof/with-timer-accum :enc-response-recs->datomic
     (with-map-vals ctx [db-uri tx-size-limit]
-      (let [enc-resp-rec-chunked (partition-all tx-size-limit enc-resp-recs)
-            conn                 (d.peer/connect db-uri)
-            resp                 (peer-transact-entities-chunked conn enc-resp-rec-chunked)]
+      (let [resp (peer-transact-entities db-uri tx-size-limit entity-maps)]
         ; (pp/pprint resp )
         resp))))
 

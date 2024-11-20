@@ -39,7 +39,7 @@
            :icn-maps-aug-fname          "icn-maps-aug.edn"
            :invoke-fn                   tupelo.core/noop
            :missing-icn-fname           "missing-icns.edn"
-           :tx-data-chunked-fname       "tx-data-chunked.edn"
+           :tx-data-fname               "tx-data.edn"
            :tx-size-limit               500}
           )))
 
@@ -99,6 +99,6 @@
                       :missing-icn-fname           "missing-icns.edn"
                       :tx-size-limit               500
 
-                      :tx-data-chunked-fname       "tx-data-chunked.edn"})]
+                      :tx-data-fname               "tx-data.edn"})]
       ; (spyx-pretty (data/diff ctx expected))
       (is= ctx expected))))

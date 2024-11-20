@@ -1,7 +1,9 @@
 ; Test functions & data before commit to production server
 (ns       ; ^:test-refresh/focus
   tst.enc-response.prod
-  (:use enc-response.prod tupelo.core tupelo.test)
+  (:use enc-response.prod
+        tupelo.core
+        tupelo.test)
   (:require
     [clojure.data :as data]
     [clojure.edn :as edn]
@@ -33,7 +35,7 @@
    :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
    :missing-icn-fname           "resources/missing-icns-prod-small.edn"
    :icn-maps-aug-fname          "icn-maps-aug.edn"
-   :tx-data-chunked-fname       "tx-data-chuncked.edn"
+   :tx-data-fname               "tx-data.edn"
    })
 
 (ttj/define-fixture :each
