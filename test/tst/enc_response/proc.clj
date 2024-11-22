@@ -147,7 +147,7 @@
              ; :missing-icn-fname  "/Users/athom555/work/missing-icns-prod-orig.edn"
              :icn-maps-aug-fname "icn-maps-aug.edn"}]
 
-    (let [icn-maps-aug (create-icn-maps-aug-datomic ctx)]
+    (let [icn-maps-aug (create-icn-maps-aug->file ctx)]
       (is (->> (xlast icn-maps-aug)
             (submatch? {:encounter-transmission/icn      "30000019034555",
                         :encounter-transmission/plan     "ia-medicaid",

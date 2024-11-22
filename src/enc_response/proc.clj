@@ -97,7 +97,7 @@
                                 enc-resp-rec-newest))]
       enc-response-recs)))
 
-(s/defn create-icn-maps-aug-datomic :- [tsk/KeyMap]
+(s/defn create-icn-maps-aug->file :- [tsk/KeyMap]
   [ctx :- tsk/KeyMap]
   (spyx :create-icn-maps-aug-datomic--enter)
   (spyx :create-icn-maps-aug-datomic (datomic/count-enc-response-recs ctx))

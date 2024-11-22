@@ -49,7 +49,7 @@
                            (datomic/curr-db db-uri)))]
       result)))
 
-(s/defn save-icn-recs-datomic->missing :- [tsk/KeyMap]
+(s/defn save-icn-recs-datomic->missing-file :- [tsk/KeyMap]
   "Pulls all records from datomic that possess attr `:encounter-transmission/icn`. Unwraps inner
    vector to return a vector of entity-maps."
   [ctx :- tsk/KeyMap]

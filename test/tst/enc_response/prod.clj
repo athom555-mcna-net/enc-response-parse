@@ -11,6 +11,7 @@
     [clojure.pprint :as pp]
     [datomic.api :as d.peer]
     [enc-response.datomic :as datomic]
+    [enc-response.proc :as proc]
     [enc-response.schemas :as schemas]
     [schema.core :as s]
     [tupelo.schema :as tsk]
@@ -99,17 +100,11 @@
               result))))))
 
 ; Add 20 missing ICN entities to Datomic, extract, and elide the :db/id values
-(verify
-  (let [ctx {:db-uri                      "datomic:dev://localhost:4334/missing-icns-test"
-             :tx-size-limit               3
-
-             :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
-             :missing-icn-fname           "resources/missing-icns-prod-small.edn"
-             :icn-maps-aug-fname          "icn-maps-aug.edn"
-             :tx-data-fname               "tx-data.edn"}]
-
-    (init-missing-icns->datomic ctx) ; transact sample records into test DB
-
+(verify-focus
+  (let [ctx {:db-uri            "datomic:dev://localhost:4334/missing-icns-test"
+             :tx-size-limit     3
+             :missing-icn-fname "resources/missing-icns-prod-small.edn"}]
+    (init-missing-icns->datomic ctx)
     (let [result       (datomic/elide-db-id
                          (onlies (d.peer/q '[:find (pull ?eid [:db/id
                                                                :encounter-transmission/icn
@@ -168,8 +163,49 @@
                 :encounter-transmission/status #:db{:id 17592186045417}}])))))
 
   (let [ctx {:db-uri            "datomic:dev://localhost:4334/missing-icns-test"
-             :tx-size-limit     3
              :missing-icn-fname "./missing-icns-test.edn"}]
-    (save-icn-recs-datomic->missing ctx))
-  )
+    (save-icn-recs-datomic->missing-file ctx)
 
+    (let [ctx          {:db-uri             "datomic:dev://localhost:4334/enc-response"
+                        :missing-icn-fname  "./missing-icns-test.edn"
+                        :icn-maps-aug-fname "icn-maps-aug.edn"}
+          icn-maps-aug (proc/create-icn-maps-aug->file ctx)
+          first-5-recs (it-> icn-maps-aug
+                         (sort-by :encounter-transmission/icn it)
+                         (xtake 5 it))]
+      (spyx-pretty first-5-recs)
+      (is (->> first-5-recs
+            (wild-match?
+              [{:db/id                           :*
+                :encounter-transmission/icn      "30000019034534"
+                :encounter-transmission/plan     "ia-medicaid"
+                :encounter-transmission/plan-icn "61927400780000001"
+                :encounter-transmission/status   #:db{:id :*}}
+               {:db/id                           :*
+                :encounter-transmission/icn      "30000019034535"
+                :encounter-transmission/plan     "ia-medicaid"
+                :encounter-transmission/plan-icn "61927400780000002"
+                :encounter-transmission/status   #:db{:id :*}}
+               {:db/id                           :*
+                :encounter-transmission/icn      "30000019034536"
+                :encounter-transmission/plan     "ia-medicaid"
+                :encounter-transmission/plan-icn "61927400780000003"
+                :encounter-transmission/status   #:db{:id :*}}
+               {:db/id                           :*
+                :encounter-transmission/icn      "30000019034537"
+                :encounter-transmission/plan     "ia-medicaid"
+                :encounter-transmission/plan-icn "61927400780000004"
+                :encounter-transmission/status   #:db{:id :*}}
+               {:db/id                           :*
+                :encounter-transmission/icn      "30000019034538"
+                :encounter-transmission/plan     "ia-medicaid"
+                :encounter-transmission/plan-icn "61927400780000005"
+                :encounter-transmission/status   #:db{:id :*}}])))
+
+      (when false
+        (nl)
+        (let [r1 (proc/icn-maps-aug->tx-data ctx)]
+          (spyx-pretty r1)
+          ))))
+
+  )
