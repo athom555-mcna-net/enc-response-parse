@@ -39,14 +39,20 @@
 
 ;-----------------------------------------------------------------------------
 (defn elide-db-id
-  "Recursively walk a data structure and remove any map entries with the key `:db/id`"
+  "Recursively walk a data structure and remove any map entries with the key `:db/id`.
+  This is useful both for test comparisons and to convert Datomic output data into new
+  insertion format."
   [data]
-  (->> data
-    (walk/postwalk (fn elide-db-id-walk-fn
-                     [item]
-                     (when-not (and (map-entry? item) ; `nil` is ignored when re-building maps
-                                 (= :db/id (key item)))
-                       item)))))
+  (let [is-db-id-mapentry? (fn fn-is-db-id-mapentry?
+                             [item]
+                             (and (map-entry? item)
+                               (= :db/id (key item))))]
+    (->> data
+      (walk/postwalk (fn fn-elide-db-id-walk
+                       [item]
+                       ; `nil` is ignored when re-building maps, so a `when-not` is simplest here
+                       (when-not (is-db-id-mapentry? item)
+                         item))))))
 
 ;-----------------------------------------------------------------------------
 (s/defn curr-db :- datomic.db.Db
@@ -247,7 +253,7 @@
     (prn :enc-response-datomic-init db-uri)
     (d.peer/delete-database db-uri)
     (d.peer/create-database db-uri)
-    (peer-transact-entities db-uri schemas/encounter-response) ))
+    (peer-transact-entities db-uri schemas/encounter-response)))
 
 (s/defn icn->enc-response-recs :- [tsk/KeyMap]
   [db :- s/Any

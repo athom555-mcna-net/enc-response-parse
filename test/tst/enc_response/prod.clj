@@ -37,6 +37,17 @@
             (cond-it-> (d.peer/delete-database db-uri)
               verbose-tests? (println "  Deleting db:      " it)))})
 
+(comment
+  (let [
+        ctx-tmpl {:db-uri                      "datomic:dev://localhost:4334/missing-icns-test"
+                  :tx-size-limit               3
+
+                  :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
+                  :missing-icn-fname           "resources/missing-icns-prod-small.edn"
+                  :icn-maps-aug-fname          "icn-maps-aug.edn"
+                  :tx-data-fname               "tx-data.edn"}
+        ]))
+
 ; Add 2 records to datomic using 2 different syntaxes. Verify query results.
 (verify
   (let [ctx {:db-uri                      "datomic:dev://localhost:4334/missing-icns-test"
@@ -88,7 +99,7 @@
               result))))))
 
 ; Add 20 missing ICN entities to Datomic, extract, and elide the :db/id values
-(verify-focus
+(verify
   (let [ctx {:db-uri                      "datomic:dev://localhost:4334/missing-icns-test"
              :tx-size-limit               3
 
@@ -156,9 +167,9 @@
                 :encounter-transmission/plan   "ia-medicaid"
                 :encounter-transmission/status #:db{:id 17592186045417}}])))))
 
-   (let [ctx {:db-uri                      "datomic:dev://localhost:4334/missing-icns-test"
-              :tx-size-limit               3
-              :missing-icn-fname           "./missing-icns-test.edn"}]
-     (save-icn-recs-datomic->missing ctx))
+  (let [ctx {:db-uri            "datomic:dev://localhost:4334/missing-icns-test"
+             :tx-size-limit     3
+             :missing-icn-fname "./missing-icns-test.edn"}]
+    (save-icn-recs-datomic->missing ctx))
   )
 

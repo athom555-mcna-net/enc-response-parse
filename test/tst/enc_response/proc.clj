@@ -44,16 +44,6 @@
       (spyx (datomic/count-enc-response-recs ctx))
       (enc-resp-disp-diff ctx))))
 
-(ttj/define-fixture :each
-  {:enter (fn [ctx]
-            (cond-it-> (d.peer/delete-database db-uri)
-              verbose-tests? (println "  Deleted prior db: " it))
-            (cond-it-> (d.peer/create-database db-uri)
-              verbose-tests? (println "  Creating db:      " it)))
-   :leave (fn [ctx]
-            (cond-it-> (d.peer/delete-database db-uri)
-              verbose-tests? (println "  Deleting db:      " it)))})
-
 ; check can discard all but newest record
 (verify
   (let [response-rec-1      {:billing-provider-npi            "1952711780"
@@ -94,8 +84,8 @@
 
 ; add 2 unique recs to datomic, query and verify
 (verify
-  (let [ctx         {:db-uri                      db-uri
-                     :tx-size-limit               2
+  (let [ctx         {:db-uri                      "datomic:dev://localhost:4334/enc-response-test"
+                     :tx-size-limit               3
 
                      :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
                      :missing-icn-fname           "resources/missing-icns-prod-small.edn"
@@ -148,11 +138,11 @@
                                   db))]
           (is (submatch? rec-2 raw-result)))))))
 
-; Encounter Response have been parsed & saved to Datomic. Use them to augment
+; Encounter Response recs have been parsed & saved to Datomic. Use them to augment
 ; entitie-maps with missing ICN values for `:plan-icn`
 (verify
-  (let [ctx {:db-uri             "datomic:dev://localhost:4334/enc-response-test"
-             :tx-size-limit      500
+  (let [ctx {:db-uri             "datomic:dev://localhost:4334/enc-response" ;
+             :tx-size-limit      3
              :missing-icn-fname  "/Users/athom555/work/missing-icns-prod-small.edn"
              ; :missing-icn-fname  "/Users/athom555/work/missing-icns-prod-orig.edn"
              :icn-maps-aug-fname "icn-maps-aug.edn"}]
@@ -164,24 +154,19 @@
                         :encounter-transmission/plan-icn "61927400780000019",
                         :encounter-transmission/status
                         #:db{:ident :encounter-transmission.status/accepted}}))))
-
     (when false
       (nl)
       (let [r1 (icn-maps-aug->tx-data ctx)]
         (spyx-pretty r1)
         ))
-
     ))
 
 ; parse data from all encounter response files => datomic
 (verify
-  (let [ctx {:db-uri                      db-uri
-             :tx-size-limit               2
-
+  (let [ctx {:db-uri                      "datomic:dev://localhost:4334/enc-response-test"
+             :tx-size-limit               3
              :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
-             :missing-icn-fname           "resources/missing-icns-prod-small.edn"
-             :icn-maps-aug-fname          "icn-maps-aug.edn"
-             :tx-data-fname               "tx-data.edn"}]
+             }]
 
     (init-enc-response-files->datomic ctx)
 
@@ -193,36 +178,39 @@
                                   db))
           recs-sorted   (vec (sort-by :mco-claim-number enc-resp-recs))]
       (is= (count enc-resp-recs) 14)
-      (is= (xfirst recs-sorted)
-        {:billing-provider-npi            "1952711780"
-         :claim-frequency-code            "1"
-         :claim-type                      "D"
-         :error-code                      "A00"
-         :error-field-value               ""
-         :field                           "PAID"
-         :first-date-of-service           "06302021"
-         :iowa-processing-date            "12022021"
-         :iowa-transaction-control-number "62133600780000001"
-         :line-number                     "00"
-         :mco-claim-number                "30000000100601"
-         :mco-paid-date                   "08202021"
-         :member-id                       "2610850C"
-         :total-paid-amount               "000000004763"
-         :db/id                           17592186045418})
-      (is= (xlast recs-sorted)
-        {:billing-provider-npi            "1952711780"
-         :claim-frequency-code            "7"
-         :claim-type                      "D"
-         :error-code                      "A00"
-         :error-field-value               ""
-         :field                           "DENIED"
-         :first-date-of-service           "08062021"
-         :iowa-processing-date            "01062022"
-         :iowa-transaction-control-number "62200600780000002"
-         :line-number                     "00"
-         :mco-claim-number                "30000063295501"
-         :mco-paid-date                   "12292021"
-         :member-id                       "3382022I"
-         :total-paid-amount               "000000000000"
-         :db/id                           17592186045438}))))
+      (is (->> (xfirst recs-sorted)
+            (wild-match?
+              {:billing-provider-npi            "1952711780"
+               :claim-frequency-code            "1"
+               :claim-type                      "D"
+               :error-code                      "A00"
+               :error-field-value               ""
+               :field                           "PAID"
+               :first-date-of-service           "06302021"
+               :iowa-processing-date            "12022021"
+               :iowa-transaction-control-number "62133600780000001"
+               :line-number                     "00"
+               :mco-claim-number                "30000000100601"
+               :mco-paid-date                   "08202021"
+               :member-id                       "2610850C"
+               :total-paid-amount               "000000004763"
+               :db/id                           :*})))
+
+      (is (->> (xlast recs-sorted)
+            (wild-match?
+              {:billing-provider-npi            "1952711780"
+               :claim-frequency-code            "7"
+               :claim-type                      "D"
+               :error-code                      "A00"
+               :error-field-value               ""
+               :field                           "DENIED"
+               :first-date-of-service           "08062021"
+               :iowa-processing-date            "01062022"
+               :iowa-transaction-control-number "62200600780000002"
+               :line-number                     "00"
+               :mco-claim-number                "30000063295501"
+               :mco-paid-date                   "12292021"
+               :member-id                       "3382022I"
+               :total-paid-amount               "000000000000"
+               :db/id                           :*}))))))
 
