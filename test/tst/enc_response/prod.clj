@@ -100,7 +100,7 @@
               result))))))
 
 ; Add 20 missing ICN entities to Datomic, extract, and elide the :db/id values
-(verify-focus
+(verify
   (let [ctx {:db-uri            "datomic:dev://localhost:4334/missing-icns-test"
              :tx-size-limit     3
              :missing-icn-fname "resources/missing-icns-prod-small.edn"}]
@@ -168,7 +168,8 @@
 
     (let [ctx          {:db-uri             "datomic:dev://localhost:4334/enc-response"
                         :missing-icn-fname  "./missing-icns-test.edn"
-                        :icn-maps-aug-fname "icn-maps-aug.edn"}
+                        :icn-maps-aug-fname "icn-maps-aug.edn"
+                        :tx-data-fname      "tx-data-test.edn"}
           icn-maps-aug (proc/create-icn-maps-aug->file ctx)
           first-5-recs (it-> icn-maps-aug
                          (sort-by :encounter-transmission/icn it)
@@ -202,10 +203,20 @@
                 :encounter-transmission/plan-icn "61927400780000005"
                 :encounter-transmission/status   #:db{:id :*}}])))
 
-      (when false
-        (nl)
-        (let [r1 (proc/icn-maps-aug->tx-data ctx)]
-          (spyx-pretty r1)
-          ))))
-
-  )
+      (let [tx-data      (proc/icn-maps-aug->tx-data ctx)
+            first-5-recs (it-> tx-data
+                           (sort-by :encounter-transmission/icn it)
+                           (xtake 5 it))]
+        (is (->> first-5-recs
+              (wild-match?
+                [{:db/id                           :*
+                  :encounter-transmission/plan-icn "61927400780000001"}
+                 {:db/id                           :*
+                  :encounter-transmission/plan-icn "61927400780000002"}
+                 {:db/id                           :*
+                  :encounter-transmission/plan-icn "61927400780000003"}
+                 {:db/id                           :*
+                  :encounter-transmission/plan-icn "61927400780000004"}
+                 {:db/id                           :*
+                  :encounter-transmission/plan-icn "61927400780000005"}])))))
+    ))

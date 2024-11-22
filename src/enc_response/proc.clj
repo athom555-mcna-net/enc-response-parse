@@ -122,7 +122,7 @@
         (with-result icn-maps-aug
           (spyx :create-icn-maps-aug-datomic--enter))))))
 
-(s/defn icn-maps-aug->tx-data :- [[tsk/KeyMap]]
+(s/defn icn-maps-aug->tx-data :- [tsk/KeyMap]
   [ctx]
   (prn :icn-maps-aug->tx-data--enter)
   (with-map-vals ctx [icn-maps-aug-fname tx-data-fname ]
