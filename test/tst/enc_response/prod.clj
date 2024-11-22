@@ -25,7 +25,7 @@
 ; Defines URI for local transactor in `dev` mode. Uses `data-dir` in transactor *.properties file.
 ; Default entry `data-dir=data` => /opt/datomic/data/...
 ; Absolute path entry like `data-dir=/Users/myuser/datomic-data` => that directory.
-(def db-uri "datomic:dev://localhost:4334/enc-response-test")
+(def db-uri "datomic:dev://localhost:4334/missing-icns-test")
 
 (ttj/define-fixture :each
   {:enter (fn [ctx]
@@ -39,7 +39,7 @@
 
 ; Add 2 records to datomic using 2 different syntaxes. Verify query results.
 (verify
-  (let [ctx {:db-uri                      db-uri
+  (let [ctx {:db-uri                      "datomic:dev://localhost:4334/missing-icns-test"
              :tx-size-limit               3
 
              :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
@@ -88,8 +88,8 @@
               result))))))
 
 ; Add 20 missing ICN entities to Datomic, extract, and elide the :db/id values
-(verify
-  (let [ctx {:db-uri                      db-uri
+(verify-focus
+  (let [ctx {:db-uri                      "datomic:dev://localhost:4334/missing-icns-test"
              :tx-size-limit               3
 
              :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
@@ -125,5 +125,40 @@
                                   :status #:db{:ident :encounter-transmission.status/accepted}}
          #:encounter-transmission{:icn    "30000019034538"
                                   :plan   "ia-medicaid"
-                                  :status #:db{:ident :encounter-transmission.status/accepted}}]))))
+                                  :status #:db{:ident :encounter-transmission.status/accepted}}]))
+
+    ; Display full DB entries
+    (let [full-recs    (pull-icn-recs-from-datomic ctx)
+          first-5-recs (it-> full-recs
+                         (sort-by :encounter-transmission/icn it)
+                         (xtake 5 it))]
+      ; (spyx-pretty first-5-recs)
+      (is (->> first-5-recs
+            (wild-match?
+              [{:db/id                         :*
+                :encounter-transmission/icn    "30000019034534"
+                :encounter-transmission/plan   "ia-medicaid"
+                :encounter-transmission/status #:db{:id 17592186045417}}
+               {:db/id                         :*
+                :encounter-transmission/icn    "30000019034535"
+                :encounter-transmission/plan   "ia-medicaid"
+                :encounter-transmission/status #:db{:id 17592186045417}}
+               {:db/id                         :*
+                :encounter-transmission/icn    "30000019034536"
+                :encounter-transmission/plan   "ia-medicaid"
+                :encounter-transmission/status #:db{:id 17592186045417}}
+               {:db/id                         :*
+                :encounter-transmission/icn    "30000019034537"
+                :encounter-transmission/plan   "ia-medicaid"
+                :encounter-transmission/status #:db{:id 17592186045417}}
+               {:db/id                         :*
+                :encounter-transmission/icn    "30000019034538"
+                :encounter-transmission/plan   "ia-medicaid"
+                :encounter-transmission/status #:db{:id 17592186045417}}])))))
+
+   (let [ctx {:db-uri                      "datomic:dev://localhost:4334/missing-icns-test"
+              :tx-size-limit               3
+              :missing-icn-fname           "./missing-icns-test.edn"}]
+     (save-icn-recs-datomic->missing ctx))
+  )
 

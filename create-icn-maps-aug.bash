@@ -2,9 +2,8 @@
 
 cat > /tmp/ctx.edn <<ENDEND
 {:db-uri               "datomic:dev://localhost:4334/enc-response"
- :tx-size-limit        500
+ :tx-size-limit        1000
 
- :encounter-response-root-dir "/shared/tmp/iowa/iowa_response_files"
  :missing-icn-fname           "/Users/athom555/work/missing-icns-prod-small.edn"
  :icn-maps-aug-fname          "icn-maps-aug.edn"
  :tx-data-chunked-fname       "tx-data-chunked.edn"

@@ -1,6 +1,7 @@
 (ns enc-response.prod
   (:use tupelo.core)
   (:require
+    [clojure.pprint :as pp]
     [datomic.api :as d.peer]
     [enc-response.datomic :as datomic]
     [enc-response.proc :as proc]
@@ -36,4 +37,29 @@
         (prof/with-timer-print :init-missing-icns->datomic--insert
           (datomic/peer-transact-entities db-uri tx-size-limit missing-icns))
         (prn :init-missing-icns->datomic--leave)))))
+
+
+(s/defn pull-icn-recs-from-datomic :- [tsk/KeyMap]
+  "Pulls all records from datomic that possess attr `:encounter-transmission/icn`. Unwraps inner
+   vector to return a vector of entity-maps."
+  [ctx :- tsk/KeyMap]
+  (with-map-vals ctx [db-uri]
+    (let [result (onlies (d.peer/q '[:find (pull ?eid [*])
+                                     :where [?eid :encounter-transmission/icn]]
+                           (datomic/curr-db db-uri)))]
+      result)))
+
+(s/defn save-icn-recs-datomic->missing :- [tsk/KeyMap]
+  "Pulls all records from datomic that possess attr `:encounter-transmission/icn`. Unwraps inner
+   vector to return a vector of entity-maps."
+  [ctx :- tsk/KeyMap]
+  (prn :save-icn-recs-datomic->missing--enter)
+  (with-map-vals ctx [missing-icn-fname]
+    (let [entities (pull-icn-recs-from-datomic ctx)]
+      (prn :save-icn-recs-datomic->missing--writing missing-icn-fname)
+      (prof/with-timer-print :save-icn-recs-datomic->missing--writing
+        (spit missing-icn-fname
+          (with-out-str
+            (pp/pprint entities))))))
+  (prn :save-icn-recs-datomic->missing--enter))
 
