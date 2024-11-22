@@ -16,6 +16,9 @@
    {:db/ident       :encounter-transmission/icn :db/valueType :db.type/string
     :db/cardinality :db.cardinality/one}
 
+   {:db/ident       :encounter-transmission/previous-icn :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one}
+
    {:db/ident       :encounter-transmission/plan :db/valueType :db.type/string
     :db/cardinality :db.cardinality/one}
 

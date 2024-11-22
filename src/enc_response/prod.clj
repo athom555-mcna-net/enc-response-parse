@@ -31,7 +31,9 @@
 
       ; insert sample records
       (let [missing-icns (datomic/elide-db-id ; elide old value for :db/id => transaction values
-                           (proc/load-missing-icns ctx))
-            resp1        (datomic/peer-transact-entities db-uri tx-size-limit missing-icns)])))
-  (prn :init-missing-icns->datomic--leave))
+                           (proc/load-missing-icns ctx))]
+        (prn :init-missing-icns->datomic--num-missing (count missing-icns))
+        (prof/with-timer-print :init-missing-icns->datomic--insert
+          (datomic/peer-transact-entities db-uri tx-size-limit missing-icns))
+        (prn :init-missing-icns->datomic--leave)))))
 
