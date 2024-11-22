@@ -50,12 +50,12 @@
 
 (s/defn enc-response-recs->datomic :- s/Any
   "Transact encounter response records into Datomic, using a block size from `ctx`
-  as specified by :tx-size-limit. "
+  as specified by :max-tx-size. "
   [ctx :- tsk/KeyMap
    entity-maps :- [tsk/KeyMap]]
   (prof/with-timer-accum :enc-response-recs->datomic
-    (with-map-vals ctx [db-uri tx-size-limit]
-      (datomic/peer-transact-entities db-uri tx-size-limit entity-maps))))
+    (with-map-vals ctx [db-uri max-tx-size]
+      (datomic/peer-transact-entities db-uri max-tx-size entity-maps))))
 
 (s/defn init-enc-response-files->datomic :- [s/Str]
   "Uses `:encounter-response-root-dir` from map `ctx` to specify a directory of
@@ -125,7 +125,7 @@
 (s/defn icn-maps-aug->tx-data :- [tsk/KeyMap]
   [ctx]
   (prn :icn-maps-aug->tx-data--enter)
-  (with-map-vals ctx [icn-maps-aug-fname tx-data-fname ]
+  (with-map-vals ctx [icn-maps-aug-fname tx-data-fname]
     (let [icn-maps-aug (edn/read-string (slurp icn-maps-aug-fname))
           tx-data      (keep-if not-nil? ; skip if plan-icn not found #todo unnecessary?
                          (forv [icn-map-aug icn-maps-aug]
@@ -160,3 +160,13 @@
                                        icn))))
             num-icns-duplicate (count icns-duplicate)]
         (spyx num-icns-duplicate)))))
+
+(s/defn tx-data-file->datomic :- s/Any
+  [ctx]
+  (prn :tx-data-file->datomic--enter)
+  (with-map-vals ctx [tx-data-fname db-uri max-tx-size]
+    (let [entity-maps (prof/with-timer-print :tx-data-file->datomic--read-file
+                        (edn/read-string (slurp tx-data-fname)))]
+      (with-result (datomic/peer-transact-entities db-uri max-tx-size entity-maps)
+        (prn :tx-data-file->datomic--leave)))))
+

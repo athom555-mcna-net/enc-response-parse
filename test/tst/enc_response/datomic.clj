@@ -49,7 +49,7 @@
                          :missing-icn-fname           "resources/missing-icns-prod-small.edn"
                          :icn-maps-aug-fname          "icn-maps-aug.edn"
                          :tx-data-fname               "tx-data.edn"
-                         :tx-size-limit               2}
+                         :max-tx-size               2}
 
         enc-resp-fnames (proc/get-enc-response-fnames ctx-local)
         fname-first     (xfirst enc-resp-fnames)]

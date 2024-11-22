@@ -22,7 +22,7 @@
   [ctx]
   (prn :init-missing-icns->datomic--enter)
   (prof/with-timer-print :init-missing-icns->datomic
-    (with-map-vals ctx [db-uri tx-size-limit]
+    (with-map-vals ctx [db-uri max-tx-size]
       ; create empty db
       (d.peer/delete-database db-uri)
       (d.peer/create-database db-uri)
@@ -35,7 +35,7 @@
                            (proc/load-missing-icns ctx))]
         (prn :init-missing-icns->datomic--num-missing (count missing-icns))
         (prof/with-timer-print :init-missing-icns->datomic--insert
-          (datomic/peer-transact-entities db-uri tx-size-limit missing-icns))
+          (datomic/peer-transact-entities db-uri max-tx-size missing-icns))
         (prn :init-missing-icns->datomic--leave)))))
 
 

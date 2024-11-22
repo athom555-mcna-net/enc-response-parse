@@ -1,6 +1,5 @@
 ; Test functions & data before commit to production server
-(ns       ; ^:test-refresh/focus
-  tst.enc-response.prod
+(ns tst.enc-response.prod
   (:use enc-response.prod
         tupelo.core
         tupelo.test)
@@ -41,7 +40,7 @@
 (comment
   (let [
         ctx-tmpl {:db-uri                      "datomic:dev://localhost:4334/missing-icns-test"
-                  :tx-size-limit               3
+                  :max-tx-size               3
 
                   :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
                   :missing-icn-fname           "resources/missing-icns-prod-small.edn"
@@ -52,7 +51,7 @@
 ; Add 2 records to datomic using 2 different syntaxes. Verify query results.
 (verify
   (let [ctx {:db-uri                      "datomic:dev://localhost:4334/missing-icns-test"
-             :tx-size-limit               3
+             :max-tx-size               3
 
              :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
              :missing-icn-fname           "resources/missing-icns-prod-small.edn"
@@ -102,7 +101,7 @@
 ; Add 20 missing ICN entities to Datomic, extract, and elide the :db/id values
 (verify
   (let [ctx {:db-uri            "datomic:dev://localhost:4334/missing-icns-test"
-             :tx-size-limit     3
+             :max-tx-size     3
              :missing-icn-fname "resources/missing-icns-prod-small.edn"}]
     (init-missing-icns->datomic ctx)
     (let [result       (datomic/elide-db-id
@@ -174,7 +173,6 @@
           first-5-recs (it-> icn-maps-aug
                          (sort-by :encounter-transmission/icn it)
                          (xtake 5 it))]
-      (spyx-pretty first-5-recs)
       (is (->> first-5-recs
             (wild-match?
               [{:db/id                           :*
@@ -219,4 +217,40 @@
                   :encounter-transmission/plan-icn "61927400780000004"}
                  {:db/id                           :*
                   :encounter-transmission/plan-icn "61927400780000005"}])))))
+
+    (let [ctx {:db-uri        "datomic:dev://localhost:4334/missing-icns-test"
+               :max-tx-size   3
+               :tx-data-fname "tx-data-test.edn"}]
+      (proc/tx-data-file->datomic ctx)
+      (let [full-recs    (pull-icn-recs-from-datomic ctx)
+            first-5-recs (it-> full-recs
+                           (sort-by :encounter-transmission/icn it)
+                           (xtake 5 it))]
+        (is (->> first-5-recs
+              (wild-match?
+                [{:db/id                           :*
+                  :encounter-transmission/icn      "30000019034534"
+                  :encounter-transmission/plan     "ia-medicaid"
+                  :encounter-transmission/plan-icn "61927400780000001"
+                  :encounter-transmission/status   #:db{:id :*}}
+                 {:db/id                           :*
+                  :encounter-transmission/icn      "30000019034535"
+                  :encounter-transmission/plan     "ia-medicaid"
+                  :encounter-transmission/plan-icn "61927400780000002"
+                  :encounter-transmission/status   #:db{:id :*}}
+                 {:db/id                           :*
+                  :encounter-transmission/icn      "30000019034536"
+                  :encounter-transmission/plan     "ia-medicaid"
+                  :encounter-transmission/plan-icn "61927400780000003"
+                  :encounter-transmission/status   #:db{:id :*}}
+                 {:db/id                           :*
+                  :encounter-transmission/icn      "30000019034537"
+                  :encounter-transmission/plan     "ia-medicaid"
+                  :encounter-transmission/plan-icn "61927400780000004"
+                  :encounter-transmission/status   #:db{:id :*}}
+                 {:db/id                           :*
+                  :encounter-transmission/icn      "30000019034538"
+                  :encounter-transmission/plan     "ia-medicaid"
+                  :encounter-transmission/plan-icn "61927400780000005"
+                  :encounter-transmission/status   #:db{:id :*}}])))))
     ))

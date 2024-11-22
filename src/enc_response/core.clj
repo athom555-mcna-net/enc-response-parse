@@ -19,7 +19,7 @@
    :icn-maps-aug-fname          "icn-maps-aug.edn"
    :tx-data-fname               "tx-data.edn"
 
-   :tx-size-limit               500 ; The maxinum number of entity maps to include in a single Datomic transaction.
+   :max-tx-size               500 ; The maxinum number of entity maps to include in a single Datomic transaction.
    })
 
 ;-----------------------------------------------------------------------------

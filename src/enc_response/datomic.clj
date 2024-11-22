@@ -212,12 +212,6 @@
             (vec missing-icn-recs))))))
   (prn :save-missing-icns-iowa-narrow--leave))
 
-(s/defn load-commit-transactions :- s/Any
-  [ctx]
-  (with-map-vals ctx [tx-data-fname db-uri max-tx-size]
-    (let [entity-maps (edn/read-string (slurp tx-data-fname))]
-      (peer-transact-entities db-uri max-tx-size entity-maps))))
-
 (s/defn load-commit-transactions-with :- datomic.db.Db
   [ctx]
   (prn :-----------------------------------------------------------------------------)

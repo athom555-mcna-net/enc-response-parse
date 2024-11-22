@@ -24,7 +24,7 @@
    :missing-icn-fname           "resources/missing-icns-5.edn"
    :icn-maps-aug-fname          "icn-maps-aug.edn"
    :tx-data-fname               "tx-data.edn"
-   :tx-size-limit               3
+   :max-tx-size               3
    })
 
 ;-----------------------------------------------------------------------------

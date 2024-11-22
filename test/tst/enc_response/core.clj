@@ -40,7 +40,7 @@
            :invoke-fn                   tupelo.core/noop
            :missing-icn-fname           "missing-icns.edn"
            :tx-data-fname               "tx-data.edn"
-           :tx-size-limit               500}
+           :max-tx-size               500}
           )))
 
     ; verify `dispatch` works
@@ -86,7 +86,7 @@
              :icn-maps-aug-fname          "icn-maps-aug.edn"
              :invoke-fn                   tupelo.core/noop
              :missing-icn-fname           "missing-icns.edn"
-             :tx-size-limit               500}))))
+             :max-tx-size               500}))))
 
     (let [ctx      (util/discarding-out-str
                      (config-load->ctx config-fname))
@@ -96,7 +96,7 @@
                       :icn-maps-aug-fname          "icn-maps-aug.edn"
                       :invoke-fn                   tupelo.core/noop
                       :missing-icn-fname           "missing-icns.edn"
-                      :tx-size-limit               500
+                      :max-tx-size               500
 
                       :tx-data-fname               "tx-data.edn"})]
       ; (spyx-pretty (data/diff ctx expected))

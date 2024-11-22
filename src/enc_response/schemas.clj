@@ -22,6 +22,9 @@
    {:db/ident       :encounter-transmission/plan :db/valueType :db.type/string
     :db/cardinality :db.cardinality/one}
 
+   {:db/ident       :encounter-transmission/plan-icn :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one}
+
    ; Points to :encounter-transmission.status/*
    {:db/ident       :encounter-transmission/status :db/valueType :db.type/ref
     :db/cardinality :db.cardinality/one}])

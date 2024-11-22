@@ -24,7 +24,7 @@
 (comment
   (verify
     (let [ctx {:db-uri             "datomic:dev://localhost:4334/enc-response"
-               :tx-size-limit      500
+               :max-tx-size      500
                :missing-icn-fname  "resources/missing-icns-prod-small.edn"
                :icn-maps-aug-fname "icn-maps-aug.edn"}]
       (with-map-vals ctx [db-uri]
@@ -85,7 +85,7 @@
 ; add 2 unique recs to datomic, query and verify
 (verify
   (let [ctx         {:db-uri                      "datomic:dev://localhost:4334/enc-response-test"
-                     :tx-size-limit               3
+                     :max-tx-size               3
 
                      :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
                      :missing-icn-fname           "resources/missing-icns-prod-small.edn"
@@ -142,7 +142,7 @@
 ; entitie-maps with missing ICN values for `:plan-icn`
 (verify
   (let [ctx {:db-uri             "datomic:dev://localhost:4334/enc-response" ;
-             :tx-size-limit      3
+             :max-tx-size      3
              :missing-icn-fname  "/Users/athom555/work/missing-icns-prod-small.edn"
              ; :missing-icn-fname  "/Users/athom555/work/missing-icns-prod-orig.edn"
              :icn-maps-aug-fname "icn-maps-aug.edn"}]
@@ -164,7 +164,7 @@
 ; parse data from all encounter response files => datomic
 (verify
   (let [ctx {:db-uri                      "datomic:dev://localhost:4334/enc-response-test"
-             :tx-size-limit               3
+             :max-tx-size               3
              :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
              }]
 
