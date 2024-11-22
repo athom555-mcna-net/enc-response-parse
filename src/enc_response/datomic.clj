@@ -26,7 +26,7 @@
 
 (s/def eid-min-digits :- s/Int
   "The minimum length positive int to be 'EID-like' (Datomic Entity ID)"
-  9)      ; 32 bit Long is about +/- 2e9
+  9)      ; 32 bit Integer is about +/- 2e9
 
 (s/def eid-min-value :- BigInteger
   "The minimum value positive int to be 'EID-like' (Datomic Entity ID)"
