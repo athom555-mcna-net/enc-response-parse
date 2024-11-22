@@ -77,7 +77,6 @@
           (enc-response-recs->datomic ctx data-recs)))
       (nl)
       (prn :init-enc-response-files->datomic--num-recs (datomic/count-enc-response-recs ctx))
-      (nl)
       enc-resp-fnames))
   (prof/print-profile-stats!)
   (prn :init-enc-response-files->datomic--leave)
