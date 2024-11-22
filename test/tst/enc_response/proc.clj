@@ -166,3 +166,57 @@
                         :encounter-transmission/plan-icn "61927400780000019",
                         :encounter-transmission/status
                         #:db{:ident :encounter-transmission.status/accepted}}))))))
+
+; parse data from all encounter response files => datomic
+(verify
+  (let [ctx {:db-uri                      db-uri
+             :tx-size-limit               2
+
+             :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
+             :missing-icn-fname           "resources/missing-icns-prod-small.edn"
+             :icn-maps-aug-fname          "icn-maps-aug.edn"
+             :tx-data-fname               "tx-data.edn"}]
+
+    (init-enc-response-files->datomic ctx)
+
+    ; verify can retrieve first & last records from datomic
+    (let [conn          (d.peer/connect db-uri)
+          db            (d.peer/db conn)
+          enc-resp-recs (onlies (d.peer/q '[:find (pull ?e [*])
+                                            :where [?e :mco-claim-number]]
+                                  db))
+          recs-sorted   (vec (sort-by :mco-claim-number enc-resp-recs))]
+      (is= (count enc-resp-recs) 14)
+      (is= (xfirst recs-sorted)
+        {:billing-provider-npi            "1952711780"
+         :claim-frequency-code            "1"
+         :claim-type                      "D"
+         :error-code                      "A00"
+         :error-field-value               ""
+         :field                           "PAID"
+         :first-date-of-service           "06302021"
+         :iowa-processing-date            "12022021"
+         :iowa-transaction-control-number "62133600780000001"
+         :line-number                     "00"
+         :mco-claim-number                "30000000100601"
+         :mco-paid-date                   "08202021"
+         :member-id                       "2610850C"
+         :total-paid-amount               "000000004763"
+         :db/id                           17592186045418})
+      (is= (xlast recs-sorted)
+        {:billing-provider-npi            "1952711780"
+         :claim-frequency-code            "7"
+         :claim-type                      "D"
+         :error-code                      "A00"
+         :error-field-value               ""
+         :field                           "DENIED"
+         :first-date-of-service           "08062021"
+         :iowa-processing-date            "01062022"
+         :iowa-transaction-control-number "62200600780000002"
+         :line-number                     "00"
+         :mco-claim-number                "30000063295501"
+         :mco-paid-date                   "12292021"
+         :member-id                       "3382022I"
+         :total-paid-amount               "000000000000"
+         :db/id                           17592186045438}))))
+

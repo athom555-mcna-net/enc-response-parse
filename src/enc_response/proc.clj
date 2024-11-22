@@ -56,16 +56,18 @@
     (with-map-vals ctx [db-uri tx-size-limit]
       (datomic/peer-transact-entities db-uri tx-size-limit entity-maps))))
 
-(s/defn enc-response-files->datomic :- [s/Str]
+(s/defn init-enc-response-files->datomic :- [s/Str]
   "Uses `:encounter-response-root-dir` from map `ctx` to specify a directory of
   Encounter Response files. For each file in turn, loads/parses the file and commits the data
   into Datomic. Returns a vector of the filenames processed.
 
   Assumes schema has already been transacted into Datomic. "
   [ctx :- tsk/KeyMap]
-  (prof/with-timer-accum :enc-response-files->datomic
+  (nl)
+  (prn :init-enc-response-files->datomic--enter)
+  (prof/with-timer-accum :init-enc-response-files->datomic
+    (datomic/enc-response-datomic-init ctx)
     (let [enc-resp-fnames (get-enc-response-fnames ctx)]
-      (nl)
       (prn :enc-response-files->datomic--num-files (count enc-resp-fnames))
       (nl)
       (doseq [fname enc-resp-fnames]
@@ -73,10 +75,11 @@
         (let [data-recs (parse/enc-response-fname->parsed fname)]
           (enc-response-recs->datomic ctx data-recs)))
       (nl)
-      (prn :enc-response-files->datomic--num-recs (datomic/count-enc-response-recs ctx))
+      (prn :init-enc-response-files->datomic--num-recs (datomic/count-enc-response-recs ctx))
       (nl)
       enc-resp-fnames))
   (prof/print-profile-stats!)
+  (prn :init-enc-response-files->datomic--leave)
   (nl))
 
 (s/defn enc-resp-disp-diff :- [tsk/KeyMap]
