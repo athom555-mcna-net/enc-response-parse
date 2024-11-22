@@ -20,16 +20,16 @@
 ; Defines URI for local Peer transactor in `dev` mode. Uses `data-dir` in transactor *.properties file.
 ; Default entry `data-dir=data` => /opt/datomic/data/...
 ; Absolute path entry like `data-dir=/Users/myuser/datomic-data` => that directory.
-(def db-uri-disk-test "datomic:dev://localhost:4334/enc-response-test")
+(def db-uri "datomic:dev://localhost:4334/enc-response-test")
 
 (ttj/define-fixture :each
   {:enter (fn [ctx]
-            (cond-it-> (validate boolean? (d.peer/delete-database db-uri-disk-test)) ; returns true/false
+            (cond-it-> (validate boolean? (d.peer/delete-database db-uri)) ; returns true/false
               verbose-tests? (println "  Deleted prior db: " it))
-            (cond-it-> (validate boolean? (d.peer/create-database db-uri-disk-test))
+            (cond-it-> (validate boolean? (d.peer/create-database db-uri))
               verbose-tests? (println "  Creating db:      " it)))
    :leave (fn [ctx]
-            (cond-it-> (validate boolean? (d.peer/delete-database db-uri-disk-test))
+            (cond-it-> (validate boolean? (d.peer/delete-database db-uri))
               verbose-tests? (println "  Deleting db:      " it)))})
 
 (verify
@@ -42,7 +42,7 @@
 
 ; parse data from first encounter response file => datomic
 (verify
-  (let [ctx-local       {:db-uri                      db-uri-disk-test
+  (let [ctx-local       {:db-uri                      db-uri
 
                          ; full data: "/Users/athom555/work/iowa-response"
                          :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
@@ -64,7 +64,7 @@
       (proc/enc-response-recs->datomic ctx-local data-recs) ; commit records
 
       ; verify can retrieve first & last records from datomic
-      (let [conn (d.peer/connect db-uri-disk-test)
+      (let [conn (d.peer/connect db-uri)
             db   (d.peer/db conn)]
         (let [result (only2 (d.peer/q '[:find (pull ?e [*])
                                         :where [?e :mco-claim-number "30000000100601"]] ; rec-1
@@ -77,7 +77,7 @@
 
 ; parse data from all encounter response files => datomic
 (verify
-  (let [ctx {:db-uri                      db-uri-disk-test
+  (let [ctx {:db-uri                      db-uri
              :tx-size-limit               2
 
              :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
@@ -89,7 +89,7 @@
     (proc/enc-response-files->datomic ctx)
 
     ; verify can retrieve first & last records from datomic
-    (let [conn          (d.peer/connect db-uri-disk-test)
+    (let [conn          (d.peer/connect db-uri)
           db            (d.peer/db conn)
           enc-resp-recs (onlies (d.peer/q '[:find (pull ?e [*])
                                             :where [?e :mco-claim-number]]

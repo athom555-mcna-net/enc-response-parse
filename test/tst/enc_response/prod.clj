@@ -25,21 +25,21 @@
 ; Defines URI for local transactor in `dev` mode. Uses `data-dir` in transactor *.properties file.
 ; Default entry `data-dir=data` => /opt/datomic/data/...
 ; Absolute path entry like `data-dir=/Users/myuser/datomic-data` => that directory.
-(def db-uri-disk-test "datomic:dev://localhost:4334/enc-response-test")
+(def db-uri "datomic:dev://localhost:4334/enc-response-test")
 
 (ttj/define-fixture :each
   {:enter (fn [ctx]
-            (cond-it-> (d.peer/delete-database db-uri-disk-test) ; returns true/false
+            (cond-it-> (d.peer/delete-database db-uri) ; returns true/false
               verbose-tests? (println "  Deleted prior db: " it))
-            (cond-it-> (d.peer/create-database db-uri-disk-test)
+            (cond-it-> (d.peer/create-database db-uri)
               verbose-tests? (println "  Creating db:      " it)))
    :leave (fn [ctx]
-            (cond-it-> (d.peer/delete-database db-uri-disk-test)
+            (cond-it-> (d.peer/delete-database db-uri)
               verbose-tests? (println "  Deleting db:      " it)))})
 
 ; Add 2 records to datomic using 2 different syntaxes. Verify query results.
 (verify
-  (let [ctx {:db-uri                      db-uri-disk-test
+  (let [ctx {:db-uri                      db-uri
              :tx-size-limit               3
 
              :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
@@ -89,7 +89,7 @@
 
 ; Add 20 missing ICN entities to Datomic, extract, and elide the :db/id values
 (verify
-  (let [ctx {:db-uri                      db-uri-disk-test
+  (let [ctx {:db-uri                      db-uri
              :tx-size-limit               3
 
              :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
@@ -105,7 +105,7 @@
                                                                :encounter-transmission/plan
                                                                {:encounter-transmission/status [*]}])
                                              :where [?eid :encounter-transmission/icn]]
-                                   (datomic/curr-db db-uri-disk-test))))
+                                   (datomic/curr-db db-uri))))
           first-5-recs (it-> result
                          (sort-by :encounter-transmission/icn it)
                          (xtake 5 it))]

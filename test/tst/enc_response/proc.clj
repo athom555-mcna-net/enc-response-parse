@@ -19,7 +19,7 @@
 ; Defines URI for local transactor in `dev` mode. Uses `data-dir` in transactor *.properties file.
 ; Default entry `data-dir=data` => /opt/datomic/data/...
 ; Absolute path entry like `data-dir=/Users/myuser/datomic-data` => that directory.
-(def db-uri-disk-test "datomic:dev://localhost:4334/enc-response-test")
+(def db-uri "datomic:dev://localhost:4334/enc-response-test")
 
 (comment
   (verify
@@ -46,12 +46,12 @@
 
 (ttj/define-fixture :each
   {:enter (fn [ctx]
-            (cond-it-> (d.peer/delete-database db-uri-disk-test)
+            (cond-it-> (d.peer/delete-database db-uri)
               verbose-tests? (println "  Deleted prior db: " it))
-            (cond-it-> (d.peer/create-database db-uri-disk-test)
+            (cond-it-> (d.peer/create-database db-uri)
               verbose-tests? (println "  Creating db:      " it)))
    :leave (fn [ctx]
-            (cond-it-> (d.peer/delete-database db-uri-disk-test)
+            (cond-it-> (d.peer/delete-database db-uri)
               verbose-tests? (println "  Deleting db:      " it)))})
 
 ; check can discard all but newest record
@@ -94,7 +94,7 @@
 
 ; add 2 unique recs to datomic, query and verify
 (verify
-  (let [ctx         {:db-uri                      db-uri-disk-test
+  (let [ctx         {:db-uri                      db-uri
                      :tx-size-limit               2
 
                      :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
