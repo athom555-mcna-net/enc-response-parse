@@ -131,11 +131,10 @@
                      :field                           "DENIED"
                      :error-field-value               ""}
         sample-recs [rec-1
-                     rec-2]
+                     rec-2]]
+    (datomic/enc-response-datomic-init ctx)
+    (enc-response-recs->datomic ctx sample-recs) ; insert records into datomic
 
-        resp1       (datomic/enc-response-schema->datomic ctx) ; insert schema into datomic
-        resp3       (enc-response-recs->datomic ctx sample-recs) ; insert records into datomic
-        ]
     ; Query datomic to verify can retrieve records
     (with-map-vals ctx [db-uri]
       (let [conn (d.peer/connect db-uri)
@@ -151,7 +150,7 @@
 
 ; Encounter Response have been parsed & saved to Datomic. Use them to augment
 ; entitie-maps with missing ICN values for `:plan-icn`
-(verify-focus
+(verify
   (let [ctx {:db-uri             "datomic:dev://localhost:4334/enc-response"
              :tx-size-limit      500
              :missing-icn-fname  "/Users/athom555/work/missing-icns-prod-small.edn"

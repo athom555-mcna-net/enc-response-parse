@@ -239,22 +239,14 @@
         0
         (only2 num-recs)))))
 
-;-----------------------------------------------------------------------------
-(s/defn enc-response-schema->datomic :- s/Any
-  "Transact the schema for encounter response records into Datomic"
-  [ctx :- tsk/KeyMap]
-  (with-map-vals ctx [db-uri]
-    (prn :enc-response-schema->datomic db-uri)
-    (peer-transact-entities db-uri schemas/encounter-response)))
-
 (s/defn enc-response-datomic-init :- s/Any
   "Transact the schema for encounter response records into Datomic"
   [ctx :- tsk/KeyMap]
   (with-map-vals ctx [db-uri]
     (prn :enc-response-datomic-init db-uri)
-    (peer-delete-db ctx)
+    (d.peer/delete-database db-uri)
     (d.peer/create-database db-uri)
-    (enc-response-schema->datomic ctx)))
+    (peer-transact-entities db-uri schemas/encounter-response) ))
 
 (s/defn icn->enc-response-recs :- [tsk/KeyMap]
   [db :- s/Any

@@ -60,7 +60,7 @@
           rec-5     (xlast data-recs)]
       (is= 5 (count data-recs))
 
-      (enc-response-schema->datomic ctx-local) ; commit schema
+      (enc-response-datomic-init ctx-local)
       (proc/enc-response-recs->datomic ctx-local data-recs) ; commit records
 
       ; verify can retrieve first & last records from datomic
@@ -84,7 +84,8 @@
              :missing-icn-fname           "resources/missing-icns-prod-small.edn"
              :icn-maps-aug-fname          "icn-maps-aug.edn"
              :tx-data-fname               "tx-data.edn"}]
-    (enc-response-schema->datomic ctx) ; commit schema
+
+    (enc-response-datomic-init ctx)
     (proc/enc-response-files->datomic ctx)
 
     ; verify can retrieve first & last records from datomic
