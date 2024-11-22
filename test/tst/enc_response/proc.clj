@@ -151,13 +151,11 @@
 ; Encounter Response have been parsed & saved to Datomic. Use them to augment
 ; entitie-maps with missing ICN values for `:plan-icn`
 (verify
-  (let [ctx {:db-uri             "datomic:dev://localhost:4334/enc-response"
+  (let [ctx {:db-uri             "datomic:dev://localhost:4334/enc-response-test"
              :tx-size-limit      500
              :missing-icn-fname  "/Users/athom555/work/missing-icns-prod-small.edn"
              ; :missing-icn-fname  "/Users/athom555/work/missing-icns-prod-orig.edn"
-             :icn-maps-aug-fname "icn-maps-aug.edn"
-             }]
-    ; (spyx-pretty (enc-resp-disp-diff ctx))
+             :icn-maps-aug-fname "icn-maps-aug.edn"}]
 
     (let [icn-maps-aug (create-icn-maps-aug-datomic ctx)]
       (is (->> (xlast icn-maps-aug)
@@ -165,7 +163,15 @@
                         :encounter-transmission/plan     "ia-medicaid",
                         :encounter-transmission/plan-icn "61927400780000019",
                         :encounter-transmission/status
-                        #:db{:ident :encounter-transmission.status/accepted}}))))))
+                        #:db{:ident :encounter-transmission.status/accepted}}))))
+
+    (when false
+      (nl)
+      (let [r1 (icn-maps-aug->tx-data ctx)]
+        (spyx-pretty r1)
+        ))
+
+    ))
 
 ; parse data from all encounter response files => datomic
 (verify

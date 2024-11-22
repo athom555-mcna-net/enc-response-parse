@@ -4,12 +4,12 @@ cat > /tmp/ctx.edn <<ENDEND
 {   :db-uri               "datomic:dev://localhost:4334/enc-response-test"
     :tx-size-limit        500
 
-   :missing-icn-fname           "/Users/athom555/work/missing-icns-prod-small.edn"
- ; :encounter-response-root-dir "/shared/tmp/iowa/iowa_response_files"
+   :encounter-response-root-dir "/Users/athom555/work/iowa-response-5"
+ ; :missing-icn-fname           "/Users/athom555/work/missing-icns-prod-small.edn"
  ; :icn-maps-aug-fname          "icn-maps-aug.edn"
  ; :tx-data-fname               "tx-data.edn"
 
-   :invoke-fn             enc-response.proc/enc-response-files->datomic
+   :invoke-fn             enc-response.proc/init-enc-response-files->datomic
 }
 ENDEND
 

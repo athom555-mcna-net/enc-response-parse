@@ -10,7 +10,8 @@
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
     )
-  (:gen-class))
+  ; (:gen-class)
+  )
 
 (def ^:dynamic verbose?
   "Enable to see progress printouts"

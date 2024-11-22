@@ -6,6 +6,7 @@
     [enc-response.datomic] ; required to make `eval` work
     [enc-response.parse] ; required to make `eval` work
     [enc-response.proc] ; required to make `eval` work
+    [enc-response.prod] ; required to make `eval` work
     [schema.core :as s]
     [tupelo.schema :as tsk]
     )
@@ -16,7 +17,7 @@
    :encounter-response-root-dir "/shared/tmp/iowa/iowa_response_files"
    :missing-icn-fname           "missing-icns.edn"
    :icn-maps-aug-fname          "icn-maps-aug.edn"
-   :tx-data-fname       "tx-data.edn"
+   :tx-data-fname               "tx-data.edn"
 
    :tx-size-limit               500 ; The maxinum number of entity maps to include in a single Datomic transaction.
    })
@@ -49,13 +50,13 @@
         ; >>>       (spyx invoke-fn)
         ctx       (dissoc ctx :invoke-fn)
         form      (list invoke-fn ctx)]
-  ; (spyxx invoke-fn)
-  ; (prn :92 (find-var invoke-fn))
-  ; (prn :93 (requiring-resolve invoke-fn))
-  ; (prn :94 (qualified-symbol? invoke-fn))
-  ; (prn :95 (simple-symbol? invoke-fn))
-  ; (prn :form)
-  ; (pp/pprint form)
+    ; (spyxx invoke-fn)
+    ; (prn :92 (find-var invoke-fn))
+    ; (prn :93 (requiring-resolve invoke-fn))
+    ; (prn :94 (qualified-symbol? invoke-fn))
+    ; (prn :95 (simple-symbol? invoke-fn))
+    ; (prn :form)
+    ; (pp/pprint form)
     (eval form)))
 
 ;---------------------------------------------------------------------------------------------------

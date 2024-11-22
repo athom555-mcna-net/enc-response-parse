@@ -15,7 +15,8 @@
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
     )
-  (:gen-class))
+  ; (:gen-class)
+  )
 
 (def ^:dynamic verbose?
   "Enable to see progress printouts"
@@ -99,30 +100,33 @@
 
 (s/defn create-icn-maps-aug-datomic :- [tsk/KeyMap]
   [ctx :- tsk/KeyMap]
+  (spyx :create-icn-maps-aug-datomic--enter)
   (spyx :create-icn-maps-aug-datomic (datomic/count-enc-response-recs ctx))
-  (with-map-vals ctx [db-uri icn-maps-aug-fname]
-    (let [missing-recs (load-missing-icns ctx)
-          >>           (prn :num-missing-icns (count missing-recs))
-          db           (datomic/curr-db db-uri)
-          ; for each rec with missing ICN, find only the newest encounter response record
-          icn-maps-aug (forv [missing-rec missing-recs]
-                         (let [icn                 (grab :encounter-transmission/icn missing-rec)
-                               enc-resp-recs       (datomic/icn->enc-response-recs db icn)
-                               enc-resp-rec-newest (resp-recs->newest enc-resp-recs)
+  (prof/with-timer-print :create-icn-maps-aug-datomic--processing
+    (with-map-vals ctx [db-uri icn-maps-aug-fname]
+      (let [missing-recs (load-missing-icns ctx)
+            >>           (prn :num-missing-icns (count missing-recs))
+            db           (datomic/curr-db db-uri)
+            ; for each rec with missing ICN, find only the newest encounter response record
+            icn-maps-aug (forv [missing-rec missing-recs]
+                           (let [icn                 (grab :encounter-transmission/icn missing-rec)
+                                 enc-resp-recs       (datomic/icn->enc-response-recs db icn)
+                                 enc-resp-rec-newest (resp-recs->newest enc-resp-recs)
 
-                               iowa-tcn            (grab :iowa-transaction-control-number enc-resp-rec-newest)
-                               icn-map-aug         (glue missing-rec {:encounter-transmission/plan-icn iowa-tcn})]
-                           icn-map-aug))]
+                                 iowa-tcn            (grab :iowa-transaction-control-number enc-resp-rec-newest)
+                                 icn-map-aug         (glue missing-rec {:encounter-transmission/plan-icn iowa-tcn})]
+                             icn-map-aug))]
 
-      (println "Writing: " icn-maps-aug-fname)
-      (prof/with-timer-print :create-icn-maps-aug-datomic--writing-file
-        (spit icn-maps-aug-fname (with-out-str (pp/pprint icn-maps-aug))))
-      icn-maps-aug)))
+        (println "Writing: " icn-maps-aug-fname)
+        (prof/with-timer-print :create-icn-maps-aug-datomic--writing-file
+          (spit icn-maps-aug-fname (with-out-str (pp/pprint icn-maps-aug))))
+        (with-result icn-maps-aug
+          (spyx :create-icn-maps-aug-datomic--enter))))))
 
 (s/defn icn-maps-aug->tx-data :- [[tsk/KeyMap]]
   [ctx]
   (prn :icn-maps-aug->tx-data--enter)
-  (with-map-vals ctx [icn-maps-aug-fname tx-data-fname tx-size-limit]
+  (with-map-vals ctx [icn-maps-aug-fname tx-data-fname ]
     (let [icn-maps-aug (edn/read-string (slurp icn-maps-aug-fname))
           tx-data      (keep-if not-nil? ; skip if plan-icn not found #todo unnecessary?
                          (forv [icn-map-aug icn-maps-aug]
