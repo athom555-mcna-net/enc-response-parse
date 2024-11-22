@@ -112,7 +112,7 @@
                            icn-map-aug))]
 
       (println "Writing: " icn-maps-aug-fname)
-      (prof/with-timer-print :writing-file
+      (prof/with-timer-print :create-icn-maps-aug-datomic--writing-file
         (spit icn-maps-aug-fname (with-out-str (pp/pprint icn-maps-aug))))
       icn-maps-aug)))
 
@@ -120,18 +120,19 @@
   [ctx]
   (prn :icn-maps-aug->tx-data--enter)
   (with-map-vals ctx [icn-maps-aug-fname tx-data-fname tx-size-limit]
-    (let [icn-maps-aug    (edn/read-string (slurp icn-maps-aug-fname))
-          tx-data         (keep-if not-nil? ; skip if plan-icn not found #todo unnecessary?
-                            (forv [icn-map-aug icn-maps-aug]
-                              (let [eid      (grab :db/id icn-map-aug)
-                                    icn      (grab :encounter-transmission/icn icn-map-aug)
-                                    plan-icn (grab :encounter-transmission/plan-icn icn-map-aug)]
-                                (if (truthy? plan-icn) ; skip if plan-icn not found #todo unnecessary?
-                                  {:db/id                           eid
-                                   :encounter-transmission/plan-icn plan-icn}
-                                  (prn :skipping-nil--plan-icn icn)))))]
+    (let [icn-maps-aug (edn/read-string (slurp icn-maps-aug-fname))
+          tx-data      (keep-if not-nil? ; skip if plan-icn not found #todo unnecessary?
+                         (forv [icn-map-aug icn-maps-aug]
+                           (let [eid      (grab :db/id icn-map-aug)
+                                 icn      (grab :encounter-transmission/icn icn-map-aug)
+                                 plan-icn (grab :encounter-transmission/plan-icn icn-map-aug)]
+                             (if (truthy? plan-icn) ; skip if plan-icn not found #todo unnecessary?
+                               {:db/id                           eid
+                                :encounter-transmission/plan-icn plan-icn}
+                               (prn :skipping-nil--plan-icn icn)))))]
       (println "Writing: " tx-data-fname)
-      (spit tx-data-fname (with-out-str (pp/pprint tx-data)))
+      (prof/with-timer-print :icn-maps-aug->tx-data--writing-file
+        (spit tx-data-fname (with-out-str (pp/pprint tx-data))))
       (with-result tx-data
         (prn :icn-maps-aug->tx-data--leave)))))
 

@@ -46,22 +46,13 @@
 
 (ttj/define-fixture :each
   {:enter (fn [ctx]
-            (cond-it-> (validate boolean? (d.peer/delete-database db-uri-disk-test)) ; returns true/false
+            (cond-it-> (d.peer/delete-database db-uri-disk-test)
               verbose-tests? (println "  Deleted prior db: " it))
-            (cond-it-> (validate boolean? (d.peer/create-database db-uri-disk-test))
+            (cond-it-> (d.peer/create-database db-uri-disk-test)
               verbose-tests? (println "  Creating db:      " it)))
    :leave (fn [ctx]
-            (cond-it-> (validate boolean? (d.peer/delete-database db-uri-disk-test))
+            (cond-it-> (d.peer/delete-database db-uri-disk-test)
               verbose-tests? (println "  Deleting db:      " it)))})
-
-(def ctx-local
-  {:db-uri                      db-uri-disk-test
-
-   :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
-   :missing-icn-fname           "resources/missing-icns-prod-small.edn"
-   :icn-maps-aug-fname          "icn-maps-aug.edn"
-   :tx-data-fname               "tx-data.edn"
-   :tx-size-limit               2})
 
 ; check can discard all but newest record
 (verify
@@ -103,7 +94,15 @@
 
 ; add 2 unique recs to datomic, query and verify
 (verify
-  (let [resp1       (datomic/enc-response-schema->datomic ctx-local) ; commit schema into datomic
+  (let [ctx    {:db-uri                      db-uri-disk-test
+                     :tx-size-limit               2
+
+                     :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
+                     :missing-icn-fname           "resources/missing-icns-prod-small.edn"
+                     :icn-maps-aug-fname          "icn-maps-aug.edn"
+                     :tx-data-fname               "tx-data.edn"}
+
+        resp1       (datomic/enc-response-schema->datomic ctx) ; commit schema into datomic
 
         rec-1       {:mco-claim-number                "30000062649905"
                      :iowa-transaction-control-number "62133600780000013"
@@ -135,10 +134,10 @@
                      :error-field-value               ""}
         sample-recs [rec-1
                      rec-2]
-        resp3       (enc-response-recs->datomic ctx-local sample-recs) ; commit records into datomic
+        resp3       (enc-response-recs->datomic ctx sample-recs) ; commit records into datomic
         ]
     ; Query datomic to verify can retrieve records
-    (with-map-vals ctx-local [db-uri]
+    (with-map-vals ctx [db-uri]
       (let [conn (d.peer/connect db-uri)
             db   (d.peer/db conn)]
         (let [raw-result (only2 (d.peer/q '[:find (pull ?e [*])

@@ -44,7 +44,7 @@
     (walk/postwalk (fn elide-db-id-walk-fn
                      [item]
                      (when-not (and (map-entry? item) ; `nil` is ignored when re-building maps
-                           (= :db/id (key item)))
+                                 (= :db/id (key item)))
                        item)))))
 
 ;-----------------------------------------------------------------------------
@@ -68,11 +68,12 @@
    entity-maps :- [tsk/KeyMap]]
   (when verbose?
     (prn :peer-transact-entities-impl-single--enter))
-  (let [conn (d.peer/connect db-uri)
-        resp @(d.peer/transact conn entity-maps)]
-    (with-result resp
-      (when verbose?
-        (prn :peer-transact-entities-impl-single--leave)))))
+  (prof/with-timer-print :peer-transact-entities-impl-single
+    (let [conn (d.peer/connect db-uri)
+          resp @(d.peer/transact conn entity-maps)]
+      (with-result resp
+        (when verbose?
+          (prn :peer-transact-entities-impl-single--leave))))))
 
 (s/defn ^:no-doc peer-transact-entities-impl-chunked :- tsk/Vec
   "Accepts a 2D array of entity maps. Each row of data, in order, is committed into Datomic
@@ -82,19 +83,20 @@
    entity-maps :- [tsk/KeyMap]]
   (when verbose?
     (prn :peer-transact-entities-impl-chunked--enter))
-  (let [conn             (d.peer/connect db-uri)
-        entities-chunked (partition-all max-tx-size entity-maps)
-        tx-results       (reduce
-                           (fn [cum tx]
-                             (when verbose?
-                               (prn :peer-transact-entities-impl-chunked--tx (count cum)))
-                             (conj cum
-                               @(d.peer/transact conn tx)))
-                           []
-                           entities-chunked)]
-    (when verbose?
-      (prn :peer-transact-entities-impl-chunked--leave))
-    tx-results))
+  (prof/with-timer-print :peer-transact-entities-impl-chunked
+    (let [conn             (d.peer/connect db-uri)
+          entities-chunked (partition-all max-tx-size entity-maps)
+          tx-results       (reduce
+                             (fn [cum tx]
+                               (when verbose?
+                                 (prn :peer-transact-entities-impl-chunked--tx (count cum)))
+                               (conj cum
+                                 @(d.peer/transact conn tx)))
+                             []
+                             entities-chunked)]
+      (with-result tx-results
+        (when verbose?
+          (prn :peer-transact-entities-impl-chunked--leave))))))
 
 (s/defn peer-transact-entities :- s/Any
   "Accepts a sequence of entity maps, and commits them into Datomic as a transaction. Usage:

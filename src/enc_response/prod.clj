@@ -6,6 +6,7 @@
     [enc-response.proc :as proc]
     [enc-response.schemas :as schemas]
     [schema.core :as s]
+    [tupelo.profile :as prof]
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
     )
@@ -17,16 +18,19 @@
 
 (s/defn init-missing-icns->datomic
   [ctx]
-  (with-map-vals ctx [db-uri tx-size-limit]
-    ; create empty db
-    (datomic/peer-delete-db ctx)
-    (d.peer/create-database db-uri)
+  (prn :init-missing-icns->datomic--enter)
+  (prof/with-timer-print :init-missing-icns->datomic
+    (with-map-vals ctx [db-uri tx-size-limit]
+      ; create empty db
+      (d.peer/delete-database db-uri)
+      (d.peer/create-database db-uri)
 
-    ; create schema
-    (datomic/peer-transact-entities db-uri schemas/prod-missing-icns)
+      ; insert schema
+      (datomic/peer-transact-entities db-uri schemas/prod-missing-icns)
 
-    ; add sample records
-    (let [missing-icns         (datomic/elide-db-id
-                                 (proc/load-missing-icns ctx))
-          resp1                (datomic/peer-transact-entities db-uri tx-size-limit missing-icns)])))
+      ; insert sample records
+      (let [missing-icns (datomic/elide-db-id ; elide old value for :db/id => transaction values
+                           (proc/load-missing-icns ctx))
+            resp1        (datomic/peer-transact-entities db-uri tx-size-limit missing-icns)])))
+  (prn :init-missing-icns->datomic--leave))
 

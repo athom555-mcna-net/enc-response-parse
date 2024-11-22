@@ -27,67 +27,65 @@
 ; Absolute path entry like `data-dir=/Users/myuser/datomic-data` => that directory.
 (def db-uri-disk-test "datomic:dev://localhost:4334/enc-response-test")
 
-(def ctx-local
-  {:db-uri                      db-uri-disk-test
-   :tx-size-limit               3
-
-   :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
-   :missing-icn-fname           "resources/missing-icns-prod-small.edn"
-   :icn-maps-aug-fname          "icn-maps-aug.edn"
-   :tx-data-fname               "tx-data.edn"
-   })
-
 (ttj/define-fixture :each
   {:enter (fn [ctx]
-            (cond-it-> (validate boolean? (d.peer/delete-database db-uri-disk-test)) ; returns true/false
+            (cond-it-> (d.peer/delete-database db-uri-disk-test) ; returns true/false
               verbose-tests? (println "  Deleted prior db: " it))
-            (cond-it-> (validate boolean? (d.peer/create-database db-uri-disk-test))
+            (cond-it-> (d.peer/create-database db-uri-disk-test)
               verbose-tests? (println "  Creating db:      " it)))
    :leave (fn [ctx]
-            (cond-it-> (validate boolean? (d.peer/delete-database db-uri-disk-test))
+            (cond-it-> (d.peer/delete-database db-uri-disk-test)
               verbose-tests? (println "  Deleting db:      " it)))})
 
+; Add 2 records to datomic using 2 different syntaxes. Verify query results.
 (verify
-  (with-map-vals ctx-local [db-uri]
-    ; create empty db
-    (datomic/peer-delete-db ctx-local)
-    (d.peer/create-database db-uri)
+  (let [ctx {:db-uri                      db-uri-disk-test
+             :tx-size-limit               3
 
-    ; add schema
-    (datomic/peer-transact-entities db-uri schemas/prod-missing-icns)
+             :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
+             :missing-icn-fname           "resources/missing-icns-prod-small.edn"
+             :icn-maps-aug-fname          "icn-maps-aug.edn"
+             :tx-data-fname               "tx-data.edn"}]
+    (with-map-vals ctx [db-uri]
+      ; create empty db
+      (d.peer/delete-database db-uri)
+      (d.peer/create-database db-uri)
 
-    ; add sample records.  Note 2 diffenent ways to specify sub-entity ":encounter-transmission/status"
-    (let [test-entities [; specify :encounter-transmission.status/accepted as `ident` value
-                         {:encounter-transmission/icn    "30000019034534"
-                          :encounter-transmission/plan   "ia-medicaid"
-                          :encounter-transmission/status :encounter-transmission.status/accepted}
+      ; add schema
+      (datomic/peer-transact-entities db-uri schemas/prod-missing-icns)
 
-                         ; specify :encounter-transmission.status/rejected as sub-entity
-                         {:encounter-transmission/icn    "30000019034535"
-                          :encounter-transmission/plan   "ia-medicaid"
-                          :encounter-transmission/status {:db/ident :encounter-transmission.status/rejected}}]
+      ; add sample records.  Note 2 diffenent ways to specify sub-entity ":encounter-transmission/status"
+      (let [test-entities [; specify :encounter-transmission.status/accepted as `ident` value
+                           {:encounter-transmission/icn    "30000019034534"
+                            :encounter-transmission/plan   "ia-medicaid"
+                            :encounter-transmission/status :encounter-transmission.status/accepted}
 
-          resp1         (datomic/peer-transact-entities db-uri test-entities) ; add entities to datomic
+                           ; specify :encounter-transmission.status/rejected as sub-entity
+                           {:encounter-transmission/icn    "30000019034535"
+                            :encounter-transmission/plan   "ia-medicaid"
+                            :encounter-transmission/status {:db/ident :encounter-transmission.status/rejected}}]
 
-          ; query datomic for all entities & verify present in DB
-          conn          (d.peer/connect db-uri)
-          db            (d.peer/db conn)
-          result        (onlies (d.peer/q '[:find (pull ?eid [:db/id
-                                                              :encounter-transmission/icn
-                                                              :encounter-transmission/plan
-                                                              {:encounter-transmission/status [*]}])
-                                            :where [?eid :encounter-transmission/icn]]
-                                  db))]
-      ; Use `submatch?` to ignore :db/id values
-      (is (submatch? [{:encounter-transmission/icn  "30000019034534"
-                       :encounter-transmission/plan "ia-medicaid"
-                       :encounter-transmission/status
-                       #:db{:ident :encounter-transmission.status/accepted}}
-                      {:encounter-transmission/icn  "30000019034535"
-                       :encounter-transmission/plan "ia-medicaid"
-                       :encounter-transmission/status
-                       #:db{:ident :encounter-transmission.status/rejected}}]
-            result)))))
+            resp1         (datomic/peer-transact-entities db-uri test-entities) ; add entities to datomic
+
+            ; query datomic for all entities & verify present in DB
+            conn          (d.peer/connect db-uri)
+            db            (d.peer/db conn)
+            result        (onlies (d.peer/q '[:find (pull ?eid [:db/id
+                                                                :encounter-transmission/icn
+                                                                :encounter-transmission/plan
+                                                                {:encounter-transmission/status [*]}])
+                                              :where [?eid :encounter-transmission/icn]]
+                                    db))]
+        ; Use `submatch?` to ignore :db/id values
+        (is (submatch? [{:encounter-transmission/icn  "30000019034534"
+                         :encounter-transmission/plan "ia-medicaid"
+                         :encounter-transmission/status
+                         #:db{:ident :encounter-transmission.status/accepted}}
+                        {:encounter-transmission/icn  "30000019034535"
+                         :encounter-transmission/plan "ia-medicaid"
+                         :encounter-transmission/status
+                         #:db{:ident :encounter-transmission.status/rejected}}]
+              result))))))
 
 ; Add 20 missing ICN entities to Datomic, extract, and elide the :db/id values
 (verify
