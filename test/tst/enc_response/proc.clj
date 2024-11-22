@@ -94,15 +94,13 @@
 
 ; add 2 unique recs to datomic, query and verify
 (verify
-  (let [ctx    {:db-uri                      db-uri-disk-test
+  (let [ctx         {:db-uri                      db-uri-disk-test
                      :tx-size-limit               2
 
                      :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
                      :missing-icn-fname           "resources/missing-icns-prod-small.edn"
                      :icn-maps-aug-fname          "icn-maps-aug.edn"
                      :tx-data-fname               "tx-data.edn"}
-
-        resp1       (datomic/enc-response-schema->datomic ctx) ; commit schema into datomic
 
         rec-1       {:mco-claim-number                "30000062649905"
                      :iowa-transaction-control-number "62133600780000013"
@@ -134,7 +132,9 @@
                      :error-field-value               ""}
         sample-recs [rec-1
                      rec-2]
-        resp3       (enc-response-recs->datomic ctx sample-recs) ; commit records into datomic
+
+        resp1       (datomic/enc-response-schema->datomic ctx) ; insert schema into datomic
+        resp3       (enc-response-recs->datomic ctx sample-recs) ; insert records into datomic
         ]
     ; Query datomic to verify can retrieve records
     (with-map-vals ctx [db-uri]
@@ -151,7 +151,7 @@
 
 ; Encounter Response have been parsed & saved to Datomic. Use them to augment
 ; entitie-maps with missing ICN values for `:plan-icn`
-(verify
+(verify-focus
   (let [ctx {:db-uri             "datomic:dev://localhost:4334/enc-response"
              :tx-size-limit      500
              :missing-icn-fname  "/Users/athom555/work/missing-icns-prod-small.edn"

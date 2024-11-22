@@ -96,7 +96,7 @@
 
 (s/defn create-icn-maps-aug-datomic :- [tsk/KeyMap]
   [ctx :- tsk/KeyMap]
-  (spyx (datomic/count-enc-response-recs ctx))
+  (spyx :create-icn-maps-aug-datomic (datomic/count-enc-response-recs ctx))
   (with-map-vals ctx [db-uri icn-maps-aug-fname]
     (let [missing-recs (load-missing-icns ctx)
           >>           (prn :num-missing-icns (count missing-recs))

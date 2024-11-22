@@ -32,15 +32,6 @@
             (cond-it-> (validate boolean? (d.peer/delete-database db-uri-disk-test))
               verbose-tests? (println "  Deleting db:      " it)))})
 
-(def ctx-local
-  {:db-uri                      db-uri-disk-test
-
-   :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
-   :missing-icn-fname           "resources/missing-icns-prod-small.edn"
-   :icn-maps-aug-fname          "icn-maps-aug.edn"
-   :tx-data-fname               "tx-data.edn"
-   :tx-size-limit               2})
-
 (verify
   (let [data     [:a 2 {:c {:db/id 999 :d 4}}]
         expected [:a 2 {:c {:d 4}}]]
@@ -51,8 +42,16 @@
 
 ; parse data from first encounter response file => datomic
 (verify
-  ; full data: "/Users/athom555/work/iowa-response"
-  (let [enc-resp-fnames (proc/get-enc-response-fnames ctx-local)
+  (let [ctx-local       {:db-uri                      db-uri-disk-test
+
+                         ; full data: "/Users/athom555/work/iowa-response"
+                         :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
+                         :missing-icn-fname           "resources/missing-icns-prod-small.edn"
+                         :icn-maps-aug-fname          "icn-maps-aug.edn"
+                         :tx-data-fname               "tx-data.edn"
+                         :tx-size-limit               2}
+
+        enc-resp-fnames (proc/get-enc-response-fnames ctx-local)
         fname-first     (xfirst enc-resp-fnames)]
 
     ; verify parsed all lines => records from first file
@@ -78,13 +77,20 @@
 
 ; parse data from all encounter response files => datomic
 (verify
-  (enc-response-schema->datomic ctx-local) ; commit schema
-  (proc/enc-response-files->datomic ctx-local)
+  (let [ctx {:db-uri                      db-uri-disk-test
+             :tx-size-limit               2
 
-  ; verify can retrieve first & last records from datomic
-  (let [conn (d.peer/connect db-uri-disk-test)
-        db   (d.peer/db conn)]
-    (let [enc-resp-recs (onlies (d.peer/q '[:find (pull ?e [*])
+             :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
+             :missing-icn-fname           "resources/missing-icns-prod-small.edn"
+             :icn-maps-aug-fname          "icn-maps-aug.edn"
+             :tx-data-fname               "tx-data.edn"}]
+    (enc-response-schema->datomic ctx) ; commit schema
+    (proc/enc-response-files->datomic ctx)
+
+    ; verify can retrieve first & last records from datomic
+    (let [conn          (d.peer/connect db-uri-disk-test)
+          db            (d.peer/db conn)
+          enc-resp-recs (onlies (d.peer/q '[:find (pull ?e [*])
                                             :where [?e :mco-claim-number]]
                                   db))
           recs-sorted   (vec (sort-by :mco-claim-number enc-resp-recs))]
