@@ -5,8 +5,8 @@ cat > /tmp/ctx.edn <<ENDEND
 
   :db-uri               "datomic:dev://localhost:4334/enc-response"
 
-  :missing-icn-fname    "./missing-icns.edn"
-  :icn-maps-aug-fname   "icn-maps-aug.edn"
+  :missing-icn-fname    "/Users/athom555/work/missing-icns-prod-small.edn"
+  :icn-maps-aug-fname   "icn-maps-aug-prod-small.edn"
 }
 ENDEND
 

@@ -6,7 +6,7 @@ cat > /tmp/ctx.edn <<ENDEND
     :db-uri                <prod uri>
     :max-tx-size           1000
 
-    :tx-data-fname         "tx-data.edn"
+    :tx-data-fname         "tx-data-prod-small.edn"
 }
 ENDEND
 
