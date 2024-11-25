@@ -3,14 +3,13 @@
 cat > /tmp/ctx.edn <<ENDEND
 {  :db-uri               "datomic:dev://localhost:4334/missing-icns-test"
    :tx-size-limit        100
-
-   :missing-icn-fname           "/Users/athom555/work/missing-icns-prod-small.edn"
-
  ; :encounter-response-root-dir "/shared/tmp/iowa/iowa_response_files"
- ; :icn-maps-aug-fname          "icn-maps-aug.edn"
- ; :tx-data-fname               "tx-data.edn"
 
-   :invoke-fn             enc-response.prod/init-missing-icns->datomic
+   :missing-icn-fname           "./missing-icns-test.edn"
+   :icn-maps-aug-fname          "icn-maps-aug.edn"
+   :tx-data-fname               "tx-data.edn"
+
+   :invoke-fn             enc-response.prod/save-icn-recs-datomic->missing-file
 }
 ENDEND
 
