@@ -1,14 +1,12 @@
 #!/bin/bash 
 
 cat > /tmp/ctx.edn <<ENDEND
-{  :db-uri                "datomic:dev://localhost:4334/missing-icns-test"
-   :tx-size-limit         100
+{  
+    :invoke-fn             enc-response.proc/tx-data-file->datomic
+    :db-uri                "datomic:dev://localhost:4334/missing-icns-fake"
+    :max-tx-size           1000
 
-   :missing-icn-fname     "./missing-icns-test.edn"
-   :icn-maps-aug-fname    "icn-maps-aug.edn"
-   :tx-data-fname         "tx-data.edn"
-
-   :invoke-fn             enc-response.proc/tx-data-file->datomic
+    :tx-data-fname         "tx-data.edn"
 }
 ENDEND
 

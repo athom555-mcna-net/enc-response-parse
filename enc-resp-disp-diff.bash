@@ -2,7 +2,7 @@
 
 cat > /tmp/ctx.edn <<MYDATA
 {:db-uri               "datomic:dev://localhost:4334/enc-response"
- :tx-size-limit        500
+ :max-tx-size        500
 
 ;:missing-icn-fname    "/Users/athom555/work/missing-icns-prod-small.edn"
  :missing-icn-fname    "/Users/athom555/work/missing-icns-prod-orig.edn"

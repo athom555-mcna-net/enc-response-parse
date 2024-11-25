@@ -3,7 +3,7 @@
 cat > /tmp/ctx.edn <<ENDER
 {
  :db-uri               "datomic:dev://localhost:4334/enc-response"
- :tx-size-limit        3
+ :max-tx-size        3
 
  :missing-icn-fname    "/Users/athom555/work/missing-icns-prod-small.edn"
 ;:missing-icn-fname    "/Users/athom555/work/missing-icns-prod-orig.edn"

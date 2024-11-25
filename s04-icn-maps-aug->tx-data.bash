@@ -4,7 +4,6 @@ cat > /tmp/ctx.edn <<ENDEND
 {   :invoke-fn             enc-response.proc/icn-maps-aug->tx-data
 
     :db-uri                "datomic:dev://localhost:4334/missing-icns-fake"
-    :tx-size-limit         1000
 
     :missing-icn-fname     "./missing-icns-test.edn"
     :icn-maps-aug-fname    "icn-maps-aug.edn"

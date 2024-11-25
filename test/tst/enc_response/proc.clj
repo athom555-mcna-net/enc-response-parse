@@ -39,7 +39,7 @@
 (comment
   (verify
     (let [ctx {:db-uri            "datomic:dev://localhost:4334/enc-response"
-               :tx-size-limit     500
+               :max-tx-size       500
                :missing-icn-fname "resources/missing-icns-prod-small.edn"}]
       (spyx (datomic/count-enc-response-recs ctx))
       (enc-resp-disp-diff ctx))))

@@ -2,7 +2,7 @@
 
 cat > /tmp/ctx.edn <<ENDEND
 {   :db-uri               "datomic:dev://localhost:4334/enc-response-test"
-    :tx-size-limit        100
+    :max-tx-size        100
 
    :encounter-response-root-dir "/Users/athom555/work/iowa-response-5"
 

@@ -12,8 +12,7 @@
     )
   (:gen-class))
 
-(comment)
-(def ^:dynamic ctx-default
+#_(def ^:dynamic ctx-default
   {  ; vvv used to construct `db-uri`
    :datomic-uri                 "datomic:sql://encounters"
    :postgres-uri                "jdbc:postgresql://postgres.qa:5432/topaz?user=datomic&password=geheim"
