@@ -19,29 +19,33 @@
   (is= :dummy-fn--result (enc-response.core/dummy-fn))
 
   ; verify config-load->ctx works
-  (let [config-fname "config-tst.edn"]
+  (let [config-fname "/tmp/config-tst.edn"]
     (spit config-fname
       (with-out-str
         (pp/pprint
           (quote
             {:datomic-uri                 "datomic:sql://encounters"
              :postgres-uri                "jdbc:postgresql://postgres.qa:5432/topaz?user=datomic&password=geheim"
-             :invoke-fn                   tupelo.core/noop
-             :encounter-response-root-dir "/some/path/to/root"
-             }))))
 
-    (let [ctx (util/discarding-out-str
-                (config-load->ctx config-fname))]
-      (is= ctx
-        (quote
-          {:db-uri                      "datomic:sql://encounters?jdbc:postgresql://postgres.qa:5432/topaz?user=datomic&password=geheim"
-           :encounter-response-root-dir "/some/path/to/root"
-           :icn-maps-aug-fname          "icn-maps-aug.edn"
-           :invoke-fn                   tupelo.core/noop
-           :missing-icn-fname           "missing-icns.edn"
-           :tx-data-fname               "tx-data.edn"
-           :max-tx-size               500}
-          )))
+             :encounter-response-root-dir "/some/path/to/root"
+             :icn-maps-aug-fname          "icn-maps-aug.edn"
+             :invoke-fn                   tupelo.core/noop
+             :missing-icn-fname           "missing-icns.edn"
+             :tx-data-fname               "tx-data.edn"
+             :max-tx-size                 500}))))
+
+    (let [ctx      (util/discarding-out-str
+                     (config-load->ctx config-fname))
+          expected (quote
+                     {:db-uri                      "datomic:sql://encounters?jdbc:postgresql://postgres.qa:5432/topaz?user=datomic&password=geheim"
+
+                      :encounter-response-root-dir "/some/path/to/root"
+                      :invoke-fn                   tupelo.core/noop
+                      :missing-icn-fname           "missing-icns.edn"
+                      :icn-maps-aug-fname          "icn-maps-aug.edn"
+                      :tx-data-fname               "tx-data.edn"
+                      :max-tx-size                 500})]
+      (is= ctx expected))
 
     ; verify `dispatch` works
     (spit config-fname
@@ -82,11 +86,13 @@
             {:db-uri                      "some-preexisting-uri"
              :datomic-uri                 "aaa"
              :postgres-uri                "bbbb"
+
              :encounter-response-root-dir "/some/path/to/root"
-             :icn-maps-aug-fname          "icn-maps-aug.edn"
              :invoke-fn                   tupelo.core/noop
+             :icn-maps-aug-fname          "icn-maps-aug.edn"
              :missing-icn-fname           "missing-icns.edn"
-             :max-tx-size               500}))))
+             :tx-data-fname               "tx-data.edn"
+             :max-tx-size                 500}))))
 
     (let [ctx      (util/discarding-out-str
                      (config-load->ctx config-fname))
@@ -96,7 +102,7 @@
                       :icn-maps-aug-fname          "icn-maps-aug.edn"
                       :invoke-fn                   tupelo.core/noop
                       :missing-icn-fname           "missing-icns.edn"
-                      :max-tx-size               500
+                      :max-tx-size                 500
 
                       :tx-data-fname               "tx-data.edn"})]
       ; (spyx-pretty (data/diff ctx expected))

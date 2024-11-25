@@ -12,14 +12,21 @@
     )
   (:gen-class))
 
+(comment)
 (def ^:dynamic ctx-default
-  {
-   :encounter-response-root-dir "/shared/tmp/iowa/iowa_response_files"
+  {  ; vvv used to construct `db-uri`
+   :datomic-uri                 "datomic:sql://encounters"
+   :postgres-uri                "jdbc:postgresql://postgres.qa:5432/topaz?user=datomic&password=geheim"
+
+   :db-uri  nil ; if nil or missing, derived from other above
+   :max-tx-size                1000 ; The maxinum number of entity maps to include in a single Datomic transaction.
+
+   :encounter-response-root-dir "/some/path/to/root" ; "/shared/tmp/iowa/iowa_response_files" on QA
    :missing-icn-fname           "missing-icns.edn"
    :icn-maps-aug-fname          "icn-maps-aug.edn"
    :tx-data-fname               "tx-data.edn"
 
-   :max-tx-size               500 ; The maxinum number of entity maps to include in a single Datomic transaction.
+   :invoke-fn                   tupelo.core/noop
    })
 
 ;-----------------------------------------------------------------------------
@@ -35,7 +42,7 @@
   [config-fname :- s/Str]
   (let [config (edn/read-string (slurp config-fname))
         ;  >>     (spyx-pretty :config-read config)
-        c1     (glue ctx-default config)
+        c1     config ; (glue ctx-default config) ; #todo #awt remove???
         c2     (if (:db-uri c1)
                  c1 ; do not overwrite pre-existing value
                  (glue c1 {:db-uri (str (grab :datomic-uri config) \? (grab :postgres-uri config))}))

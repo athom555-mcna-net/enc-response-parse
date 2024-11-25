@@ -1,15 +1,16 @@
 #!/bin/bash 
 
 cat > /tmp/ctx.edn <<ENDEND
-{  :db-uri               "datomic:dev://localhost:4334/missing-icns-test"
-   :tx-size-limit        100
- ; :encounter-response-root-dir "/shared/tmp/iowa/iowa_response_files"
+{ :invoke-fn            enc-response.prod/save-icn-recs-datomic->missing-file
 
-   :missing-icn-fname           "./missing-icns-test.edn"
-   :icn-maps-aug-fname          "icn-maps-aug.edn"
-   :tx-data-fname               "tx-data.edn"
+  :missing-icn-fname    "./missing-icns-test.edn"
+  :db-uri               "datomic:dev://localhost:4334/missing-icns-fake"
 
-   :invoke-fn             enc-response.prod/save-icn-recs-datomic->missing-file
+; :icn-maps-aug-fname   "icn-maps-aug.edn"
+; :tx-data-fname        "tx-data.edn"
+; :max-tx-size          1000 ; The maxinum number of entity maps to include in a single Datomic transaction.
+
+; :encounter-response-root-dir "/shared/tmp/iowa/iowa_response_files"
 }
 ENDEND
 
