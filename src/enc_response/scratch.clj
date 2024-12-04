@@ -77,6 +77,15 @@
                        [?eid :encounter-transmission/previous-icn ?previous-icn]]
              db))))
 
+  (comment
+    (d.peer/q '[:find (pull ?eid [*])
+                :where
+                [<db/id> value]
+                ]
+      db)
+
+    )
+
   (pp/pprint
     (first
       (d.peer/q '[:find (pull ?eid [*])

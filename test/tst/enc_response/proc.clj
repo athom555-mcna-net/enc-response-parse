@@ -8,6 +8,8 @@
     [clojure.pprint :as pp]
     [datomic.api :as d.peer]
     [enc-response.datomic :as datomic]
+    [tupelo.csv :as csv]
+    [tupelo.io :as tio]
     [tupelo.string :as str]
     [tupelo.test.jvm :as ttj]
     ))
@@ -24,7 +26,7 @@
 (comment
   (verify
     (let [ctx {:db-uri             "datomic:dev://localhost:4334/enc-response"
-               :max-tx-size      500
+               :max-tx-size        500
                :missing-icn-fname  "resources/missing-icns-prod-small.edn"
                :icn-maps-aug-fname "icn-maps-aug.edn"}]
       (with-map-vals ctx [db-uri]
@@ -85,7 +87,7 @@
 ; add 2 unique recs to datomic, query and verify
 (verify
   (let [ctx         {:db-uri                      "datomic:dev://localhost:4334/enc-response-test"
-                     :max-tx-size               3
+                     :max-tx-size                 3
 
                      :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
                      :missing-icn-fname           "resources/missing-icns-prod-small.edn"
@@ -142,7 +144,7 @@
 ; entitie-maps with missing ICN values for `:plan-icn`
 (verify
   (let [ctx {:db-uri             "datomic:dev://localhost:4334/enc-response" ;
-             :max-tx-size      3
+             :max-tx-size        3
              :missing-icn-fname  "/Users/athom555/work/missing-icns-prod-small.edn"
              ; :missing-icn-fname  "/Users/athom555/work/missing-icns-prod-orig.edn"
              :icn-maps-aug-fname "icn-maps-aug.edn"}]
@@ -164,7 +166,7 @@
 ; parse data from all encounter response files => datomic
 (verify
   (let [ctx {:db-uri                      "datomic:dev://localhost:4334/enc-response-test"
-             :max-tx-size               3
+             :max-tx-size                 3
              :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
              }]
 
@@ -214,3 +216,51 @@
                :total-paid-amount               "000000000000"
                :db/id                           :*}))))))
 
+(verify-focus
+  (let [ctx {:encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
+             :plan-icn-update-tsv-fname   "./plan-icn-update.tsv"}
+        ]
+    (with-map-vals ctx [plan-icn-update-tsv-fname]
+      (let [plan-icn-update-tsv-File (tio/->File plan-icn-update-tsv-fname)
+            sample-text              "hello
+                                      there
+                                      again"
+            sample-lines             (mapv str/trim
+                                       (str/split-lines sample-text))]
+
+        (is= java.io.File (type plan-icn-update-tsv-File))
+
+        (is= 3 (count sample-lines))
+        (is= sample-lines ["hello"
+                           "there"
+                           "again"])
+
+        ; delete any existing file & create a new empty file
+        (tio/delete-file-if-exists plan-icn-update-tsv-File)
+        (.createNewFile plan-icn-update-tsv-File)
+
+        ; write each line to file
+        (doseq [line-str sample-lines]
+          (let [line-out (str line-str \newline)] ; must add newline!!!
+            (spit plan-icn-update-tsv-File line-out :append true)))
+
+        ; verify fesult
+        (let [result (mapv str/trim
+                       (str/split-lines
+                         (slurp plan-icn-update-tsv-File)))]
+          (is= result ["hello"
+                       "there"
+                       "again"])))
+      (let [plan-icn-update-tsv-File (tio/->File plan-icn-update-tsv-fname)
+            update-data              [{:icn 101 :plan-icn 201 :status :accepted}
+                                      {:icn 102 :plan-icn 202 :status :accepted}
+                                      {:icn 103 :plan-icn 203 :status :rejected}]
+            update-csv               (csv/entities->csv update-data {:separator \tab})]
+        ; (println update-csv)
+        (is-nonblank-lines= update-csv
+          "icn  plan-icn  status
+           101  201       accepted
+           102  202       accepted
+           103  203       rejected")
+        )
+      )))
