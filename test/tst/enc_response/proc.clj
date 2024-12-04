@@ -275,6 +275,6 @@
             "icn	plan-icn	status
              101	201       accepted
              102	202       accepted
-             103	203       rejected ")))
+             103	203       rejected    ")))
 
       )))
