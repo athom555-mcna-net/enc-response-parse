@@ -8,6 +8,7 @@
     [clojure.pprint :as pp]
     [datomic.api :as d.peer]
     [enc-response.datomic :as datomic]
+    [schema.core :as s]
     [tupelo.csv :as csv]
     [tupelo.io :as tio]
     [tupelo.string :as str]
@@ -221,6 +222,7 @@
              :plan-icn-update-tsv-fname   "./plan-icn-update.tsv"}
         ]
     (with-map-vals ctx [plan-icn-update-tsv-fname]
+      ; Create an empty file, append lines to it one at a time
       (let [plan-icn-update-tsv-File (tio/->File plan-icn-update-tsv-fname)
             sample-text              "hello
                                       there
@@ -251,15 +253,23 @@
           (is= result ["hello"
                        "there"
                        "again"])))
+
+      ; demo creating a csv text string
       (let [plan-icn-update-tsv-File (tio/->File plan-icn-update-tsv-fname)
             update-data              [{:icn 101 :plan-icn 201 :status :accepted}
                                       {:icn 102 :plan-icn 202 :status :accepted}
                                       {:icn 103 :plan-icn 203 :status :rejected}]
-            update-csv               (csv/entities->csv update-data {:separator \tab})]
+            update-csv               (csv/entities->csv update-data {:separator \tab})
+            update-csv-noheader     (str/drop-lines 1 update-csv)               ]
         ; (println update-csv)
         (is-nonblank-lines= update-csv
           "icn  plan-icn  status
            101  201       accepted
+           102  202       accepted
+           103  203       rejected")
+        ; (println update-csv-noheader)
+        (is-nonblank-lines= update-csv-noheader
+          "101  201       accepted
            102  202       accepted
            103  203       rejected")
         )
