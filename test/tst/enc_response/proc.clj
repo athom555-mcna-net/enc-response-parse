@@ -11,8 +11,12 @@
     [schema.core :as s]
     [tupelo.csv :as csv]
     [tupelo.io :as tio]
+    [tupelo.schema :as tsk]
     [tupelo.string :as str]
     [tupelo.test.jvm :as ttj]
+    )
+  (:import
+    [java.io File]
     ))
 
 ; Enable to see progress printouts
@@ -217,7 +221,7 @@
                :total-paid-amount               "000000000000"
                :db/id                           :*}))))))
 
-(verify-focus
+(verify
   (let [ctx {:encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
              :plan-icn-update-tsv-fname   "./plan-icn-update.tsv"}
         ]
@@ -246,7 +250,7 @@
           (let [line-out (str line-str \newline)] ; must add newline!!!
             (spit plan-icn-update-tsv-File line-out :append true)))
 
-        ; verify fesult
+        ; verify result
         (let [result (mapv str/trim
                        (str/split-lines
                          (slurp plan-icn-update-tsv-File)))]
@@ -254,23 +258,23 @@
                        "there"
                        "again"])))
 
-      ; demo creating a csv text string
-      (let [plan-icn-update-tsv-File (tio/->File plan-icn-update-tsv-fname)
-            update-data              [{:icn 101 :plan-icn 201 :status :accepted}
-                                      {:icn 102 :plan-icn 202 :status :accepted}
-                                      {:icn 103 :plan-icn 203 :status :rejected}]
-            update-csv               (csv/entities->csv update-data {:separator \tab})
-            update-csv-noheader     (str/drop-lines 1 update-csv)               ]
-        ; (println update-csv)
-        (is-nonblank-lines= update-csv
-          "icn  plan-icn  status
-           101  201       accepted
-           102  202       accepted
-           103  203       rejected")
-        ; (println update-csv-noheader)
-        (is-nonblank-lines= update-csv-noheader
-          "101  201       accepted
-           102  202       accepted
-           103  203       rejected")
-        )
+      ; demo creating a csv text file from 2 blocks of data
+      (let [data-1     [{:icn 101 :plan-icn 201 :status :accepted}]
+            data-2     [{:icn 102 :plan-icn 202 :status :accepted}
+                        {:icn 103 :plan-icn 203 :status :rejected}]
+            dummy-File (tio/create-temp-file "tsv" ".tmp")]
+
+        ; verify newlines are correct for subsequent writes
+        (with-open [writer (io/writer dummy-File)]
+          (.write writer (csv/entities->csv data-1 {:separator \tab}))
+          (.write writer (csv/entities->csv data-2 {:separator \tab :header? false})))
+        (let [result (slurp dummy-File)
+              lines  (str/split-lines result)]
+          (is= 4 (count lines))
+          (is-nonblank-lines= result
+            "icn	plan-icn	status
+             101	201       accepted
+             102	202       accepted
+             103	203       rejected ")))
+
       )))
