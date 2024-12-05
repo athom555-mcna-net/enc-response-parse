@@ -264,10 +264,23 @@
                         {:icn 103 :plan-icn 203 :status :rejected}]
             dummy-File (tio/create-temp-file "tsv" ".tmp")]
 
-        ; verify newlines are correct for subsequent writes
+        ; verify newlines are correct for subsequent writes - Writer
         (with-open [writer (io/writer dummy-File)]
           (.write writer (csv/entities->csv data-1 {:separator \tab}))
           (.write writer (csv/entities->csv data-2 {:separator \tab :header? false})))
+        (let [result (slurp dummy-File)
+              lines  (str/split-lines result)]
+          (is= 4 (count lines))
+          (is-nonblank-lines= result
+            "icn	plan-icn	status
+             101	201       accepted
+             102	202       accepted
+             103	203       rejected    "))
+
+        ; verify newlines are correct for subsequent writes - spit
+        (spit dummy-File (csv/entities->csv data-1 {:separator \tab}))
+        (spit dummy-File (csv/entities->csv data-2 {:separator \tab :header? false})
+          :append true)
         (let [result (slurp dummy-File)
               lines  (str/split-lines result)]
           (is= 4 (count lines))
