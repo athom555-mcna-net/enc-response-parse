@@ -221,73 +221,76 @@
                :total-paid-amount               "000000000000"
                :db/id                           :*}))))))
 
+; (with-map-vals ctx [plan-icn-update-tsv-fname])
 (verify
-  (let [ctx {:encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
-             :plan-icn-update-tsv-fname   "./plan-icn-update.tsv"}
-        ]
-    (with-map-vals ctx [plan-icn-update-tsv-fname]
-      ; Create an empty file, append lines to it one at a time
-      (let [plan-icn-update-tsv-File (tio/->File plan-icn-update-tsv-fname)
-            sample-text              "hello
-                                      there
-                                      again"
-            sample-lines             (mapv str/trim
-                                       (str/split-lines sample-text))]
+  (let [ctx        {:encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
+                    :plan-icn-update-tsv-fname   "./plan-icn-update.tsv"}
+        dummy-File (tio/create-temp-file "tsv" ".tmp")]
+    (is= java.io.File (type dummy-File))
+    ; delete any existing file & create a new empty file
 
-        (is= java.io.File (type plan-icn-update-tsv-File))
+    ; Create an empty file, append lines to it one at a time
+    (let [; plan-icn-update-tsv-File (tio/->File plan-icn-update-tsv-fname)
+          sample-text  "hello
+                        there
+                        again"
+          sample-lines (mapv str/trim
+                         (str/split-lines sample-text))]
+      (is= 3 (count sample-lines))
+      (is= sample-lines ["hello"
+                         "there"
+                         "again"])
 
-        (is= 3 (count sample-lines))
-        (is= sample-lines ["hello"
-                           "there"
-                           "again"])
+      ; write each line to file
+      (tio/delete-file-if-exists dummy-File)
+      ; (.createNewFile dummy-File) ; unnecessary
+      (doseq [line-str sample-lines]
+        (let [line-out (str line-str \newline)] ; must add newline!!!
+          (spit dummy-File line-out :append true)))
+      (let [result (it-> dummy-File
+                     (slurp it)
+                     (str/split-lines it)
+                     (mapv str/trim it))]
+        (is= result ["hello"
+                     "there"
+                     "again"])))
 
-        ; delete any existing file & create a new empty file
-        (tio/delete-file-if-exists plan-icn-update-tsv-File)
-        (.createNewFile plan-icn-update-tsv-File)
+    ; demo creating a csv text file from 2 blocks of data
+    (let [data-1 [{:icn 101 :plan-icn 201 :status :accepted}]
+          data-2 [{:icn 102 :plan-icn 202 :status :accepted}
+                  {:icn 103 :plan-icn 203 :status :rejected}]
 
-        ; write each line to file
-        (doseq [line-str sample-lines]
-          (let [line-out (str line-str \newline)] ; must add newline!!!
-            (spit plan-icn-update-tsv-File line-out :append true)))
+          csv-1 (csv/entities->csv data-1 {:separator \tab})
+          csv-2 (csv/entities->csv data-2 {:separator \tab :header? false})]
+      (spyx csv-1)
+      (spyx csv-2)
 
-        ; verify result
-        (let [result (mapv str/trim
-                       (str/split-lines
-                         (slurp plan-icn-update-tsv-File)))]
-          (is= result ["hello"
-                       "there"
-                       "again"])))
+      (is= csv-1 "icn\tplan-icn\tstatus\n101\t201\taccepted\n") ; header + 1 row
+      (is= csv-2 "102\t202\taccepted\n103\t203\trejected\n") ; no header, 2 rows
 
-      ; demo creating a csv text file from 2 blocks of data
-      (let [data-1     [{:icn 101 :plan-icn 201 :status :accepted}]
-            data-2     [{:icn 102 :plan-icn 202 :status :accepted}
-                        {:icn 103 :plan-icn 203 :status :rejected}]
-            dummy-File (tio/create-temp-file "tsv" ".tmp")]
+      ; Use Writer to create file
+      (with-open [writer (io/writer dummy-File)]
+        (.write writer csv-1)
+        (.write writer csv-2))
+      (let [result (slurp dummy-File)
+            lines  (str/split-lines result)]
+        (is= 4 (count lines))
+        (is-nonblank-lines= result
+          "icn	plan-icn	status
+           101	201       accepted
+           102	202       accepted
+           103	203       rejected    "))
 
-        ; verify newlines are correct for subsequent writes - Writer
-        (with-open [writer (io/writer dummy-File)]
-          (.write writer (csv/entities->csv data-1 {:separator \tab}))
-          (.write writer (csv/entities->csv data-2 {:separator \tab :header? false})))
-        (let [result (slurp dummy-File)
-              lines  (str/split-lines result)]
-          (is= 4 (count lines))
-          (is-nonblank-lines= result
-            "icn	plan-icn	status
-             101	201       accepted
-             102	202       accepted
-             103	203       rejected    "))
+      ; Use spit to create file
+      (spit dummy-File csv-1)
+      (spit dummy-File csv-2 :append true)
+      (let [result (slurp dummy-File)
+            lines  (str/split-lines result)]
+        (is= 4 (count lines))
+        (is-nonblank-lines= result
+          "icn	plan-icn	status
+           101	201       accepted
+           102	202       accepted
+           103	203       rejected    ")))
 
-        ; verify newlines are correct for subsequent writes - spit
-        (spit dummy-File (csv/entities->csv data-1 {:separator \tab}))
-        (spit dummy-File (csv/entities->csv data-2 {:separator \tab :header? false})
-          :append true)
-        (let [result (slurp dummy-File)
-              lines  (str/split-lines result)]
-          (is= 4 (count lines))
-          (is-nonblank-lines= result
-            "icn	plan-icn	status
-             101	201       accepted
-             102	202       accepted
-             103	203       rejected    ")))
-
-      )))
+    ))
