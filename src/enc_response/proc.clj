@@ -174,36 +174,35 @@
   "Appends a block of TSV data to output file as specified in ctx."
   [ctx :- tsk/KeyMap
    data-recs :- [tsk/KeyMap]
-   write-hdr-line :- s/Bool]
-  (let [header-flg (truthy? write-hdr-line)
-        append-flg (not header-flg)]
-    (with-map-vals ctx [update-tsv-fname]
-      (let [out-recs (forv [data-rec data-recs]
-                       (select-keys data-rec [:mco-claim-number :iowa-transaction-control-number]))
-            csv-str  (csv/entities->csv out-recs {:separator \tab :header? header-flg})
-            ]
-        (spit update-tsv-fname csv-str :append append-flg)))))
+   init-output-file? :- s/Bool]
+  (prof/with-timer-accum :enc-resp-parsed->tsv
+    (let [header-flg (truthy? init-output-file?)
+          append-flg (not header-flg)]
+      (with-map-vals ctx [plan-icn-update-tsv-fname]
+        (let [out-recs (forv [data-rec data-recs]
+                         (select-keys data-rec [:mco-claim-number :iowa-transaction-control-number]))
+              csv-str  (csv/entities->csv out-recs {:separator \tab :header? header-flg})]
+          (spit plan-icn-update-tsv-fname csv-str :append append-flg))))))
 
-;(s/defn init-enc-response-files->updates-tsv :- [s/Str]
-;  "Uses `:encounter-response-root-dir` from map `ctx` to specify a directory of
-;  Encounter Response files. For each file in turn, loads/parses the file and saves
-;  data fields => TSV file:  icn, status, plan-icn "
-;  [ctx :- tsk/KeyMap]
-;  (nl)
-;  (prn :init-enc-response-files->updates-tsv--enter)
-;  (prof/with-timer-accum :init-enc-response-files->updates-tsv
-;    (let [enc-resp-fnames (get-enc-response-fnames ctx)]
-;      (prn :init-enc-response-files->updates-tsv--num-files (count enc-resp-fnames))
-;      (nl)
-;
-;      (doseq [fname enc-resp-fnames]
-;        (prn :init-enc-response-files->updates-tsv--processing fname)
-;        (let [data-recs (parse/enc-response-fname->parsed fname)]
-;          << append to file >>
-;          ))
-;      (nl)
-;      enc-resp-fnames))
-;  (prof/print-profile-stats!)
-;  (prn :init-enc-response-files->updates-tsv--leave)
-;  (nl))
+(s/defn init-enc-response-files->updates-tsv
+  "Uses `:encounter-response-root-dir` from map `ctx` to specify a directory of
+  Encounter Response files. For each file in turn, loads/parses the file and saves
+  data fields => TSV file."
+  [ctx :- tsk/KeyMap]
+  (nl)
+  (prn :init-enc-response-files->updates-tsv--enter)
+  (prof/with-timer-accum :init-enc-response-files->updates-tsv
+    (let [enc-resp-fnames (get-enc-response-fnames ctx)
+          first-time? (atom true)]
+      (prn :init-enc-response-files->updates-tsv--num-files (count enc-resp-fnames))
+      (nl)
+      (doseq [fname enc-resp-fnames]
+        (prn :init-enc-response-files->updates-tsv--processing fname)
+        (let [data-recs (parse/enc-response-fname->parsed fname)]
+          (enc-resp-parsed->tsv ctx data-recs @first-time?)
+          (reset! first-time? false)))
+      (nl)))
+  (prof/print-profile-stats!)
+  (prn :init-enc-response-files->updates-tsv--leave)
+  (nl))
 

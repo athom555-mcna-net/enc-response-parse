@@ -24,6 +24,7 @@
    :missing-icn-fname           "missing-icns.edn"
    :icn-maps-aug-fname          "icn-maps-aug.edn"
    :tx-data-fname               "tx-data.edn"
+   :plan-icn-update-tsv-fname   "./plan-icn-update.tsv"
 
    :invoke-fn                   tupelo.core/noop
    })

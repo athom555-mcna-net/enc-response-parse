@@ -221,11 +221,8 @@
                :total-paid-amount               "000000000000"
                :db/id                           :*}))))))
 
-; (with-map-vals ctx [plan-icn-update-tsv-fname])
-(verify-focus
-  (let [ctx        {:encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
-                    :plan-icn-update-tsv-fname   "./plan-icn-update.tsv"}
-        dummy-File (tio/create-temp-file "tsv" ".tmp")]
+(verify
+  (let [dummy-File (tio/create-temp-file "tsv" ".tmp")]
     (is= java.io.File (type dummy-File))
     ; delete any existing file & create a new empty file
 
@@ -260,8 +257,8 @@
           data-2 [{:icn 102 :plan-icn 202 :status :accepted}
                   {:icn 103 :plan-icn 203 :status :rejected}]
 
-          csv-1 (csv/entities->csv data-1 {:separator \tab})
-          csv-2 (csv/entities->csv data-2 {:separator \tab :header? false})]
+          csv-1  (csv/entities->csv data-1 {:separator \tab})
+          csv-2  (csv/entities->csv data-2 {:separator \tab :header? false})]
       (is= csv-1 "icn\tplan-icn\tstatus\n101\t201\taccepted\n") ; header + 1 row
       (is= csv-2 "102\t202\taccepted\n103\t203\trejected\n") ; no header, 2 rows
 
@@ -289,17 +286,43 @@
     (let [data-1 [{:mco-claim-number 101 :iowa-transaction-control-number 201 :status :accepted}]
           data-2 [{:mco-claim-number 102 :iowa-transaction-control-number 202 :status :accepted}
                   {:mco-claim-number 103 :iowa-transaction-control-number 203 :status :rejected}]
-          ctx {:update-tsv-fname dummy-File}]
+          ctx    {:plan-icn-update-tsv-fname dummy-File}]
       (enc-resp-parsed->tsv ctx data-1 true)
       (enc-resp-parsed->tsv ctx data-2 false)
       (let [result (slurp dummy-File)]
-        (prn :-----------------------------------------------------------------------------)
-        (println result)
-        (prn :-----------------------------------------------------------------------------)
+        ;(prn :-----------------------------------------------------------------------------)
+        ;(println result)
+        ;(prn :-----------------------------------------------------------------------------)
         (is-nonblank-lines= result
           "iowa-transaction-control-number	mco-claim-number
            201	101
            202	102
            203	103 ")))
-
     ))
+
+(verify
+  (let [ctx {:encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
+             :plan-icn-update-tsv-fname   "./plan-icn-update-small.tsv"}]
+    (init-enc-response-files->updates-tsv ctx)
+    (with-map-vals ctx [plan-icn-update-tsv-fname]
+      (let [result (slurp plan-icn-update-tsv-fname)]
+        ;(prn :-----------------------------------------------------------------------------)
+        ;(println result)
+        ;(prn :-----------------------------------------------------------------------------)
+        (is-nonblank-lines= result
+          "iowa-transaction-control-number    mco-claim-number
+            62133600780000001                 30000000100601
+            62133600780000002                 30000000102936
+            62133600780000003                 30000062649895
+            62133600780000004                 30000062649896
+            62133600780000005                 30000062649897
+            62134500780000001                 30000062771575
+            62134500780000002                 30000062778189
+            62134500780000003                 30000000102990
+            62135000780000001                 30000062903232
+            62135000780000002                 30000062903233
+            62135000780000003                 30000062903234
+            62135000780000004                 30000000217708
+            62200600780000001                 30000063295500
+            62200600780000002                 30000063295501 ")))))
+
