@@ -1,11 +1,9 @@
 (ns enc-response.proc
   (:use tupelo.core)
   (:require
-    [clojure.data :as data]
     [clojure.java.io :as io]
     [clojure.pprint :as pp]
     [clojure.tools.reader.edn :as edn]
-    [datomic.api :as d.peer]
     [enc-response.datomic :as datomic]
     [enc-response.parse :as parse]
     [enc-response.util :as util]
@@ -14,9 +12,7 @@
     [tupelo.profile :as prof]
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
-    )
-  ; (:gen-class)
-  )
+    ))
 
 (def ^:dynamic verbose?
   "Enable to see progress printouts"
