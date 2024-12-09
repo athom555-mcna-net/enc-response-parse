@@ -5,7 +5,6 @@
   ;-----------------------------------------------------------------------------
 
   :dependencies [
-                 [com.datomic/local         "1.0.285"]
                  [com.datomic/peer          "1.0.7260"]
                  [org.clojure/clojure       "1.12.0"]
                  [org.flatland/ordered      "1.15.12"]
