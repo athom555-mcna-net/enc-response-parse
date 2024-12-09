@@ -286,4 +286,20 @@
            102	202       accepted
            103	203       rejected    ")))
 
+    (let [data-1 [{:mco-claim-number 101 :iowa-transaction-control-number 201 :status :accepted}]
+          data-2 [{:mco-claim-number 102 :iowa-transaction-control-number 202 :status :accepted}
+                  {:mco-claim-number 103 :iowa-transaction-control-number 203 :status :rejected}]
+          ctx {:update-tsv-fname dummy-File}]
+      (enc-resp-parsed->tsv ctx data-1 true)
+      (enc-resp-parsed->tsv ctx data-2 false)
+      (let [result (slurp dummy-File)]
+        (prn :-----------------------------------------------------------------------------)
+        (println result)
+        (prn :-----------------------------------------------------------------------------)
+        (is-nonblank-lines= result
+          "iowa-transaction-control-number	mco-claim-number
+           201	101
+           202	102
+           203	103 ")))
+
     ))
