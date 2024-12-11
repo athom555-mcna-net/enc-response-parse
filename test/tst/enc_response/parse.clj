@@ -34,7 +34,7 @@
   (throws-not? (validate-format :char "")) ; empty str legal
   (throws-not? (validate-format :numeric ""))
   (throws-not? (validate-format :alphanumeric ""))
-  (throws? (validate-format :char (vec "abc"))) ; must be str, not charseq
+  (throws? (validate-format :char (vec "abc"))) ; must be str not charseq
 
   (is= "a" (validate-format :char "a")) ; :char => alpha only
   (is= "abc" (validate-format :char "abc"))
@@ -55,8 +55,8 @@
   (is= "9" (validate-format :text "9"))
   (is= "abc9" (validate-format :text "abc9"))
   (is= "#abc" (validate-format :text "#abc"))
-  (is= "#ab,c!" (validate-format :text "#ab,c!"))
-  (is= "#ab, c!" (validate-format :text "#ab, c!")))
+  (is= "#abc!" (validate-format :text "#abc!"))
+  (is= "#ab c!" (validate-format :text "#ab c!")))
 
 (verify
   (throws? (spec-slice {:name :xxx :format :char :length 0} (vec "abcdefg"))) ; zero length
@@ -83,9 +83,9 @@
                      {:name :bb :format :numeric :length 2}
                      {:name :ccc :format :alphanumeric :length 3 :length-strict? false}]]
     (is= (parse-string-fields field-specs "a23cc3")
-      {:a "a", :bb "23", :ccc "cc3"})
+      {:a "a" :bb "23" :ccc "cc3"})
     (is= (parse-string-fields field-specs "a23cc3dddd") ; extra chars ignored
-      {:a "a", :bb "23", :ccc "cc3"})
+      {:a "a" :bb "23" :ccc "cc3"})
     (throws? (parse-string-fields field-specs "abbccc")) ; bb wrong format
     (throws-not? (parse-string-fields field-specs "a23cc")) ; insufficient chars ok in last field
     ))
@@ -137,7 +137,7 @@
   ; ignores parent dirs in path
   (is (enc-resp-file? (File. "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20200312_062014.TXT")))
 
-  ; OK if not exist, as long as pattern matches
+  ; OK if not exist as long as pattern matches
   (is (enc-resp-file? (File. "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_xxxxxxx_062014.TXT")))
   (isnt (enc-resp-file? (File. "/Users/athom555/work/iowa-response/xxxxENC_RESPONSE_D_xxxxxxx_062014.TXT"))))
 
@@ -238,36 +238,36 @@
             rec-5     (xlast data-recs)]
         (is= 5 (count data-recs))
 
-        (is= rec-1 {:billing-provider-npi            "1952711780",
-                    :claim-frequency-code            "1",
-                    :claim-type                      "D",
-                    :error-code                      "A00",
-                    :error-field-value               "",
-                    :field                           "PAID",
-                    :first-date-of-service           "06302021",
-                    :iowa-processing-date            "12022021",
-                    :iowa-transaction-control-number "62133600780000001",
-                    :line-number                     "00",
-                    :mco-claim-number                "30000000100601",
-                    :mco-paid-date                   "08202021",
-                    :member-id                       "2610850C",
+        (is= rec-1 {:billing-provider-npi            "1952711780"
+                    :claim-frequency-code            "1"
+                    :claim-type                      "D"
+                    :error-code                      "A00"
+                    :error-field-value               ""
+                    :field                           "PAID"
+                    :first-date-of-service           "06302021"
+                    :iowa-processing-date            "12022021"
+                    :iowa-transaction-control-number "62133600780000001"
+                    :line-number                     "00"
+                    :mco-claim-number                "30000000100601"
+                    :mco-paid-date                   "08202021"
+                    :member-id                       "2610850C"
                     :total-paid-amount               "000000004763"})
-        (is= rec-5 {:billing-provider-npi            "1952711780",
-                    :claim-frequency-code            "1",
-                    :claim-type                      "D",
-                    :error-code                      "A00",
-                    :error-field-value               "",
-                    :field                           "PAID",
-                    :first-date-of-service           "10272021",
-                    :iowa-processing-date            "12022021",
-                    :iowa-transaction-control-number "62133600780000005",
-                    :line-number                     "00",
-                    :mco-claim-number                "30000062649897",
-                    :mco-paid-date                   "11242021",
-                    :member-id                       "4037045B",
+        (is= rec-5 {:billing-provider-npi            "1952711780"
+                    :claim-frequency-code            "1"
+                    :claim-type                      "D"
+                    :error-code                      "A00"
+                    :error-field-value               ""
+                    :field                           "PAID"
+                    :first-date-of-service           "10272021"
+                    :iowa-processing-date            "12022021"
+                    :iowa-transaction-control-number "62133600780000005"
+                    :line-number                     "00"
+                    :mco-claim-number                "30000062649897"
+                    :mco-paid-date                   "11242021"
+                    :member-id                       "4037045B"
                     :total-paid-amount               "000000034574"})
 
-        ; verify parsed all 5 records from file, first & last match expected values
+        ; verify parsed all 5 records from file first & last match expected values
         (is (->> data-recs
               (wild-match?
                 [rec-1

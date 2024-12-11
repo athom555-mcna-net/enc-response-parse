@@ -283,25 +283,33 @@
            102	202       accepted
            103	203       rejected    ")))
 
-    (let [data-1 [{:mco-claim-number 101 :iowa-transaction-control-number 201 :status :accepted}]
-          data-2 [{:mco-claim-number 102 :iowa-transaction-control-number 202 :status :accepted}
-                  {:mco-claim-number 103 :iowa-transaction-control-number 203 :status :rejected}]
+    (let [data-1 [{:mco-claim-number 101 :iowa-transaction-control-number 201 :error-code "A00"}]
+          data-2 [{:mco-claim-number 102 :iowa-transaction-control-number 202 :error-code "A00"}
+                  {:mco-claim-number 103 :iowa-transaction-control-number 203 :error-code "B99"}]
           ctx    {:plan-icn-update-tsv-fname dummy-File}]
       (enc-resp-parsed->tsv ctx data-1 true)
       (enc-resp-parsed->tsv ctx data-2 false)
       (let [result (slurp dummy-File)]
-        ;(prn :-----------------------------------------------------------------------------)
-        ;(println result)
-        ;(prn :-----------------------------------------------------------------------------)
+        (prn :-----------------------------------------------------------------------------)
+        (println result)
+        (prn :-----------------------------------------------------------------------------)
         (is-nonblank-lines= result
-          "iowa-transaction-control-number	mco-claim-number
-           201	101
-           202	102
-           203	103 ")))
+          "icn	plan-icn	status
+           101	201       accepted
+           102	202       accepted
+           103	203       rejected ")))
     ))
 
 (verify
-  (let [ctx {:encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
+  (is= "accepted" (error-code->status-str "A00"))
+  (is= "accepted" (error-code->status-str "a00"))
+
+  (is= "rejected" (error-code->status-str "A1S"))
+  (is= "rejected" (error-code->status-str "B00"))
+  (is= "rejected" (error-code->status-str "xyz"))
+
+  (let [ctx {:encounter-response-root-dir "./enc-response-files-test-small" ; full data:
+             ; "/Users/athom555/work/iowa-response"
              :plan-icn-update-tsv-fname   "./plan-icn-update-small.tsv"}]
     (init-enc-response-files->updates-tsv ctx)
     (with-map-vals ctx [plan-icn-update-tsv-fname]
@@ -310,19 +318,20 @@
         ;(println result)
         ;(prn :-----------------------------------------------------------------------------)
         (is-nonblank-lines= result
-          "iowa-transaction-control-number    mco-claim-number
-            62133600780000001                 30000000100601
-            62133600780000002                 30000000102936
-            62133600780000003                 30000062649895
-            62133600780000004                 30000062649896
-            62133600780000005                 30000062649897
-            62134500780000001                 30000062771575
-            62134500780000002                 30000062778189
-            62134500780000003                 30000000102990
-            62135000780000001                 30000062903232
-            62135000780000002                 30000062903233
-            62135000780000003                 30000062903234
-            62135000780000004                 30000000217708
-            62200600780000001                 30000063295500
-            62200600780000002                 30000063295501 ")))))
+          " icn	            plan-icn	      status
+          30000000100601	62133600780000001	accepted
+          30000000102936	62133600780000002	accepted
+          30000062649895	62133600780000003	accepted
+          30000062649896	62133600780000004	accepted
+          30000062649897	62133600780000005	accepted
+          30000062771575	62134500780000001	accepted
+          30000062778189	62134500780000002	accepted
+          30000000102990	62134500780000003	accepted
+          30000062903232	62135000780000001	accepted
+          30000062903233	62135000780000002	accepted
+          30000062903234	62135000780000003	accepted
+          30000000217708	62135000780000004	accepted
+          30000063295500	62200600780000001	accepted
+          30000063295501	62200600780000002	accepted "
+          )))))
 

@@ -166,6 +166,14 @@
       (with-result (datomic/peer-transact-entities db-uri max-tx-size entity-maps)
         (prn :tx-data-file->datomic--leave)))))
 
+(s/defn error-code->status-str :- s/Str
+  "Convert the 'error-code' field of an Encounter Response record into a text string
+  'accepted' or 'rejected'."
+  [error-code :- s/Str]
+  (if (str/lowercase= "a00" error-code)
+    "accepted"
+    "rejected"))
+
 (s/defn enc-resp-parsed->tsv
   "Appends a block of TSV data to output file as specified in ctx."
   [ctx :- tsk/KeyMap
@@ -176,7 +184,10 @@
           append-flg (not header-flg)]
       (with-map-vals ctx [plan-icn-update-tsv-fname]
         (let [out-recs (forv [data-rec data-recs]
-                         (select-keys data-rec [:mco-claim-number :iowa-transaction-control-number]))
+                         (with-map-vals data-rec [mco-claim-number error-code iowa-transaction-control-number]
+                           {:icn      mco-claim-number
+                            :status   (error-code->status-str error-code)
+                            :plan-icn iowa-transaction-control-number}))
               csv-str  (csv/entities->csv out-recs {:separator \tab :header? header-flg})]
           (spit plan-icn-update-tsv-fname csv-str :append append-flg))))))
 
@@ -189,7 +200,7 @@
   (prn :init-enc-response-files->updates-tsv--enter)
   (prof/with-timer-accum :init-enc-response-files->updates-tsv
     (let [enc-resp-fnames (get-enc-response-fnames ctx)
-          first-time? (atom true)]
+          first-time?     (atom true)]
       (prn :init-enc-response-files->updates-tsv--num-files (count enc-resp-fnames))
       (nl)
       (doseq [fname enc-resp-fnames]
