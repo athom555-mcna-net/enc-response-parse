@@ -135,18 +135,18 @@
   (is (enc-resp-file-name? "ENC_RESPONSE_D_20200312_062014.TXT"))
 
   ; ignores parent dirs in path
-  (is (enc-resp-file? (File. "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20200312_062014.TXT")))
+  (is (enc-resp-File? (File. "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20200312_062014.TXT")))
 
   ; OK if not exist as long as pattern matches
-  (is (enc-resp-file? (File. "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_xxxxxxx_062014.TXT")))
-  (isnt (enc-resp-file? (File. "/Users/athom555/work/iowa-response/xxxxENC_RESPONSE_D_xxxxxxx_062014.TXT"))))
+  (is (enc-resp-File? (File. "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_xxxxxxx_062014.TXT")))
+  (isnt (enc-resp-File? (File. "/Users/athom555/work/iowa-response/xxxxENC_RESPONSE_D_xxxxxxx_062014.TXT"))))
 
 ;---------------------------------------------------------------------------------------------------
 (verify
   (let [encounter-response-root-dir "./enc-response-files-test"
         enc-resp-root-dir-File      (io/file encounter-response-root-dir)
         all-files                   (file-seq enc-resp-root-dir-File) ; returns a tree of File objects like `find`
-        enc-resp-fnames             (vec (sort (mapv str (keep-if enc-resp-file? all-files))))]
+        enc-resp-fnames             (vec (sort (mapv str (keep-if enc-resp-File? all-files))))]
     (is (it-> all-files
           (mapv type it)
           (every? #(= % File) it))) ; every element is a java.io.File
@@ -215,7 +215,7 @@
              }]
 
     ; full data: "/Users/athom555/work/iowa-response"
-    (let [enc-resp-fnames (proc/enc-response-dir->fnames ctx) ; uses :encounter-response-root-dir
+    (let [enc-resp-fnames (enc-response-dir->fnames ctx) ; uses :encounter-response-root-dir
           fname-first     (xfirst enc-resp-fnames)]
       ; verify found all files in dir
       (is= enc-resp-fnames

@@ -51,7 +51,7 @@
                          :tx-data-fname               "tx-data.edn"
                          :max-tx-size               2}
 
-        enc-resp-fnames (proc/enc-response-dir->fnames ctx-local)
+        enc-resp-fnames (parse/enc-response-dir->fnames ctx-local)
         fname-first     (xfirst enc-resp-fnames)]
 
     ; verify parsed all lines => records from first file

@@ -1,6 +1,7 @@
 (ns enc-response.parse
   (:use tupelo.core)
   (:require
+    [clojure.java.io :as io]
     [flatland.ordered.map :as omap]
     [schema.core :as s]
     [tupelo.profile :as prof]
@@ -21,11 +22,18 @@
   [fname :- s/Str]
   (boolean (re-matches encounter-response-filename-patt fname)))
 
-(s/defn enc-resp-file? :- s/Bool
+(s/defn enc-resp-File? :- s/Bool
   [file :- java.io.File]
   (it-> file
     (.getName it) ; returns string w/o parent dirs
     (enc-resp-file-name? it)))
+
+(s/defn enc-response-dir->fnames :- [s/Str]
+  [ctx :- tsk/KeyMap]
+  (let [enc-resp-root-dir-File (io/file (grab :encounter-response-root-dir ctx))
+        all-files              (file-seq enc-resp-root-dir-File) ; returns a tree like `find`
+        enc-resp-fnames        (sort (mapv str (keep-if enc-resp-File? all-files)))]
+    enc-resp-fnames))
 
 ;---------------------------------------------------------------------------------------------------
 (s/def spec-opts-default :- tsk/KeyMap
