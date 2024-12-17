@@ -128,13 +128,14 @@
   (let [lines (it-> fname
                 (slurp it)
                 (str/split-lines it)
-                (drop-if #(str/whitespace? %) it))]
+                (drop-if str/whitespace? it))]
     lines))
 
 (s/defn enc-response-fname->parsed :- [tsk/KeyMap]
   [fname :- s/Str]
   (prof/with-timer-accum :enc-response-fname->parsed
-    (let [data-recs (forv [line (enc-response-fname->lines fname)]
+    (let [
+          data-recs (forv [line (enc-response-fname->lines fname)]
                       (parse-string-fields iowa-encounter-response-specs line))]
       data-recs)))
 

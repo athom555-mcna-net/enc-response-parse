@@ -4,8 +4,10 @@
     [clojure.java.io :as io]
     [clojure.pprint :as pp]
     [clojure.tools.reader.edn :as edn]
+    [datomic.api :as d.peer]
     [enc-response.datomic :as datomic]
     [enc-response.parse :as parse]
+    [enc-response.schemas :as schemas]
     [enc-response.util :as util]
     [schema.core :as s]
     [tupelo.csv :as csv]
@@ -36,40 +38,6 @@
         recs-sorted       (sort-by rec->iso-date-str resp-recs)
         result            (xlast recs-sorted)]
     result))
-
-(s/defn enc-response-recs->datomic :- s/Any
-  "Transact encounter response records into Datomic, using a block size from `ctx`
-  as specified by :max-tx-size. "
-  [ctx :- tsk/KeyMap
-   entity-maps :- [tsk/KeyMap]]
-  (prof/with-timer-accum :enc-response-recs->datomic
-    (with-map-vals ctx [db-uri max-tx-size]
-      (datomic/peer-transact-entities db-uri max-tx-size entity-maps))))
-
-(s/defn init-enc-response-files->datomic :- [s/Str]
-  "Uses `:encounter-response-root-dir` from map `ctx` to specify a directory of
-  Encounter Response files. For each file in turn, loads/parses the file and commits the data
-  into Datomic. Returns a vector of the filenames processed.
-
-  Assumes schema has already been transacted into Datomic. "
-  [ctx :- tsk/KeyMap]
-  (nl)
-  (prn :init-enc-response-files->datomic--enter)
-  (prof/with-timer-accum :init-enc-response-files->datomic
-    (datomic/enc-response-datomic-init ctx)
-    (let [enc-resp-fnames (parse/enc-response-dir->fnames ctx)]
-      (prn :enc-response-files->datomic--num-files (count enc-resp-fnames))
-      (nl)
-      (doseq [fname enc-resp-fnames]
-        (prn :enc-response-files->datomic--processing fname)
-        (let [data-recs (parse/enc-response-fname->parsed fname)]
-          (enc-response-recs->datomic ctx data-recs)))
-      (nl)
-      (prn :init-enc-response-files->datomic--num-recs (datomic/count-enc-response-recs ctx))
-      enc-resp-fnames))
-  (prof/print-profile-stats!)
-  (prn :init-enc-response-files->datomic--leave)
-  (nl))
 
 (s/defn enc-resp-disp-diff :- [tsk/KeyMap]
   [ctx :- tsk/KeyMap]
@@ -206,25 +174,56 @@
   (prn :init-enc-response-files->updates-tsv--leave)
   (nl))
 
+(s/defn enc-response-recs->datomic :- s/Any
+  "Transact encounter response records into Datomic, using a block size from `ctx`
+  as specified by :max-tx-size. "
+  [ctx :- tsk/KeyMap
+   entity-maps :- [tsk/KeyMap]]
+  (prof/with-timer-accum :enc-response-recs->datomic
+    (with-map-vals ctx [db-uri max-tx-size]
+      (datomic/peer-transact-entities db-uri max-tx-size entity-maps))))
+
+(s/defn init-enc-response-files->datomic :- [s/Str]
+  "Uses `:encounter-response-root-dir` from map `ctx` to specify a directory tree of
+  Encounter Response files. For each file in turn, loads/parses the file and commits the data
+  into Datomic. Returns a vector of the filenames processed.
+
+  Assumes schema has already been transacted into Datomic. "
+  [ctx :- tsk/KeyMap]
+  (nl)
+  (prn :init-enc-response-files->datomic--enter)
+  (prof/with-timer-accum :init-enc-response-files->datomic
+    (datomic/enc-response-datomic-init ctx)
+    (let [enc-resp-fnames (parse/enc-response-dir->fnames ctx)]
+      (prn :enc-response-files->datomic--num-files (count enc-resp-fnames))
+      (nl)
+      (doseq [fname enc-resp-fnames]
+        (prn :enc-response-files->datomic--processing fname)
+        (let [data-recs (parse/enc-response-fname->parsed fname)]
+          (enc-response-recs->datomic ctx data-recs)))
+      (nl)
+      (prn :init-enc-response-files->datomic--num-recs (datomic/count-enc-response-recs ctx))
+      enc-resp-fnames))
+  (prof/print-profile-stats!)
+  (prn :init-enc-response-files->datomic--leave)
+  (nl))
+
 ; #todo #awt working
 (s/defn init-enc-response->datomic
   [ctx]
   (prn :init-enc-response->datomic--enter)
   (prof/with-timer-print :init-enc-response->datomic
     (with-map-vals ctx [db-uri max-tx-size]
-      ; create empty db
-      (d.peer/delete-database db-uri)
-      (d.peer/create-database db-uri)
+      (datomic/enc-response-datomic-init ctx)
 
-      ; insert schema
-      (datomic/peer-transact-entities db-uri schemas/encounter-response)
-
-      ; insert sample records
-      (let [missing-icns
-            (proc/load-enc-response ctx)]
-        (prn :init-enc-response->datomic--num-missing (count enc-response))
-        (prof/with-timer-print :init-enc-response->datomic--insert
-          (datomic/peer-transact-entities db-uri max-tx-size enc-response))
-        (prn :init-enc-response->datomic--leave))
-      )))
+      (let [enc-resp-fnames (parse/enc-response-dir->fnames ctx)]
+        (prn :init-enc-response->datomic--num-fnames (count enc-resp-fnames))
+        (doseq [fname enc-resp-fnames]
+          (prn :init-enc-response->datomic----processing fname)
+          (let [data-recs (parse/enc-response-fname->parsed fname)]
+            (prof/with-timer-print :init-enc-response->datomic--insert
+              (datomic/peer-transact-entities db-uri max-tx-size data-recs)))))
+      (prof/print-profile-stats!)
+      (nl)
+      (prn :init-enc-response->datomic--leave))))
 
