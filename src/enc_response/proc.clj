@@ -206,3 +206,25 @@
   (prn :init-enc-response-files->updates-tsv--leave)
   (nl))
 
+; #todo #awt working
+(s/defn init-enc-response->datomic
+  [ctx]
+  (prn :init-enc-response->datomic--enter)
+  (prof/with-timer-print :init-enc-response->datomic
+    (with-map-vals ctx [db-uri max-tx-size]
+      ; create empty db
+      (d.peer/delete-database db-uri)
+      (d.peer/create-database db-uri)
+
+      ; insert schema
+      (datomic/peer-transact-entities db-uri schemas/encounter-response)
+
+      ; insert sample records
+      (let [missing-icns
+            (proc/load-enc-response ctx)]
+        (prn :init-enc-response->datomic--num-missing (count enc-response))
+        (prof/with-timer-print :init-enc-response->datomic--insert
+          (datomic/peer-transact-entities db-uri max-tx-size enc-response))
+        (prn :init-enc-response->datomic--leave))
+      )))
+
