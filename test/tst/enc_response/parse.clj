@@ -215,7 +215,7 @@
              }]
 
     ; full data: "/Users/athom555/work/iowa-response"
-    (let [enc-resp-fnames (proc/get-enc-response-fnames ctx) ; uses :encounter-response-root-dir
+    (let [enc-resp-fnames (proc/enc-response-dir->fnames ctx) ; uses :encounter-response-root-dir
           fname-first     (xfirst enc-resp-fnames)]
       ; verify found all files in dir
       (is= enc-resp-fnames

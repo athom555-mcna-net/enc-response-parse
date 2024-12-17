@@ -25,7 +25,7 @@
     (prof/with-timer-print :load-missing-icns
       (edn/read-string (slurp missing-icn-fname)))))
 
-(s/defn get-enc-response-fnames :- [s/Str]
+(s/defn enc-response-dir->fnames :- [s/Str]
   [ctx :- tsk/KeyMap]
   (let [enc-resp-root-dir-File (io/file (grab :encounter-response-root-dir ctx))
         all-files              (file-seq enc-resp-root-dir-File) ; returns a tree like `find`
@@ -64,7 +64,7 @@
   (prn :init-enc-response-files->datomic--enter)
   (prof/with-timer-accum :init-enc-response-files->datomic
     (datomic/enc-response-datomic-init ctx)
-    (let [enc-resp-fnames (get-enc-response-fnames ctx)]
+    (let [enc-resp-fnames (enc-response-dir->fnames ctx)]
       (prn :enc-response-files->datomic--num-files (count enc-resp-fnames))
       (nl)
       (doseq [fname enc-resp-fnames]
@@ -199,7 +199,7 @@
   (nl)
   (prn :init-enc-response-files->updates-tsv--enter)
   (prof/with-timer-accum :init-enc-response-files->updates-tsv
-    (let [enc-resp-fnames (get-enc-response-fnames ctx)
+    (let [enc-resp-fnames (enc-response-dir->fnames ctx)
           first-time?     (atom true)]
       (prn :init-enc-response-files->updates-tsv--num-files (count enc-resp-fnames))
       (nl)

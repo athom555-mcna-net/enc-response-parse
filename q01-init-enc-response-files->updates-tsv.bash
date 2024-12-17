@@ -9,8 +9,6 @@ cat > /tmp/ctx.edn <<ENDEND
 ; :encounter-response-root-dir  "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
 ; :plan-icn-update-tsv-fname    "./plan-icn-update-small.tsv"
 
-  :db-uri  "dummy"   ; if nil or missing, derived from other above
-
 }
 ENDEND
 

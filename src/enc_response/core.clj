@@ -44,7 +44,7 @@
         c1     config ; (glue ctx-default config) ; #todo #awt remove???
         c2     (if (:db-uri c1)
                  c1 ; do not overwrite pre-existing value
-                 (glue c1 {:db-uri (str (grab :datomic-uri config) \? (grab :postgres-uri config))}))
+                 (glue c1 {:db-uri (str (:datomic-uri config) \? (:postgres-uri config))}))
         ctx    (dissoc c2 :datomic-uri :postgres-uri)] ; always remove component URI values
     (spyx-pretty :loaded ctx)
     ctx))
