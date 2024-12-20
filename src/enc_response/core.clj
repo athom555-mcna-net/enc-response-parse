@@ -12,21 +12,21 @@
   (:gen-class))
 
 #_(def ^:dynamic ctx-default
-  {  ; vvv used to construct `db-uri`
-   :datomic-uri                 "datomic:sql://encounters"
-   :postgres-uri                "jdbc:postgresql://postgres.qa:5432/topaz?user=datomic&password=geheim"
+    {; vvv used to construct `db-uri`
+     :datomic-uri                 "datomic:sql://encounters"
+     :postgres-uri                "jdbc:postgresql://postgres.qa:5432/topaz?user=datomic&password=geheim"
 
-   :db-uri  nil ; if nil or missing, derived from other above
-   :max-tx-size                1000 ; The maxinum number of entity maps to include in a single Datomic transaction.
+     :db-uri                      nil ; if nil or missing, derived from other above
+     :max-tx-size                 1000 ; The maxinum number of entity maps to include in a single Datomic transaction.
 
-   :encounter-response-root-dir "/some/path/to/root" ; "/shared/tmp/iowa/iowa_response_files" on QA
-   :missing-icn-fname           "missing-icns.edn"
-   :icn-maps-aug-fname          "icn-maps-aug.edn"
-   :tx-data-fname               "tx-data.edn"
-   :plan-icn-update-tsv-fname   "./plan-icn-update.tsv"
+     :encounter-response-root-dir "/some/path/to/root" ; "/shared/tmp/iowa/iowa_response_files" on QA
+     :missing-icn-fname           "missing-icns.edn"
+     :icn-maps-aug-fname          "icn-maps-aug.edn"
+     :tx-data-fname               "tx-data.edn"
+     :plan-icn-update-tsv-fname   "./plan-icn-update.tsv"
 
-   :invoke-fn                   tupelo.core/noop
-   })
+     :invoke-fn                   tupelo.core/noop
+     })
 
 ;-----------------------------------------------------------------------------
 (defn dummy-fn
@@ -39,13 +39,14 @@
 ;-----------------------------------------------------------------------------
 (s/defn config-load->ctx :- tsk/KeyMap
   [config-fname :- s/Str]
-  (let [config (edn/read-string (slurp config-fname))
-        ;  >>     (spyx-pretty :config-read config)
-        c1     config ; (glue ctx-default config) ; #todo #awt remove???
-        c2     (if (:db-uri c1)
-                 c1 ; do not overwrite pre-existing value
-                 (glue c1 {:db-uri (str (:datomic-uri config) \? (:postgres-uri config))}))
-        ctx    (dissoc c2 :datomic-uri :postgres-uri)] ; always remove component URI values
+  (let [config-str (slurp config-fname)
+        config     (edn/read-string config-str)
+        ; >>         (spyx-pretty :config-read config)
+        c1         config ; (glue ctx-default config) ; #todo #awt remove???
+        c2         (if (:db-uri c1)
+                     c1 ; do not overwrite pre-existing value
+                     (glue c1 {:db-uri (str (:datomic-uri config) \? (:postgres-uri config))}))
+        ctx        (dissoc c2 :datomic-uri :postgres-uri)] ; always remove component URI values
     (spyx-pretty :loaded ctx)
     ctx))
 
@@ -82,10 +83,16 @@
       (spy :main-impl--leave))))
 
 (defn -main
-  [config-fname]
+  [input & others]
   (spy :main--enter)
-  (main-impl config-fname)
-  (spy :main--leave)
-
+  (spyx (vals->map input others))
+  (let [config-fname (cond
+                       (string? input) input
+                       (map? input) (grab :opts-file input))]
+    (spyx config-fname)
+    (main-impl config-fname)
+    (spy :main--leave))
   (spy :calling-system-exit)
-  (System/exit 0))
+  (do
+    (Thread/sleep 500)
+    (System/exit 0)))

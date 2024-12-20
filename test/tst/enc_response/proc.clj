@@ -335,7 +335,7 @@
           30000063295501	62200600780000002	accepted "
           )))))
 
-(verify-focus
+(verify
   (let [ctx {:invoke-fn                   enc-response.proc/init-enc-response->datomic
              :db-uri                      "datomic:dev://localhost:4334/enc-response-test-blk"
 
