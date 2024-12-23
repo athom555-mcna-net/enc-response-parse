@@ -26,6 +26,8 @@
                                                     :where [?e :mco-claim-number]]
                                           db))
           rec-first              (xfirst all-recs)
+          s1                     (xfirst all-recs-sorted)
+          s2                     (xsecond all-recs-sorted)
           ]
       (is= 923307 count-recs)
       (is= 923307 count-mco-claim-number)
@@ -47,7 +49,7 @@
          :total-paid-amount               "000000005076"
          :db/id                           17592186045418})
 
-      (is= (xfirst all-recs-sorted)
+      (is= s1
         {:billing-provider-npi            "1952711780"
          :claim-frequency-code            "1"
          :claim-type                      "D"
@@ -63,23 +65,38 @@
          :member-id                       "1728543G"
          :total-paid-amount               "000000005076"
          :db/id                           17592186045418})
-      (is= (xsecond all-recs-sorted)
-        {:billing-provider-npi "1952711780",
-         :claim-frequency-code "7",
-         :claim-type "D",
-         :error-code "A00",
-         :error-field-value "",
-         :field "PAID",
-         :first-date-of-service "00000000",
-         :iowa-processing-date "10012019",
-         :iowa-transaction-control-number "61927400780000001",
-         :line-number "00",
-         :mco-claim-number "30000019034534",
-         :mco-paid-date "00000000",
-         :member-id "1728543G",
-         :total-paid-amount "000000005076",
-         :db/id 17592186233517})
+      (is= s2
+        {:billing-provider-npi            "1952711780"
+         :claim-frequency-code            "7"
+         :claim-type                      "D"
+         :error-code                      "A00"
+         :error-field-value               ""
+         :field                           "PAID"
+         :first-date-of-service           "00000000"
+         :iowa-processing-date            "10012019"
+         :iowa-transaction-control-number "61927400780000001"
+         :line-number                     "00"
+         :mco-claim-number                "30000019034534"
+         :mco-paid-date                   "00000000"
+         :member-id                       "1728543G"
+         :total-paid-amount               "000000005076"
+         :db/id                           17592186233517})
 
+      ; (spyx-pretty (data/diff s1 s2) )
+
+      (let [num-keys            (count (keys grp-by-mco-number))
+            grp-by-mco-number-3 (into {} (take 3 grp-by-mco-number))
+            ]
+        (spyx-pretty grp-by-mco-number-3)
+        (is=  862918 (spyx num-keys))
+        (spyx-pretty (into {} (take 5 mco-number->count)) )
+        (spyx-pretty (count mco-number->count-1))
+        (spyx-pretty (count mco-number->count-2))
+        (spyx-pretty (count mco-number->count-3))
+        (spyx-pretty (count mco-number->count-4))
+        (spyx-pretty (count mco-number->count-5+))
+        (spyx-pretty mco-number->count-5+)
+        )
       )
 
     ))
