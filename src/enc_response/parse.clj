@@ -35,6 +35,12 @@
         enc-resp-fnames        (sort (mapv str (keep-if enc-resp-File? all-files)))]
     enc-resp-fnames))
 
+(s/defn enc-response-fname->base-str :- s/Str
+  [fname :- s/Str]
+  (let [r1   (re-matches #".*(ENC_RESPONSE_.*.TXT)" fname)
+        base (xsecond r1)]
+    base))
+
 (s/defn enc-response-fname->utc-str :- s/Str
   [fname :- s/Str]
   (let [r1               (re-matches #".*ENC_RESPONSE_._(\d{8})_(\d{6}).TXT" fname)
@@ -150,11 +156,11 @@
 (s/defn enc-response-fname->parsed :- [tsk/KeyMap]
   [fname :- s/Str]
   (prof/with-timer-accum :enc-response-fname->parsed
-    (let [utc-datetime-str  (enc-response-fname->utc-str fname)
-          data-recs (forv [line (enc-response-fname->lines fname)]
-                      (let [rec1 (parse-string-fields iowa-encounter-response-specs line)
-                            rec2 (glue rec1 {:utc-datetime-str utc-datetime-str})]
-                        rec2))]
+    (let [base-str (enc-response-fname->base-str fname)
+          data-recs        (forv [line (enc-response-fname->lines fname)]
+                             (let [rec1 (parse-string-fields iowa-encounter-response-specs line)
+                                   rec2 (glue rec1 {:fname-str base-str})]
+                               rec2))]
       data-recs)))
 
 

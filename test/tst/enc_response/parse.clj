@@ -209,9 +209,12 @@
 (verify
   (let [fname "./enc-response-files-test-small/ENC_RESPONSE_D_20211202_065818.TXT"]
     (is= (enc-response-fname->utc-str fname)
-      "2021-12-02T06:58:18")))
+      "2021-12-02T06:58:18")
+    (spyx-pretty (enc-response-fname->base-str fname))
 
-(verify
+    ))
+
+(verify-focus
   (let [ctx {:db-uri                      "datomic:dev://localhost:4334/enc-response-test"
 
              :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
@@ -258,7 +261,7 @@
                     :mco-paid-date                   "08202021"
                     :member-id                       "2610850C"
                     :total-paid-amount               "000000004763"
-                    :utc-datetime-str                "2021-12-02T06:58:18"})
+                    :fname-str                       "ENC_RESPONSE_D_20211202_065818.TXT"})
         (is= rec-5 {:billing-provider-npi            "1952711780"
                     :claim-frequency-code            "1"
                     :claim-type                      "D"
@@ -273,7 +276,7 @@
                     :mco-paid-date                   "11242021"
                     :member-id                       "4037045B"
                     :total-paid-amount               "000000034574"
-                    :utc-datetime-str                "2021-12-02T06:58:18"})
+                    :fname-str                       "ENC_RESPONSE_D_20211202_065818.TXT"})
 
         ; verify parsed all 5 records from file first & last match expected values
         (is (->> data-recs
