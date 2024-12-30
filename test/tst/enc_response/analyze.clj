@@ -84,7 +84,7 @@
 
       ; (spyx-pretty (data/diff s1 s2) )
 
-      #_(let [num-keys            (count (keys grp-by-mco-number))
+      (let [num-keys            (count (keys grp-by-mco-number))
             grp-by-mco-number-3 (into {} (take 3 grp-by-mco-number))]
         (is= 862918 num-keys)
         (spyx-pretty (into {} (take 5 mco-number->count)))

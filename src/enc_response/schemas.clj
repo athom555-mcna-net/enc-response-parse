@@ -71,5 +71,9 @@
     :db/valueType :db.type/string :db/cardinality :db.cardinality/one}
 
    {:db/ident     :error-field-value
-    :db/valueType :db.type/string :db/cardinality :db.cardinality/one}])
+    :db/valueType :db.type/string :db/cardinality :db.cardinality/one}
+
+   {:db/ident     :utc-datetime-str
+    :db/valueType :db.type/string :db/cardinality :db.cardinality/one}
+   ])
 

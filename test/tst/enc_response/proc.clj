@@ -201,6 +201,7 @@
                :mco-paid-date                   "08202021"
                :member-id                       "2610850C"
                :total-paid-amount               "000000004763"
+               :utc-datetime-str                "2021-12-02T06:58:18"
                :db/id                           :*})))
 
       (is (->> (xlast recs-sorted)
@@ -219,6 +220,7 @@
                :mco-paid-date                   "12292021"
                :member-id                       "3382022I"
                :total-paid-amount               "000000000000"
+               :utc-datetime-str                "2022-01-06T06:29:29"
                :db/id                           :*}))))))
 
 (verify
