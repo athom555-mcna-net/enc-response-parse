@@ -35,6 +35,22 @@
         enc-resp-fnames        (sort (mapv str (keep-if enc-resp-File? all-files)))]
     enc-resp-fnames))
 
+(s/defn enc-response-fname->utc-str :- s/Str
+  [fname :- s/Str]
+  (let [r1               (re-matches #".*ENC_RESPONSE_._(\d{8})_(\d{6}).TXT" fname)
+        date-str         (nth r1 1)
+        time-str         (nth r1 2)
+        year             (subs date-str 0 4)
+        month            (subs date-str 4 6)
+        day              (subs date-str 6 8)
+        hour             (subs time-str 0 2)
+        min              (subs time-str 2 4)
+        sec              (subs time-str 4 6)
+        utc-date-str     (format "%4s-%2s-%2s" year month day)
+        utc-time-str     (format "%2s:%2s:%2s" hour min sec)
+        utc-datetime-str (str utc-date-str \T utc-time-str)]
+    utc-datetime-str))
+
 ;---------------------------------------------------------------------------------------------------
 (s/def spec-opts-default :- tsk/KeyMap
   "Default options for field specs"
@@ -134,9 +150,11 @@
 (s/defn enc-response-fname->parsed :- [tsk/KeyMap]
   [fname :- s/Str]
   (prof/with-timer-accum :enc-response-fname->parsed
-    (let [
+    (let [utc-datetime-str  (enc-response-fname->utc-str fname)
           data-recs (forv [line (enc-response-fname->lines fname)]
-                      (parse-string-fields iowa-encounter-response-specs line))]
+                      (let [rec1 (parse-string-fields iowa-encounter-response-specs line)
+                            rec2 (glue rec1 {:utc-datetime-str utc-datetime-str})]
+                        rec2))]
       data-recs)))
 
 

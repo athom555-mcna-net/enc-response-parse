@@ -84,10 +84,10 @@
 
       ; (spyx-pretty (data/diff s1 s2) )
 
-      (let [num-keys            (count (keys grp-by-mco-number))
+      #_(let [num-keys            (count (keys grp-by-mco-number))
             grp-by-mco-number-3 (into {} (take 3 grp-by-mco-number))]
-        (is=  862918 num-keys)
-        (spyx-pretty (into {} (take 5 mco-number->count)) )
+        (is= 862918 num-keys)
+        (spyx-pretty (into {} (take 5 mco-number->count)))
         (spyx-pretty grp-by-mco-number-3)
         (spyx num-keys)
         (spyx-pretty (count mco-number->count-1))
@@ -96,6 +96,19 @@
         (spyx-pretty (count mco-number->count-4))
         (spyx-pretty (count mco-number->count-5+))
         (spyx-pretty mco-number->count-5+)
+        (newline)
+        (let [mco-1 (ffirst mco-number->count-3)
+              r1    (grab mco-1 grp-by-mco-number)]
+          (spyx mco-1)
+          (spyx-pretty r1))
+        (let [mco-1 (nth (keys mco-number->count-3) 3)
+              r1    (grab mco-1 grp-by-mco-number)]
+          (spyx mco-1)
+          (spyx-pretty r1))
+        (let [mco-1 (nth (keys mco-number->count-4) 1)
+              r1    (sort-by :iowa-transaction-control-number (grab mco-1 grp-by-mco-number))]
+          (spyx mco-1)
+          (spyx-pretty r1))
         )
       )
 

@@ -8,6 +8,7 @@
     [clojure.pprint :as pp]
     [enc-response.datomic :as datomic]
     [enc-response.proc :as proc]
+    [schema.core :as s]
     [tupelo.parse :as parse]
     [tupelo.string :as str]
     )
@@ -24,7 +25,7 @@
    :missing-icn-fname           "resources/missing-icns-5.edn"
    :icn-maps-aug-fname          "icn-maps-aug.edn"
    :tx-data-fname               "tx-data.edn"
-   :max-tx-size               3
+   :max-tx-size                 3
    })
 
 ;-----------------------------------------------------------------------------
@@ -206,6 +207,11 @@
                          #:db{:ident :encounter-transmission.status/accepted}}]))))))
 
 (verify
+  (let [fname "./enc-response-files-test-small/ENC_RESPONSE_D_20211202_065818.TXT"]
+    (is= (enc-response-fname->utc-str fname)
+      "2021-12-02T06:58:18")))
+
+(verify
   (let [ctx {:db-uri                      "datomic:dev://localhost:4334/enc-response-test"
 
              :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"
@@ -251,7 +257,8 @@
                     :mco-claim-number                "30000000100601"
                     :mco-paid-date                   "08202021"
                     :member-id                       "2610850C"
-                    :total-paid-amount               "000000004763"})
+                    :total-paid-amount               "000000004763"
+                    :utc-datetime-str                "2021-12-02T06:58:18"})
         (is= rec-5 {:billing-provider-npi            "1952711780"
                     :claim-frequency-code            "1"
                     :claim-type                      "D"
@@ -265,7 +272,8 @@
                     :mco-claim-number                "30000062649897"
                     :mco-paid-date                   "11242021"
                     :member-id                       "4037045B"
-                    :total-paid-amount               "000000034574"})
+                    :total-paid-amount               "000000034574"
+                    :utc-datetime-str                "2021-12-02T06:58:18"})
 
         ; verify parsed all 5 records from file first & last match expected values
         (is (->> data-recs
