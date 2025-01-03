@@ -12,6 +12,12 @@
 (def db-uri "datomic:dev://localhost:4334/enc-response-full")
 (def db (datomic/curr-db db-uri))
 
+(s/defn keyfn-enc-resp :- tsk/Vec
+  [a :- tsk/KeyMap]
+  [(grab :fname-str a)
+   (grab :mco-claim-number a)
+   (grab :iowa-transaction-control-number a)])
+
 (def all-recs
   (prof/with-timer-print :enc-response.analyze--all-recs
     (spyx :enc-response.analyze--all-recs-enter)
@@ -23,7 +29,7 @@
 
 (def all-recs-sorted
   (prof/with-timer-print :enc-response.analyze--all-recs-sort
-    (vec (sort-by :fname-str all-recs))))
+    (vec (sort-by keyfn-enc-resp all-recs))))
 
 (def grp-by-mco-number (group-by :mco-claim-number all-recs-sorted))
 (def mco-number->count (map-vals grp-by-mco-number count))

@@ -6,6 +6,7 @@
     [clojure.data :as data]
     [clojure.java.io :as io]
     [clojure.pprint :as pp]
+    [crockery.core :as tbl]
     [datomic.api :as d.peer]
     [enc-response.datomic :as datomic]
     [schema.core :as s]
@@ -19,7 +20,62 @@
     [java.io File]
     ))
 
+(s/defn print-table
+  [datomic-recs :- [tsk/KeyMap]]
+  (let [recs-sorted (sort-by keyfn-enc-resp datomic-recs)]
+    (tbl/print-table
+      [{:name :fname-str :title "FName"}
+       {:name :mco-claim-number :title "MCO ICN"}
+       {:name :iowa-transaction-control-number :title "Iowa ICN"}
+       :billing-provider-npi
+       {:name :claim-frequency-code :title "Claim Code"}
+       :claim-type
+       :error-code
+       {:name :error-field-value :title "Error Field"}
+       :field
+       {:name :first-date-of-service :title "First DOS"}
+       {:name :iowa-processing-date :title "Iowa DOS"}
+       :line-number
+       :mco-paid-date
+       :member-id
+       :total-paid-amount]
+      recs-sorted)))
+
+
+(verify
+  (let [r1 {:fname-str "a" :mco-claim-number "30" :iowa-transaction-control-number "3" }
+        r2 {:fname-str "b" :mco-claim-number "20" :iowa-transaction-control-number "2" }
+        r3 {:fname-str "c" :mco-claim-number "10" :iowa-transaction-control-number "1" }]
+    (is= [r1 r2 r3]
+      (sort-by keyfn-enc-resp [r1 r2 r3])
+      (sort-by keyfn-enc-resp [r1 r3 r2])
+      (sort-by keyfn-enc-resp [r2 r3 r1])
+      (sort-by keyfn-enc-resp [r2 r1 r3])
+      (sort-by keyfn-enc-resp [r3 r2 r1])
+      (sort-by keyfn-enc-resp [r3 r1 r2])))
+  (let [r1 {:fname-str "a" :mco-claim-number "1" :iowa-transaction-control-number "3" }
+        r2 {:fname-str "a" :mco-claim-number "2" :iowa-transaction-control-number "2" }
+        r3 {:fname-str "a" :mco-claim-number "3" :iowa-transaction-control-number "1" }]
+    (is= [r1 r2 r3]
+      (sort-by keyfn-enc-resp [r1 r2 r3])
+      (sort-by keyfn-enc-resp [r1 r3 r2])
+      (sort-by keyfn-enc-resp [r2 r3 r1])
+      (sort-by keyfn-enc-resp [r2 r1 r3])
+      (sort-by keyfn-enc-resp [r3 r2 r1])
+      (sort-by keyfn-enc-resp [r3 r1 r2])))
+  (let [r1 {:fname-str "a" :mco-claim-number "1" :iowa-transaction-control-number "1" }
+        r2 {:fname-str "a" :mco-claim-number "1" :iowa-transaction-control-number "2" }
+        r3 {:fname-str "a" :mco-claim-number "1" :iowa-transaction-control-number "3" }]
+    (is= [r1 r2 r3]
+      (sort-by keyfn-enc-resp [r1 r2 r3])
+      (sort-by keyfn-enc-resp [r1 r3 r2])
+      (sort-by keyfn-enc-resp [r2 r3 r1])
+      (sort-by keyfn-enc-resp [r2 r1 r3])
+      (sort-by keyfn-enc-resp [r3 r2 r1])
+      (sort-by keyfn-enc-resp [r3 r1 r2]))))
+
 (verify-focus
+
   (when true
     (let [count-recs             (count all-recs)
           count-mco-claim-number (only2 (d.peer/q '[:find (count ?e)
@@ -102,25 +158,19 @@
         (newline)
         (let [mco-1 (ffirst mco-number->count-3)
               r3a   (grab mco-1 grp-by-mco-number)]
-          (spyx mco-1)
-          (spyx-pretty r3a))
+          (print-table r3a))
         (let [mco-1 (nth (keys mco-number->count-3) 3)
               r3b   (grab mco-1 grp-by-mco-number)]
-          (spyx mco-1)
-          (spyx-pretty r3b))
+          (print-table r3b))
         (let [mco-1 (nth (keys mco-number->count-4) 1)
               r4    (sort-by :fname-str (grab mco-1 grp-by-mco-number))]
-          (spyx mco-1)
-          (spyx-pretty r4))
+          (print-table r4))
         (let [mco-1 (nth (keys mco-number->count-5) 1)
               r5    (sort-by :fname-str (grab mco-1 grp-by-mco-number))]
-          (spyx mco-1)
-          (spyx-pretty r5))
-        )
-      )
+          (print-table r5))
 
+        ))
     ))
-
 
 #_(let [eid-first (only (first (d.peer/q '[:find ?e
                                            :where [?e :mco-claim-number ?id]]
