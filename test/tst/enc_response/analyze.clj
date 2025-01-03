@@ -40,6 +40,7 @@
          :error-field-value               ""
          :field                           "PAID"
          :first-date-of-service           "00000000"
+         :fname-str                       "ENC_RESPONSE_D_20170413_132207.TXT"
          :iowa-processing-date            "04132017"
          :iowa-transaction-control-number "61710200783000001"
          :line-number                     "00"
@@ -48,7 +49,6 @@
          :member-id                       "1728543G"
          :total-paid-amount               "000000005076"
          :db/id                           17592186045418})
-
       (is= s1
         {:billing-provider-npi            "1952711780"
          :claim-frequency-code            "1"
@@ -57,6 +57,7 @@
          :error-field-value               ""
          :field                           "PAID"
          :first-date-of-service           "00000000"
+         :fname-str                       "ENC_RESPONSE_D_20170413_132207.TXT"
          :iowa-processing-date            "04132017"
          :iowa-transaction-control-number "61710200783000001"
          :line-number                     "00"
@@ -67,20 +68,21 @@
          :db/id                           17592186045418})
       (is= s2
         {:billing-provider-npi            "1952711780"
-         :claim-frequency-code            "7"
+         :claim-frequency-code            "1"
          :claim-type                      "D"
          :error-code                      "A00"
          :error-field-value               ""
          :field                           "PAID"
          :first-date-of-service           "00000000"
-         :iowa-processing-date            "10012019"
-         :iowa-transaction-control-number "61927400780000001"
+         :fname-str                       "ENC_RESPONSE_D_20170413_132207.TXT"
+         :iowa-processing-date            "04132017"
+         :iowa-transaction-control-number "61710200783000002"
          :line-number                     "00"
-         :mco-claim-number                "30000019034534"
+         :mco-claim-number                "30000019034535"
          :mco-paid-date                   "00000000"
-         :member-id                       "1728543G"
-         :total-paid-amount               "000000005076"
-         :db/id                           17592186233517})
+         :member-id                       "1750178H"
+         :total-paid-amount               "000000010017"
+         :db/id                           17592186045419})
 
       ; (spyx-pretty (data/diff s1 s2) )
 
@@ -94,21 +96,26 @@
         (spyx-pretty (count mco-number->count-2))
         (spyx-pretty (count mco-number->count-3))
         (spyx-pretty (count mco-number->count-4))
-        (spyx-pretty (count mco-number->count-5+))
-        (spyx-pretty mco-number->count-5+)
+        (spyx-pretty (count mco-number->count-5))
+        (spyx-pretty (count mco-number->count-6+))
+        (spyx-pretty mco-number->count-6+)
         (newline)
         (let [mco-1 (ffirst mco-number->count-3)
-              r1    (grab mco-1 grp-by-mco-number)]
+              r3a   (grab mco-1 grp-by-mco-number)]
           (spyx mco-1)
-          (spyx-pretty r1))
+          (spyx-pretty r3a))
         (let [mco-1 (nth (keys mco-number->count-3) 3)
-              r1    (grab mco-1 grp-by-mco-number)]
+              r3b   (grab mco-1 grp-by-mco-number)]
           (spyx mco-1)
-          (spyx-pretty r1))
+          (spyx-pretty r3b))
         (let [mco-1 (nth (keys mco-number->count-4) 1)
-              r1    (sort-by :iowa-transaction-control-number (grab mco-1 grp-by-mco-number))]
+              r4    (sort-by :fname-str (grab mco-1 grp-by-mco-number))]
           (spyx mco-1)
-          (spyx-pretty r1))
+          (spyx-pretty r4))
+        (let [mco-1 (nth (keys mco-number->count-5) 1)
+              r5    (sort-by :fname-str (grab mco-1 grp-by-mco-number))]
+          (spyx mco-1)
+          (spyx-pretty r5))
         )
       )
 

@@ -23,7 +23,7 @@
 
 (def all-recs-sorted
   (prof/with-timer-print :enc-response.analyze--all-recs-sort
-    (vec (sort-by :mco-claim-number all-recs))))
+    (vec (sort-by :fname-str all-recs))))
 
 (def grp-by-mco-number (group-by :mco-claim-number all-recs-sorted))
 (def mco-number->count (map-vals grp-by-mco-number count))
@@ -43,7 +43,11 @@
                                         :let [recs-cnt (count recs)]
                                         :when (= 4 recs-cnt)]
                                     [mco-num recs-cnt])))
-(def mco-number->count-5+ (into {} (for [[mco-num recs] grp-by-mco-number
+(def mco-number->count-5 (into {} (for [[mco-num recs] grp-by-mco-number
+                                        :let [recs-cnt (count recs)]
+                                        :when (= 5 recs-cnt)]
+                                    [mco-num recs-cnt])))
+(def mco-number->count-6+ (into {} (for [[mco-num recs] grp-by-mco-number
                                          :let [recs-cnt (count recs)]
-                                         :when (<= 5 recs-cnt)]
+                                         :when (<= 6 recs-cnt)]
                                      [mco-num recs-cnt])))
