@@ -240,7 +240,7 @@
         out-recs (forv [rec key-recs]
                    (with-map-vals rec [:mco-claim-number :iowa-transaction-control-number :error-code]
                      {:icn      mco-claim-number
-                      :plan-icn iowa-transaction-control-number
+                      :plan_icn iowa-transaction-control-number
                       :status   (proc/error-code->status-str error-code)}))]
     out-recs))
 
@@ -257,8 +257,8 @@
         icn->claims       {"100000" [{:mco-claim-number "100000" :iowa-transaction-control-number "200000" :error-code "A00"}]
                            "100001" [{:mco-claim-number "100001" :iowa-transaction-control-number "200001" :error-code "A00"}]
                            "123"    [{:mco-claim-number "123" :iowa-transaction-control-number "200001" :error-code "A00"}]}
-        tsv-recs-expected [{:icn "100000", :plan-icn "200000", :status "accepted"}
-                           {:icn "100001", :plan-icn "200001", :status "accepted"}]
+        tsv-recs-expected [{:icn "100000", :plan_icn "200000", :status "accepted"}
+                           {:icn "100001", :plan_icn "200001", :status "accepted"}]
         ]
     (is= java.io.File (type dummy-File))
     (tio/delete-file-if-exists dummy-File)
@@ -266,7 +266,7 @@
     (is= (transform-claim-recs->tsv-recs icn->claims) tsv-recs-expected)
     (let [csv-1 (csv/entities->csv tsv-recs-expected {:separator \tab})]
       (is-nonblank= csv-1
-        " icn	    plan-icn	status
+        " icn	    plan_icn	status
           100000	200000	  accepted
           100001	200001    accepted"))
 
@@ -277,7 +277,7 @@
         (println result)
         (prn :-----------------------------------------------------------------------------))
       (is-nonblank-lines= result
-        " icn	    plan-icn	status
+        " icn	    plan_icn	status
           100000	200000	  accepted
           100001	200001    accepted "))
     )
