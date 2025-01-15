@@ -34,6 +34,14 @@
   (s/fn [block :- [s/Any]]
     (mapv f block)))
 
+(s/defn fn->vec-fn-lazy :- tsk/Fn
+  "Vectorize a function, so that instead of operating on a scalar value,
+  it operates on each value in a 1D array. Used twice, the resulting function operates
+  on each value in a 2D array. Lazy."
+  [f :- tsk/Fn]
+  (s/fn [block :- [s/Any]]
+    (map f block)))
+
 (s/defn array-1d->2d-lazy :- [[s/Any]]
   "Convert a 1D sequence to a lazy 2D array (possibly ragged) in row-major order."
   [row-size :- s/Int
@@ -51,12 +59,13 @@
   [seq-2d :- [[s/Any]]]
   (apply glue seq-2d))
 
-(s/defn array-2d->1d-lazy-concat :- [s/Any]
+(s/defn array-2d->1d-lazy :- [s/Any]
   "Concatenate rows of a 2D array (possibly ragged), returning a 1-D vector."
   [seq-2d :- [[s/Any]]]
   (apply concat seq-2d))
 
-(comment  ; #awt 2024-11-19 works, but no advantage to `(apply concat seq-2d)`
+; #awt 2024-11-19 works, but no advantage to `(apply concat seq-2d)`
+(comment
   (s/defn array-2d->1d-lazy-gen :- [s/Any]
     "Concatenate rows of a 2D array (possibly ragged), returning a 1-D vector."
     [seq-2d :- [[s/Any]]]
