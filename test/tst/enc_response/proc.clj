@@ -266,7 +266,7 @@
         (.write writer csv-1)
         (.write writer csv-2))
       (let [result (slurp dummy-File)]
-        (is-nonblank-lines= result
+        (is-nonblank= result
           "icn	plan-icn	status
            101	201       accepted
            102	202       accepted
@@ -276,7 +276,7 @@
       (spit dummy-File csv-1)
       (spit dummy-File csv-2 :append true)
       (let [result (slurp dummy-File)]
-        (is-nonblank-lines= result
+        (is-nonblank= result
           "icn	plan-icn	status
            101	201       accepted
            102	202       accepted
@@ -292,7 +292,7 @@
         (prn :-----------------------------------------------------------------------------)
         (println result)
         (prn :-----------------------------------------------------------------------------)
-        (is-nonblank-lines= result
+        (is-nonblank= result
           "icn	plan-icn	status
            101	201       accepted
            102	202       accepted
@@ -316,7 +316,7 @@
         ;(prn :-----------------------------------------------------------------------------)
         ;(println result)
         ;(prn :-----------------------------------------------------------------------------)
-        (is-nonblank-lines= result
+        (is-nonblank= result
           " icn	            plan-icn	      status
           30000000100601	62133600780000001	accepted
           30000000102936	62133600780000002	accepted
