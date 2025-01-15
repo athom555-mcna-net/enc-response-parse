@@ -4,6 +4,7 @@
         tupelo.test)
   (:require
     [clojure.data :as data]
+    [clojure.edn :as edn]
     [clojure.java.io :as io]
     [clojure.pprint :as pp]
     [crockery.core :as tbl]
@@ -161,13 +162,16 @@
     ; (spyx-pretty icns)
     (doseq [icn icns]
       (let [recs (grab icn mco-icn->recs)]
-        (data-dump recs)
-        (print-table recs)))))
+        ; (newline)
+        ; (data-dump recs)
+        (print-table recs)
+        ))))
 
 (verify   ; -focus
   (when true
-    ; (print-samples [3 2 2 2 2] (keys mco-icn->count-2))
-    ; (print-samples [3 2 2 2 2] (keys mco-icn->count-3))
+    (print-samples [3 2 2 2 2] (keys mco-icn->count-1))
+    (print-samples [3 2 2 2 2] (keys mco-icn->count-2))
+    (print-samples [3 2 2 2 2] (keys mco-icn->count-3))
     (print-samples [3 2 2 2 2] (keys mco-icn->count-4))
     ; (print-samples [3 2 2 2 2] (keys mco-icn->count-5))
     ; (print-samples [3 2 2 2 2] (keys mco-icn->count-6+))
@@ -248,7 +252,7 @@
   [out-File :- java.io.File
    icn->claims :- {s/Str [tsk/KeyMap]}] ; Map:  { <mco icn str>  <vec of claim recs> }
   (let [tsv-recs (transform-claim-recs->tsv-recs icn->claims)
-        csv-str (csv/entities->csv tsv-recs {:separator \tab})]
+        csv-str  (csv/entities->csv tsv-recs {:separator \tab})]
     (spit out-File csv-str)
     nil))
 
@@ -279,7 +283,73 @@
       (is-nonblank-lines= result
         " icn	    plan_icn	status
           100000	200000	  accepted
-          100001	200001    accepted "))
+          100001	200001    accepted ")
+      ))
+
+  (let [dummy-File        (tio/create-temp-file "tsv" ".tmp")
+
+        ; sample data is already sorted
+        claim-samples-1-4 (edn/read-string (slurp (io/resource "missing-samples-1-4-x11.edn")))
+
+        ; group-by is stable & preserves sort
+        mco-icn->recs     (group-by :mco-claim-number claim-samples-1-4)
+        ]
+    ; (spyx-pretty claim-samples-1-4)
+    ; (spyx-pretty mco-icn->recs)
+    (write-claim-recs->tsv-File dummy-File mco-icn->recs)
+    (let [result (slurp dummy-File)]
+      (when true
+        (prn :-----------------------------------------------------------------------------)
+        (println result)
+        (prn :-----------------------------------------------------------------------------))
+      (is-nonblank= result
+        "icn	            plan_icn	        status
+        30000063213328	62136400780001867	accepted
+        30000448502207	62413700780001274	accepted
+        30000445494761	62334100780001107	accepted
+        30000442669589	62320900780002611	accepted
+        30000019456586	61927400780003713	accepted
+        30000063441230	62201300780000770	accepted
+        30000442335359	62318700780001632	accepted
+        30000025291511	61901100780020808	accepted
+        30000442667308	62320900780000333	accepted
+        30000021292581	61932600781000118	accepted
+        30000021292602	61932600781000130	accepted
+        30000026016171	61901100780025001	accepted
+        30000442335461	62318700780001730	accepted
+        30000442669395	62320900780002417	accepted
+        30000440287928	62307500780002101	accepted
+        30000062721704	62133600780002517	accepted
+        30000023584657	61901100780008188	accepted
+        30000021609954	61901100780000165	accepted
+        30000021292352	61932600781000006	accepted
+        30000021292683	61932600781000190	accepted
+        30000442334949	62318700780001228	accepted
+        30000442336283	62318700780002540	accepted
+        30000023324107	61901100780007661	accepted
+        30000030447982	61901100780034492	accepted
+        30000441175463	62312400780000014	accepted
+        30000053627071	62025400780000665	accepted
+        30000021292544	61932600781000094	accepted
+        30000021292624	61932600781000147	accepted
+        30000062083292	62130800780004334	accepted
+        30000442460618	62319400780003706	accepted
+        30000021609958	61901100780000169	accepted
+        30000023716740	61901100780009739	accepted
+        30000442667785	62320900780000810	accepted
+        30000442350698	62318700780003349	accepted
+        30000021292622	61932600781000145	accepted
+        30000021292890	61932600781000312	accepted
+        30000021292460	61932600781000091	accepted
+        30000442668875	62320900780001898	accepted
+        30000021292721	61932600781000208	accepted
+        30000442336002	62318700780002263	accepted
+        30000024176656	61901100780013665	accepted
+        30000025547236	61901100780023305	accepted
+        30000443409247	62324300780001503	accepted
+        30000444813175	62330600780001207	accepted  "
+        ))
     )
   )
+
 
