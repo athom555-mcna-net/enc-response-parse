@@ -5,6 +5,9 @@
     [tupelo.core :as t]
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
+    )
+  (:import
+    [java.time LocalDate]
     ))
 
 ; modified from clojure.core/with-out-str
@@ -90,4 +93,5 @@
           dd     (subs date-str 2 4)
           yyyy   (subs date-str 4 8)
           result (str yyyy "-" mm "-" dd)]
+      (LocalDate/parse result) ; parse result to validate legal values
       result)))
