@@ -74,6 +74,13 @@
                    :when (<= 1 recs-cnt 4)]
                [mco-num recs-cnt]))))
 
+(def mco-icn->recs-1-4
+  (prof/with-timer-print :enc-response.analyze--recs-1-4
+    (into {} (for [[mco-num recs] mco-icn->recs
+                   :let [recs-cnt (count recs)]
+                   :when (<= 1 recs-cnt 4)]
+               [mco-num recs]))))
+
 (def mco-icn->count-5
   (prof/with-timer-print :enc-response.analyze--count-5
     (into {} (for [[mco-num recs] mco-icn->recs

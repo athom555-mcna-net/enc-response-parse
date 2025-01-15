@@ -178,50 +178,47 @@
     (init-enc-response-files->datomic ctx)
 
     ; verify can retrieve first & last records from datomic
-    (let [conn          (d.peer/connect db-uri)
-          db            (d.peer/db conn)
-          enc-resp-recs (onlies (d.peer/q '[:find (pull ?e [*])
-                                            :where [?e :mco-claim-number]]
-                                  db))
-          recs-sorted   (vec (sort-by :mco-claim-number enc-resp-recs))]
+    (let [conn           (d.peer/connect db-uri)
+          db             (d.peer/db conn)
+          enc-resp-recs  (onlies (d.peer/q '[:find (pull ?e [*])
+                                             :where [?e :mco-claim-number]]
+                                   db))
+          recs-sorted    (vec (sort-by :mco-claim-number enc-resp-recs))
+          expected-first {:billing-provider-npi "1952711780"
+                          :claim-frequency-code "1"
+                          :claim-type "D"
+                          :error-code "A00"
+                          :error-field-value ""
+                          :field "PAID"
+                          :first-date-of-service "06302021"
+                          :fname-str "ENC_RESPONSE_D_20211202_065818.TXT"
+                          :iowa-processing-date "12022021"
+                          :iowa-transaction-control-number "62133600780000001"
+                          :line-number "00"
+                          :mco-claim-number "30000000100601"
+                          :mco-paid-date "08202021"
+                          :member-id "2610850C"
+                          :total-paid-amount "000000004763"}
+          expected-last {:billing-provider-npi "1952711780"
+                         :claim-frequency-code "7"
+                         :claim-type "D"
+                         :error-code "A00"
+                         :error-field-value ""
+                         :field "DENIED"
+                         :first-date-of-service "08062021"
+                         :fname-str "ENC_RESPONSE_D_20220106_062929.TXT"
+                         :iowa-processing-date "01062022"
+                         :iowa-transaction-control-number "62200600780000002"
+                         :line-number "00"
+                         :mco-claim-number "30000063295501"
+                         :mco-paid-date "12292021"
+                         :member-id "3382022I"
+                         :total-paid-amount "000000000000"}
+          result-first   (xfirst recs-sorted)
+          result-last    (xlast recs-sorted)]
       (is= (count enc-resp-recs) 14)
-      (is (->> (xfirst recs-sorted)
-            (wild-match?
-              {:billing-provider-npi            "1952711780"
-               :claim-frequency-code            "1"
-               :claim-type                      "D"
-               :error-code                      "A00"
-               :error-field-value               ""
-               :field                           "PAID"
-               :first-date-of-service           "06302021"
-               :iowa-processing-date            "12022021"
-               :iowa-transaction-control-number "62133600780000001"
-               :line-number                     "00"
-               :mco-claim-number                "30000000100601"
-               :mco-paid-date                   "08202021"
-               :member-id                       "2610850C"
-               :total-paid-amount               "000000004763"
-               :utc-datetime-str                "2021-12-02T06:58:18"
-               :db/id                           :*})))
-
-      (is (->> (xlast recs-sorted)
-            (wild-match?
-              {:billing-provider-npi            "1952711780"
-               :claim-frequency-code            "7"
-               :claim-type                      "D"
-               :error-code                      "A00"
-               :error-field-value               ""
-               :field                           "DENIED"
-               :first-date-of-service           "08062021"
-               :iowa-processing-date            "01062022"
-               :iowa-transaction-control-number "62200600780000002"
-               :line-number                     "00"
-               :mco-claim-number                "30000063295501"
-               :mco-paid-date                   "12292021"
-               :member-id                       "3382022I"
-               :total-paid-amount               "000000000000"
-               :utc-datetime-str                "2022-01-06T06:29:29"
-               :db/id                           :*}))))))
+      (is (submatch? expected-first result-first))
+      (is (submatch? expected-last result-last)))))
 
 (verify
   (let [dummy-File (tio/create-temp-file "tsv" ".tmp")]

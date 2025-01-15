@@ -214,7 +214,7 @@
 
     ))
 
-(verify-focus
+(verify
   (let [ctx {:db-uri                      "datomic:dev://localhost:4334/enc-response-test"
 
              :encounter-response-root-dir "./enc-response-files-test-small" ; full data:  "/Users/athom555/work/iowa-response"

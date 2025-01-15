@@ -13,6 +13,7 @@
     [schema.core :as s]
     [tupelo.csv :as csv]
     [tupelo.io :as tio]
+    [tupelo.profile :as prof]
     [tupelo.schema :as tsk]
     )
   (:import
@@ -108,21 +109,7 @@
                :total-paid-amount               "000000005076"
                :db/id                           :*})))))
 
-  (when false
-    (let [num-keys            (count (keys mco-icn->recs))
-          grp-by-mco-number-3 (into {} (take 3 mco-icn->recs))]
-      (is= 862918 num-keys)
-      (spyx-pretty (into {} (take 5 mco-icn->count)))
-      (spyx-pretty grp-by-mco-number-3)
-      (spyx num-keys)
-      (spyx-pretty (count mco-icn->count-1))
-      (spyx-pretty (count mco-icn->count-2))
-      (spyx-pretty (count mco-icn->count-3))
-      (spyx-pretty (count mco-icn->count-4))
-      (spyx-pretty (count mco-icn->count-5))
-      (spyx-pretty (count mco-icn->count-6+))
-      (spyx-pretty mco-icn->count-6+)
-      )))
+  )
 
 (s/defn print-table
   [datomic-recs :- [tsk/KeyMap]]
@@ -155,10 +142,10 @@
 
 (s/defn print-samples :- [tsk/KeyMap]
   [snip-vec :- [s/Int]
-   keys :- [s/Any]]
+   icns :- [s/Str]]
   (let [icns (drop-if keyword?
                (snip* {:snip-sizes snip-vec
-                       :data       keys}))]
+                       :data       icns}))]
     ; (spyx-pretty icns)
     (doseq [icn icns]
       (let [recs (grab icn mco-icn->recs)]
@@ -167,8 +154,24 @@
         (print-table recs)
         ))))
 
-(verify   ; -focus
-  (when true
+(verify
+  (when false
+    (let [num-keys            (count (keys mco-icn->recs))
+          grp-by-mco-number-3 (into {} (take 3 mco-icn->recs))]
+      (is= 862918 num-keys)
+      (spyx-pretty (into {} (take 5 mco-icn->count)))
+      (spyx-pretty grp-by-mco-number-3)
+      (spyx num-keys)
+      (spyx-pretty (count mco-icn->count-1))
+      (spyx-pretty (count mco-icn->count-2))
+      (spyx-pretty (count mco-icn->count-3))
+      (spyx-pretty (count mco-icn->count-4))
+      (spyx-pretty (count mco-icn->count-1-4))
+      (spyx-pretty (count mco-icn->count-5))
+      (spyx-pretty (count mco-icn->count-6+))
+      (spyx-pretty mco-icn->count-6+)
+      ))
+  (when false
     (print-samples [3 2 2 2 2] (keys mco-icn->count-1))
     (print-samples [3 2 2 2 2] (keys mco-icn->count-2))
     (print-samples [3 2 2 2 2] (keys mco-icn->count-3))
@@ -201,7 +204,7 @@
         (xlast recs-accepted)
         (xlast recs-valid)))))
 
-(verify-focus
+(verify
   (is (claim-accepted? {:error-code "A00"}))
   (isnt (claim-accepted? {:error-code "D09"}))
   (isnt (claim-accepted? {}))
@@ -256,7 +259,7 @@
     (spit out-File csv-str)
     nil))
 
-(verify-focus
+(verify
   (let [dummy-File        (tio/create-temp-file "tsv" ".tmp")
         icn->claims       {"100000" [{:mco-claim-number "100000" :iowa-transaction-control-number "200000" :error-code "A00"}]
                            "100001" [{:mco-claim-number "100001" :iowa-transaction-control-number "200001" :error-code "A00"}]
@@ -298,7 +301,7 @@
     ; (spyx-pretty mco-icn->recs)
     (write-claim-recs->tsv-File dummy-File mco-icn->recs)
     (let [result (slurp dummy-File)]
-      (when true
+      (when false
         (prn :-----------------------------------------------------------------------------)
         (println result)
         (prn :-----------------------------------------------------------------------------))
@@ -347,9 +350,15 @@
         30000024176656	61901100780013665	accepted
         30000025547236	61901100780023305	accepted
         30000443409247	62324300780001503	accepted
-        30000444813175	62330600780001207	accepted  "
-        ))
-    )
+        30000444813175	62330600780001207	accepted  ")))
+  )
+
+(verify   ; -focus
+  (when false ; enable to write out master TSV update file
+    (prof/with-timer-print :enc-response.analyze--write-master-tsv-file
+      (let [master-out-file (File. "./icn-master-update.tsv")]
+        (tio/delete-file-if-exists master-out-file)
+        (write-claim-recs->tsv-File master-out-file mco-icn->recs-1-4))))
   )
 
 
