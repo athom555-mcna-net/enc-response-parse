@@ -155,6 +155,7 @@
         ))))
 
 (verify
+  ; Requires above Datomic db to be populated & online
   (when false
     (let [num-keys            (count (keys mco-icn->recs))
           grp-by-mco-number-3 (into {} (take 3 mco-icn->recs))]
@@ -171,6 +172,8 @@
       (spyx-pretty (count mco-icn->count-6+))
       (spyx-pretty mco-icn->count-6+)
       ))
+
+  ; Requires above Datomic db to be populated & online
   (when false
     (print-samples [3 2 2 2 2] (keys mco-icn->count-1))
     (print-samples [3 2 2 2 2] (keys mco-icn->count-2))
