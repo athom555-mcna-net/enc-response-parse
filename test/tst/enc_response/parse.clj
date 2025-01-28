@@ -9,7 +9,6 @@
     [enc-response.datomic :as datomic]
     [enc-response.proc :as proc]
     [schema.core :as s]
-    [tupelo.parse :as parse]
     [tupelo.string :as str]
     )
   (:import
@@ -71,13 +70,6 @@
   (is= (spec-slice {:name :xxx :format :char :length 3} (vec "abcdefg")) ;input str too long => truncated
     {:state  {:chars-remaining (vec "defg")}
      :output {:xxx "abc"}}))
-
-(verify   ; document behavior for normal and failure cases
-  (is= 123 (parse/parse-int "123"))
-  (is= -1 (with-exception-default -1
-            (parse/parse-int "12x")))
-  (is= 123 (parse/parse-int "123" :default 0))
-  (is= 0 (parse/parse-int "12x" :default 0)))
 
 (verify   ; document normal and error cases
   (let [field-specs [{:name :a :format :char :length 1}
