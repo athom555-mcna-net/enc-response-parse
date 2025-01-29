@@ -114,6 +114,25 @@
    {:name :filler-07 :format :text :length 18 :length-strict? false}
    ])
 
+(s/def utah-encounter-response-specs-hdr :- [tsk/KeyMap]
+  "Field specs (in order) for the Utah Encounter Response files. Named like `4950_DOHHT007992-001_15007163_20231123.txt`.
+  NOTE: all fields are strings.
+     :alpha           - string of [a-zA-Z] chars
+     :digit           - string of [0-9] chars
+     :alphanumeric    - string of [0-9a-zA-Z] chars
+     :text            - string of ASCII characters  "
+  [
+   {:name :field-01 :format :text :length 4} ; HDDR
+   {:name :field-02 :format :text :length 4} ; MAMM
+   {:name :field-03 :format :text :length 2} ; IS
+   {:name :file-type :format :text :length 4} ;  4950
+   {:name :file-date-01 :format :digit :length 8} ; 20231123
+   {:name :file-date-02 :format :digit :length 8} ; 20231123
+   {:name :field-04 :format :text :length 4} ;  blank
+   {:name :file-type-02 :format :text :length 4} ;  4950
+   {:name :category :format :text :length 4} ; PROD
+   ])
+
 (s/def utah-encounter-response-specs-rec00 :- [tsk/KeyMap]
   "Field specs (in order) for the Utah Encounter Response files. Named like `4950_DOHHT007992-001_15007163_20231123.txt`.
   NOTE: all fields are strings.

@@ -77,7 +77,7 @@
                                 {:name :ccc :format :alphanumeric :length 3 :length-strict? false}]
         field-specs-novalidate [{:name :a :format :alpha :length 1}
                                 {:name :bb :format :digit :length 2}
-                                {:name :ccc :format :alphanumeric :length 3
+                                {:name           :ccc :format :alphanumeric :length 3
                                  :length-strict? false :validate? false}]
         ]
     (is= (parse-string-fields field-specs "a23cc3")
@@ -129,19 +129,67 @@
        :field                           "DENIED"
        :error-field-value               ""})))
 
-(verify
-  (let [rec-1    "HT00300693301                               100870530                     0000000000                         99999IO"
+(verify-focus
+  (let [hdr      "HDDRMAMMIS49502023112320231123    4950PROD"
+        rec-1    "HT00300693301                               100870530                     0000000000                         99999IO"
         rec-2    "HT00300693301           300693301           100870530                     30000445278160                0007D1468 IO            20231122332332570063657000"
         rec-3    "HT00300693301           300693301           100870530                     30000445278160                0067D20154RL                    332332570063657000"
+        parsed-hdr (parse-string-fields utah-encounter-response-specs-hdr hdr)
         parsed-1 (parse-string-fields utah-encounter-response-specs-rec99999 rec-1)
         parsed-2 (parse-string-fields utah-encounter-response-specs-rec00 rec-2)
         parsed-3 (parse-string-fields utah-encounter-response-specs-rec00 rec-3)
         ]
-    (spyx-pretty parsed-1)
-    (spyx-pretty parsed-2)
-    (spyx-pretty parsed-3)
-    )
-  )
+    (is= parsed-hdr
+      {:category     "PROD"
+       :field-01     "HDDR"
+       :field-02     "MAMM"
+       :field-03     "IS"
+       :field-04     ""
+       :file-date-01 "20231123"
+       :file-date-02 "20231123"
+       :file-type    "4950"
+       :file-type-02 "4950"})
+    (is= parsed-1
+      {:capitated-plan-id     "300693301"
+       :error-number          "99999"
+       :error-severity        "IO"
+       :filler-01             ""
+       :filler-02             ""
+       :filler-03             ""
+       :filler-04             ""
+       :filler-05             ""
+       :filler-06             ""
+       :filler-07             ""
+       :rejected-record-count "0000000000"
+       :submission-number     "100870530"
+       :submitter-id          "HT00"})
+    (is= parsed-2
+      {:capitated-plan-id          "300693301"
+       :encounter-line-number      "000"
+       :encounter-reference-number "30000445278160"
+       :error-field                "20231122"
+       :error-number               "1468"
+       :error-severity             "IO"
+       :record-category            "D"
+       :record-type                "7"
+       :related-plan-id            "300693301"
+       :submission-number          "100870530"
+       :submitter-id               "HT00"
+       :tcn                        "332332570063657000"})
+    (is= parsed-3
+      {:capitated-plan-id          "300693301"
+       :encounter-line-number      "006"
+       :encounter-reference-number "30000445278160"
+       :error-field                ""
+       :error-number               "20154"
+       :error-severity             "RL"
+       :record-category            "D"
+       :record-type                "7"
+       :related-plan-id            "300693301"
+       :submission-number          "100870530"
+       :submitter-id               "HT00"
+       :tcn                        "332332570063657000"})
+    ))
 
 (verify
   ; works only on filename w/o parent dirs
