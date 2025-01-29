@@ -72,15 +72,22 @@
      :output {:xxx "abc"}}))
 
 (verify   ; document normal and error cases
-  (let [field-specs [{:name :a :format :alpha :length 1}
-                     {:name :bb :format :digit :length 2}
-                     {:name :ccc :format :alphanumeric :length 3 :length-strict? false}]]
+  (let [field-specs            [{:name :a :format :alpha :length 1}
+                                {:name :bb :format :digit :length 2}
+                                {:name :ccc :format :alphanumeric :length 3 :length-strict? false}]
+        field-specs-novalidate [{:name :a :format :alpha :length 1}
+                                {:name :bb :format :digit :length 2}
+                                {:name :ccc :format :alphanumeric :length 3
+                                 :length-strict? false :validate? false}]
+        ]
     (is= (parse-string-fields field-specs "a23cc3")
       {:a "a" :bb "23" :ccc "cc3"})
     (is= (parse-string-fields field-specs "a23cc3dddd") ; extra chars ignored
       {:a "a" :bb "23" :ccc "cc3"})
     (throws? (parse-string-fields field-specs "abbccc")) ; bb wrong format
     (throws-not? (parse-string-fields field-specs "a23cc")) ; insufficient chars ok in last field
+
+    (throws? (parse-string-fields field-specs-novalidate "abbccc")) ; bb wrong format but no validation
     ))
 
 (verify
@@ -123,9 +130,9 @@
        :error-field-value               ""})))
 
 (verify
-  (let [rec-1     "HT00300693301                               100870530                     0000000000                         99999IO"
-        rec-2     "HT00300693301           300693301           100870530                     30000445278160                0007D1468 IO            20231122332332570063657000"
-        rec-3     "HT00300693301           300693301           100870530                     30000445278160                0067D20154RL                    332332570063657000"
+  (let [rec-1    "HT00300693301                               100870530                     0000000000                         99999IO"
+        rec-2    "HT00300693301           300693301           100870530                     30000445278160                0007D1468 IO            20231122332332570063657000"
+        rec-3    "HT00300693301           300693301           100870530                     30000445278160                0067D20154RL                    332332570063657000"
         parsed-1 (parse-string-fields utah-encounter-response-specs-rec99999 rec-1)
         parsed-2 (parse-string-fields utah-encounter-response-specs-rec00 rec-2)
         parsed-3 (parse-string-fields utah-encounter-response-specs-rec00 rec-3)

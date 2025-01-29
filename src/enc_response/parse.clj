@@ -61,6 +61,7 @@
 (s/def spec-opts-default :- tsk/KeyMap
   "Default options for field specs"
   {:trim?          true ; trim leading/trailing blanks from returned string
+   :validate?      true ; #todo add usage
 
    ; Don't crash if insufficient chars found in line.  Should only be used for last N fields
    :length-strict? true})
@@ -159,8 +160,8 @@
 (s/defn spec-slice
   [spec-in :- tsk/KeyMap
    char-seq-in :- [Character]]
-  (let [spec (into spec-opts-default spec-in)]
-    (with-map-vals spec [name format length length-strict? trim?]
+  (let [spec (glue spec-opts-default spec-in)]
+    (with-map-vals spec [name format length trim? validate? length-strict? ]
       (assert-info (pos? length) "field length must be positive" (vals->map spec))
       ; NOTE: `split-at` works for both a string and a char seq
       (let [[field-chars rem-chars-seq] (split-at length char-seq-in)]
@@ -170,7 +171,8 @@
                           trim? (str/trim it))
               result    {:state  {:chars-remaining rem-chars-seq}
                          :output {name field-str}}]
-          (validate-format format field-str)
+          (when validate?
+            (validate-format format field-str))
           result)))))
 
 (s/defn parse-string-fields :- tsk/KeyMap
