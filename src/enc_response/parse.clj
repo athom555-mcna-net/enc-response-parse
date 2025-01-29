@@ -73,17 +73,17 @@
      :alphanumeric    - string of [0-9a-zA-Z] chars
      :text            - string of ASCII characters  "
   [
-   {:name :mco-claim-number :format :numeric :length 30} ; #todo it is a number like "30000062649905                "
-   {:name :iowa-transaction-control-number :format :numeric :length 17}
-   {:name :iowa-processing-date :format :numeric :length 8}
-   {:name :claim-type :format :char :length 1}
-   {:name :claim-frequency-code :format :numeric :length 1}
+   {:name :mco-claim-number :format :digit :length 30} ; #todo it is a number like "30000062649905                "
+   {:name :iowa-transaction-control-number :format :digit :length 17}
+   {:name :iowa-processing-date :format :digit :length 8}
+   {:name :claim-type :format :alpha :length 1}
+   {:name :claim-frequency-code :format :digit :length 1}
    {:name :member-id :format :alphanumeric :length 8}
-   {:name :first-date-of-service :format :numeric :length 8}
-   {:name :billing-provider-npi :format :numeric :length 10}
-   {:name :mco-paid-date :format :numeric :length 8}
-   {:name :total-paid-amount :format :numeric :length 12}
-   {:name :line-number :format :numeric :length 2}
+   {:name :first-date-of-service :format :digit :length 8}
+   {:name :billing-provider-npi :format :digit :length 10}
+   {:name :mco-paid-date :format :digit :length 8}
+   {:name :total-paid-amount :format :digit :length 12}
+   {:name :line-number :format :digit :length 2}
    {:name :error-code :format :alphanumeric :length 3} ; #todo almost always "A00" (alt: "A45", "B01")
    {:name :field :format :text :length 24 :length-strict? false}
    {:name :error-field-value :format :text :length 80 :length-strict? false} ; #todo seems to be missing (all blanks!)
@@ -135,12 +135,14 @@
    ])
 
 ;---------------------------------------------------------------------------------------------------
+; #todo generalize to allow leading/trailing spaces
 (s/def format->pattern :- tsk/KeyMap
   "Map from format kw to regex pattern."
-  {:char         #"\p{Alpha}*" ; *** empty string allowed ***
-   :numeric      #"\p{Digit}*" ; *** empty string allowed ***
+  {:alpha        #"\p{Alpha}*" ; *** empty string allowed ***
+   :digit        #"\p{Digit}*" ; *** empty string allowed ***
    :alphanumeric #"\p{Alnum}*" ; *** empty string allowed ***
-   :text         #"\p{ASCII}*" ; *** empty string allowed ***
+   :text         #"\p{Print}*" ; *** empty string allowed ***
+   :ascii        #"\p{ASCII}*" ; *** empty string allowed ***
    })
 
 (s/defn validate-format :- s/Str
@@ -201,11 +203,11 @@
 (s/defn enc-response-fname->parsed :- [tsk/KeyMap]
   [fname :- s/Str]
   (prof/with-timer-accum :enc-response-fname->parsed
-    (let [base-str (enc-response-fname->base-str fname)
-          data-recs        (forv [line (enc-response-fname->lines fname)]
-                             (let [rec1 (parse-string-fields iowa-encounter-response-specs line)
-                                   rec2 (glue rec1 {:fname-str base-str})]
-                               rec2))]
+    (let [base-str  (enc-response-fname->base-str fname)
+          data-recs (forv [line (enc-response-fname->lines fname)]
+                      (let [rec1 (parse-string-fields iowa-encounter-response-specs line)
+                            rec2 (glue rec1 {:fname-str base-str})]
+                        rec2))]
       data-recs)))
 
 

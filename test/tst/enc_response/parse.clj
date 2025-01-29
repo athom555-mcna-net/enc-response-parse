@@ -31,25 +31,25 @@
 (verify
   (throws? (validate-format :charxxx "abc")) ; format kw must be valid
 
-  (throws-not? (validate-format :char "")) ; empty str legal
-  (throws-not? (validate-format :numeric ""))
+  (throws-not? (validate-format :alpha "")) ; empty str legal
+  (throws-not? (validate-format :digit ""))
   (throws-not? (validate-format :alphanumeric ""))
-  (throws? (validate-format :char (vec "abc"))) ; must be str not charseq
+  (throws? (validate-format :alpha (vec "abc"))) ; must be str not charseq
 
-  (is= "a" (validate-format :char "a")) ; :char => alpha only
-  (is= "abc" (validate-format :char "abc"))
-  (throws? (validate-format :numeric "abc"))
-  (throws? (validate-format :char "abc9"))
+  (is= "a" (validate-format :alpha "a")) ; :char => alpha only
+  (is= "abc" (validate-format :alpha "abc"))
+  (throws? (validate-format :digit "abc"))
+  (throws? (validate-format :alpha "abc9"))
 
   (is= "a" (validate-format :alphanumeric "a")) ; alphanumeric
   (is= "9" (validate-format :alphanumeric "9"))
   (is= "abc9" (validate-format :alphanumeric "abc9"))
   (throws? (validate-format :alphanumeric "#abc"))
 
-  (is= "9" (validate-format :numeric "9")) ; numeric only
-  (is= "123" (validate-format :numeric "123"))
-  (throws? (validate-format :numeric "abc"))
-  (throws? (validate-format :numeric "abc9"))
+  (is= "9" (validate-format :digit "9")) ; numeric only
+  (is= "123" (validate-format :digit "123"))
+  (throws? (validate-format :digit "abc"))
+  (throws? (validate-format :digit "abc9"))
 
   (is= "a" (validate-format :text "a")) ; any ASCII character
   (is= "9" (validate-format :text "9"))
@@ -59,21 +59,21 @@
   (is= "#ab c!" (validate-format :text "#ab c!")))
 
 (verify
-  (throws? (spec-slice {:name :xxx :format :char :length 0} (vec "abcdefg"))) ; zero length
-  (throws? (spec-slice {:name :xxx :format :char :length 3} (vec "ab"))) ; insufficient chars
-  (throws? (spec-slice {:name :xxx :format :char :length 3 :length-strict? true} (vec "ab"))) ; insufficient chars
-  (throws-not? (spec-slice {:name :xxx :format :char :length 3 :length-strict? false} (vec "ab"))) ; insufficient chars
+  (throws? (spec-slice {:name :xxx :format :alpha :length 0} (vec "abcdefg"))) ; zero length
+  (throws? (spec-slice {:name :xxx :format :alpha :length 3} (vec "ab"))) ; insufficient chars
+  (throws? (spec-slice {:name :xxx :format :alpha :length 3 :length-strict? true} (vec "ab"))) ; insufficient chars
+  (throws-not? (spec-slice {:name :xxx :format :alpha :length 3 :length-strict? false} (vec "ab"))) ; insufficient chars
 
-  (is= (spec-slice {:name :xxx :format :char :length 3} (vec "abc")) ; input str matches expected length
+  (is= (spec-slice {:name :xxx :format :alpha :length 3} (vec "abc")) ; input str matches expected length
     {:state  {:chars-remaining []}
      :output {:xxx "abc"}})
-  (is= (spec-slice {:name :xxx :format :char :length 3} (vec "abcdefg")) ;input str too long => truncated
+  (is= (spec-slice {:name :xxx :format :alpha :length 3} (vec "abcdefg")) ;input str too long => truncated
     {:state  {:chars-remaining (vec "defg")}
      :output {:xxx "abc"}}))
 
 (verify   ; document normal and error cases
-  (let [field-specs [{:name :a :format :char :length 1}
-                     {:name :bb :format :numeric :length 2}
+  (let [field-specs [{:name :a :format :alpha :length 1}
+                     {:name :bb :format :digit :length 2}
                      {:name :ccc :format :alphanumeric :length 3 :length-strict? false}]]
     (is= (parse-string-fields field-specs "a23cc3")
       {:a "a" :bb "23" :ccc "cc3"})
@@ -122,7 +122,7 @@
        :field                           "DENIED"
        :error-field-value               ""})))
 
-(verify-focus
+(verify
   (let [rec-1     "HT00300693301                               100870530                     0000000000                         99999IO"
         rec-2     "HT00300693301           300693301           100870530                     30000445278160                0007D1468 IO            20231122332332570063657000"
         rec-3     "HT00300693301           300693301           100870530                     30000445278160                0067D20154RL                    332332570063657000"
