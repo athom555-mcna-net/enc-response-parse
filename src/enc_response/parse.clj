@@ -64,12 +64,13 @@
 
    ; Don't crash if insufficient chars found in line.  Should only be used for last N fields
    :length-strict? true})
+; #todo add option for :failure-type [:exception or :default-result :- tsk/KeyMap]
 
 (s/def iowa-encounter-response-specs :- [tsk/KeyMap]
   "Field specs (in order) for the Iowa Encounter Response files. Named like `ENC_RESPONSE_D_20210722_071949.TXT`.
   NOTE: all fields are strings.
-     :char            - string of [a-zA-Z] chars
-     :numeric         - string of [0-9] chars
+     :alpha           - string of [a-zA-Z] chars
+     :digit           - string of [0-9] chars
      :alphanumeric    - string of [0-9a-zA-Z] chars
      :text            - string of ASCII characters  "
   [
@@ -92,8 +93,8 @@
 (s/def utah-encounter-response-specs-rec99999 :- [tsk/KeyMap]
   "Field specs (in order) for the Utah Encounter Response files. Named like `4950_DOHHT007992-001_15007163_20231123.txt`.
   NOTE: all fields are strings.
-     :char            - string of [a-zA-Z] chars
-     :numeric         - string of [0-9] chars
+     :alpha           - string of [a-zA-Z] chars
+     :digit           - string of [0-9] chars
      :alphanumeric    - string of [0-9a-zA-Z] chars
      :text            - string of ASCII characters  "
   [
@@ -115,8 +116,8 @@
 (s/def utah-encounter-response-specs-rec00 :- [tsk/KeyMap]
   "Field specs (in order) for the Utah Encounter Response files. Named like `4950_DOHHT007992-001_15007163_20231123.txt`.
   NOTE: all fields are strings.
-     :char            - string of [a-zA-Z] chars
-     :numeric         - string of [0-9] chars
+     :alpha           - string of [a-zA-Z] chars
+     :digit           - string of [0-9] chars
      :alphanumeric    - string of [0-9a-zA-Z] chars
      :text            - string of ASCII characters  "
   [
@@ -135,7 +136,6 @@
    ])
 
 ;---------------------------------------------------------------------------------------------------
-; #todo generalize to allow leading/trailing spaces
 (s/def format->pattern :- tsk/KeyMap
   "Map from format kw to regex pattern."
   {:alpha        #"\p{Alpha}*" ; *** empty string allowed ***
@@ -155,6 +155,7 @@
       (throw (ex-info "string does not match format" (vals->map src format)))))
   src)    ; return input if passes
 
+; #todo refactor to calculate start/stop idxs, then use (substr ...) with length check or yield "" if allowed
 (s/defn spec-slice
   [spec-in :- tsk/KeyMap
    char-seq-in :- [Character]]
