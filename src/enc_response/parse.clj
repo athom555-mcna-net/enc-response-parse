@@ -61,7 +61,7 @@
 (s/def spec-opts-default :- tsk/KeyMap
   "Default options for field specs"
   {:trim?          true ; trim leading/trailing blanks from returned string
-   :validate?      true ; #todo add usage
+   :validate?      true ; preform regex validation of fields
 
    ; Don't crash if insufficient chars found in line.  Should only be used for last N fields
    :length-strict? true})
