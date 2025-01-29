@@ -89,6 +89,51 @@
    {:name :error-field-value :format :text :length 80 :length-strict? false} ; #todo seems to be missing (all blanks!)
    ])
 
+(s/def utah-encounter-response-specs-rec99999 :- [tsk/KeyMap]
+  "Field specs (in order) for the Utah Encounter Response files. Named like `4950_DOHHT007992-001_15007163_20231123.txt`.
+  NOTE: all fields are strings.
+     :char            - string of [a-zA-Z] chars
+     :numeric         - string of [0-9] chars
+     :alphanumeric    - string of [0-9a-zA-Z] chars
+     :text            - string of ASCII characters  "
+  [
+   {:name :submitter-id :format :text :length 4}
+   {:name :capitated-plan-id :format :text :length 20}
+   {:name :filler-01 :format :text :length 20}
+   {:name :submission-number :format :text :length 30}
+   {:name :rejected-record-count :format :alphanumeric :length 10}
+   {:name :filler-02 :format :text :length 20}
+   {:name :filler-03 :format :text :length 3}
+   {:name :filler-04 :format :text :length 1}
+   {:name :filler-05 :format :text :length 1}
+   {:name :error-number :format :text :length 5}
+   {:name :error-severity :format :text :length 2}
+   {:name :filler-06 :format :text :length 20 :length-strict? false}
+   {:name :filler-07 :format :text :length 18 :length-strict? false}
+   ])
+
+(s/def utah-encounter-response-specs-rec00 :- [tsk/KeyMap]
+  "Field specs (in order) for the Utah Encounter Response files. Named like `4950_DOHHT007992-001_15007163_20231123.txt`.
+  NOTE: all fields are strings.
+     :char            - string of [a-zA-Z] chars
+     :numeric         - string of [0-9] chars
+     :alphanumeric    - string of [0-9a-zA-Z] chars
+     :text            - string of ASCII characters  "
+  [
+   {:name :submitter-id :format :text :length 4} ; #todo it is a number like "30000062649905                "
+   {:name :capitated-plan-id :format :text :length 20}
+   {:name :related-plan-id :format :text :length 20}
+   {:name :submission-number :format :alphanumeric :length 30}
+   {:name :encounter-reference-number :format :text :length 30}
+   {:name :encounter-line-number :format :text :length 3}
+   {:name :record-type :format :text :length 1}
+   {:name :record-category :format :text :length 1}
+   {:name :error-number :format :text :length 5}
+   {:name :error-severity :format :text :length 2}
+   {:name :error-field :format :text :length 20}
+   {:name :tcn :format :text :length 18 :length-strict? false}
+   ])
+
 ;---------------------------------------------------------------------------------------------------
 (s/def format->pattern :- tsk/KeyMap
   "Map from format kw to regex pattern."

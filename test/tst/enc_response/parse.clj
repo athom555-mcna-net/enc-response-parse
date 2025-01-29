@@ -122,6 +122,20 @@
        :field                           "DENIED"
        :error-field-value               ""})))
 
+(verify-focus
+  (let [rec-1     "HT00300693301                               100870530                     0000000000                         99999IO"
+        rec-2     "HT00300693301           300693301           100870530                     30000445278160                0007D1468 IO            20231122332332570063657000"
+        rec-3     "HT00300693301           300693301           100870530                     30000445278160                0067D20154RL                    332332570063657000"
+        parsed-1 (parse-string-fields utah-encounter-response-specs-rec99999 rec-1)
+        parsed-2 (parse-string-fields utah-encounter-response-specs-rec00 rec-2)
+        parsed-3 (parse-string-fields utah-encounter-response-specs-rec00 rec-3)
+        ]
+    (spyx-pretty parsed-1)
+    (spyx-pretty parsed-2)
+    (spyx-pretty parsed-3)
+    )
+  )
+
 (verify
   ; works only on filename w/o parent dirs
   (isnt (enc-resp-file-name? "a/b/ENC_RESPONSE_D_20200312_062014.TXT"))
