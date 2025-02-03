@@ -223,7 +223,6 @@
 (verify
   (let [dummy-File (tio/create-temp-file "tsv" ".tmp")]
     (is= java.io.File (type dummy-File))
-    ; delete any existing file & create a new empty file
 
     ; Create an empty file, append lines to it one at a time
     (let [; plan-icn-update-tsv-File (tio/->File plan-icn-update-tsv-fname)

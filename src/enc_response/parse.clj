@@ -181,4 +181,20 @@
                        {icn-num error-recs}))]
     tsv-recs))
 
+(s/defn utah-enc-response-fname->tsv-file
+  [fname-enc-resp :- s/Str
+   file-tsv] ;
+  (let [tsv-recs  (utah-enc-response-fname->tsv-recs fname-enc-resp)
+        out-lines (forv [tsv-rec tsv-recs]
+                    (assert (= 1 (count tsv-rec))) ; only 1 entry per map
+                    (let [entry           (first tsv-rec)
+                          icn             (key entry)
+                          error-info      (val entry)
+                          error-info-json (edn->json error-info)
+                          out-line        (str icn \tab error-info-json)]
+                      out-line))
+        out-str   (str/join \newline out-lines)]
+    (spit file-tsv out-str)
+    nil))
+
 

@@ -11,6 +11,8 @@
     [enc-response.proc :as proc]
     [enc-response.parse.specs :as specs]
     [schema.core :as s]
+    [tupelo.csv :as csv]
+    [tupelo.io :as tio]
     [tupelo.string :as str]
     )
   (:import
@@ -357,6 +359,28 @@
                           {"code" "20121" "severity" "error"}
                           {"code" "20121" "severity" "error"}
                           {"code" "20121" "severity" "error"}]}])
+
+
+    (let [dummy-File (File. "./tsv-out-test.txt") ; (tio/create-temp-file "tsv" ".tmp")
+          ]
+      (is= java.io.File (type dummy-File))
+
+      (utah-enc-response-fname->tsv-file sample-fname dummy-File)
+      (let [result-str (str/quotes->single (slurp dummy-File))]
+        (is-nonblank= result-str
+          "30000445230835	[{'code':'00000','severity':'unknown'}]
+           30000445278160	[{'code':'1468','severity':'warning'},{'code':'20154','severity':'error'}]
+           30000445278201	[{'code':'1468','severity':'warning'}]
+           30000445284956	[{'code':'00000','severity':'unknown'}]
+           30000445325958	[{'code':'00000','severity':'unknown'}]
+           30000445325959	[{'code':'00000','severity':'unknown'}]
+           30000445325960	[{'code':'00000','severity':'unknown'}]
+           30000445325961	[{'code':'00000','severity':'unknown'}]
+           30000445325962	[{'code':'00000','severity':'unknown'}]
+           30000445325963	[{'code':'00000','severity':'unknown'}]
+           30000445325964	[{'code':'2076','severity':'error'},{'code':'2645','severity':'warning'},{'code':'20121','severity':'error'},{'code':'20121','severity':'error'},{'code':'20121','severity':'error'}] "
+          )))
+
     ))
 
 (verify
