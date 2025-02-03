@@ -51,11 +51,11 @@
                          :tx-data-fname               "tx-data.edn"
                          :max-tx-size               2}
 
-        enc-resp-fnames (parse/enc-response-dir->fnames ctx-local)
+        enc-resp-fnames (parse/iowa-enc-response-dir->fnames ctx-local)
         fname-first     (xfirst enc-resp-fnames)]
 
     ; verify parsed all lines => records from first file
-    (let [data-recs (parse/enc-response-fname->parsed fname-first)
+    (let [data-recs (parse/iowa-enc-response-fname->parsed fname-first)
           rec-1     (xfirst data-recs)
           rec-5     (xlast data-recs)]
       (is= 5 (count data-recs))

@@ -1,4 +1,4 @@
-(ns ^:test-refresh/focus
+(ns       ; ^:test-refresh/focus
   tst.enc-response.parse
   (:use enc-response.parse
         tupelo.core
@@ -133,9 +133,9 @@
 
 (verify
   (let [hdr          "HDDRMAMMIS49502023112320231123    4950PROD"
-        line-1        "HT00300693301                               100870530                     0000000000                         99999IO"
-        line-2        "HT00300693301           300693301           100870530                     30000445278160                0007D1468 IO            20231122332332570063657000"
-        line-3        "HT00300693301           300693301           100870530                     30000445278160                0067D20154RL                    332332570063657000"
+        line-1       "HT00300693301                               100870530                     0000000000                         99999IO"
+        line-2       "HT00300693301           300693301           100870530                     30000445278160                0007D1468 IO            20231122332332570063657000"
+        line-3       "HT00300693301           300693301           100870530                     30000445278160                0067D20154RL                    332332570063657000"
         parsed-hdr   (parse-string-fields specs/utah-encounter-response-hdr hdr)
         parsed-1     (parse-string-fields specs/utah-encounter-response-rec99999 line-1)
         parsed-1-cmn (parse-string-fields specs/utah-encounter-response-common line-1)
@@ -210,24 +210,173 @@
        :tcn                        "332332570063657000"})
     ))
 
+(verify-focus
+  (let [sample-fname "resources/sample-utah-4950.txt"
+        result       (utah-enc-response-fname->parsed sample-fname)
+        result-4     (xtake 4 result)]
+    (is= result-4
+      [{:capitated-plan-id          "300693301"
+        :encounter-line-number      "000"
+        :encounter-reference-number "30000445230835"
+        :error-field                "00000000000000000000"
+        :error-number               "00000"
+        :error-severity             "00"
+        :record-category            "D"
+        :record-type                "1"
+        :related-plan-id            "300693301"
+        :submission-number          "100870502"
+        :submitter-id               "HT00"
+        :tcn                        "332332410004013000"}
+       {:capitated-plan-id          "300693301"
+        :encounter-line-number      "000"
+        :encounter-reference-number "30000445278160"
+        :error-field                "20231122"
+        :error-number               "1468"
+        :error-severity             "IO"
+        :record-category            "D"
+        :record-type                "7"
+        :related-plan-id            "300693301"
+        :submission-number          "100870530"
+        :submitter-id               "HT00"
+        :tcn                        "332332570063657000"}
+       {:capitated-plan-id          "300693301"
+        :encounter-line-number      "006"
+        :encounter-reference-number "30000445278160"
+        :error-field                ""
+        :error-number               "20154"
+        :error-severity             "RL"
+        :record-category            "D"
+        :record-type                "7"
+        :related-plan-id            "300693301"
+        :submission-number          "100870530"
+        :submitter-id               "HT00"
+        :tcn                        "332332570063657000"}
+       {:capitated-plan-id          "300693301"
+        :encounter-line-number      "000"
+        :encounter-reference-number "30000445278201"
+        :error-field                "20231122"
+        :error-number               "1468"
+        :error-severity             "IO"
+        :record-category            "D"
+        :record-type                "7"
+        :related-plan-id            "300693301"
+        :submission-number          "100870530"
+        :submitter-id               "HT00"
+        :tcn                        "332332570063722000"}])
+
+    (is= "warning"
+      (error-severity->outstr "io")
+      (error-severity->outstr "IO"))
+    (is= "error"
+      (error-severity->outstr "re")
+      (error-severity->outstr "rl")
+      (error-severity->outstr "rb")
+      (error-severity->outstr "RE")
+      (error-severity->outstr "RL")
+      (error-severity->outstr "RB"))
+    (is= "unknown"
+      (error-severity->outstr "")
+      (error-severity->outstr "garbage"))
+
+    (is= (xtake 4 (utah-enc-response-fname->by-enc-ref sample-fname))
+      {"30000445230835" [{:capitated-plan-id          "300693301"
+                          :encounter-line-number      "000"
+                          :encounter-reference-number "30000445230835"
+                          :error-field                "00000000000000000000"
+                          :error-number               "00000"
+                          :error-severity             "00"
+                          :record-category            "D"
+                          :record-type                "1"
+                          :related-plan-id            "300693301"
+                          :submission-number          "100870502"
+                          :submitter-id               "HT00"
+                          :tcn                        "332332410004013000"}]
+       "30000445278160" [{:capitated-plan-id          "300693301"
+                          :encounter-line-number      "000"
+                          :encounter-reference-number "30000445278160"
+                          :error-field                "20231122"
+                          :error-number               "1468"
+                          :error-severity             "IO"
+                          :record-category            "D"
+                          :record-type                "7"
+                          :related-plan-id            "300693301"
+                          :submission-number          "100870530"
+                          :submitter-id               "HT00"
+                          :tcn                        "332332570063657000"}
+                         {:capitated-plan-id          "300693301"
+                          :encounter-line-number      "006"
+                          :encounter-reference-number "30000445278160"
+                          :error-field                ""
+                          :error-number               "20154"
+                          :error-severity             "RL"
+                          :record-category            "D"
+                          :record-type                "7"
+                          :related-plan-id            "300693301"
+                          :submission-number          "100870530"
+                          :submitter-id               "HT00"
+                          :tcn                        "332332570063657000"}]
+       "30000445278201" [{:capitated-plan-id          "300693301"
+                          :encounter-line-number      "000"
+                          :encounter-reference-number "30000445278201"
+                          :error-field                "20231122"
+                          :error-number               "1468"
+                          :error-severity             "IO"
+                          :record-category            "D"
+                          :record-type                "7"
+                          :related-plan-id            "300693301"
+                          :submission-number          "100870530"
+                          :submitter-id               "HT00"
+                          :tcn                        "332332570063722000"}]
+       "30000445284956" [{:capitated-plan-id          "300693301"
+                          :encounter-line-number      "000"
+                          :encounter-reference-number "30000445284956"
+                          :error-field                "00000000000000000000"
+                          :error-number               "00000"
+                          :error-severity             "00"
+                          :record-category            "D"
+                          :record-type                "1"
+                          :related-plan-id            "300693301"
+                          :submission-number          "100870530"
+                          :submitter-id               "HT00"
+                          :tcn                        "332332610002571000"}]})
+
+    (is= (utah-enc-response-fname->tsv-recs sample-fname)
+      [{"30000445230835" [{"code" "00000" "severity" "unknown"}]}
+       {"30000445278160" [{"code" "1468" "severity" "warning"}
+                          {"code" "20154" "severity" "error"}]}
+       {"30000445278201" [{"code" "1468" "severity" "warning"}]}
+       {"30000445284956" [{"code" "00000" "severity" "unknown"}]}
+       {"30000445325958" [{"code" "00000" "severity" "unknown"}]}
+       {"30000445325959" [{"code" "00000" "severity" "unknown"}]}
+       {"30000445325960" [{"code" "00000" "severity" "unknown"}]}
+       {"30000445325961" [{"code" "00000" "severity" "unknown"}]}
+       {"30000445325962" [{"code" "00000" "severity" "unknown"}]}
+       {"30000445325963" [{"code" "00000" "severity" "unknown"}]}
+       {"30000445325964" [{"code" "2076" "severity" "error"}
+                          {"code" "2645" "severity" "warning"}
+                          {"code" "20121" "severity" "error"}
+                          {"code" "20121" "severity" "error"}
+                          {"code" "20121" "severity" "error"}]}])
+    ))
+
 (verify
   ; works only on filename w/o parent dirs
-  (isnt (enc-resp-file-name? "a/b/ENC_RESPONSE_D_20200312_062014.TXT"))
-  (is (enc-resp-file-name? "ENC_RESPONSE_D_20200312_062014.TXT"))
+  (isnt (iowa-enc-resp-file-name? "a/b/ENC_RESPONSE_D_20200312_062014.TXT"))
+  (is (iowa-enc-resp-file-name? "ENC_RESPONSE_D_20200312_062014.TXT"))
 
   ; ignores parent dirs in path
-  (is (enc-resp-File? (File. "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20200312_062014.TXT")))
+  (is (iowa-enc-resp-File? (File. "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_20200312_062014.TXT")))
 
   ; OK if not exist as long as pattern matches
-  (is (enc-resp-File? (File. "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_xxxxxxx_062014.TXT")))
-  (isnt (enc-resp-File? (File. "/Users/athom555/work/iowa-response/xxxxENC_RESPONSE_D_xxxxxxx_062014.TXT"))))
+  (is (iowa-enc-resp-File? (File. "/Users/athom555/work/iowa-response/ENC_RESPONSE_D_xxxxxxx_062014.TXT")))
+  (isnt (iowa-enc-resp-File? (File. "/Users/athom555/work/iowa-response/xxxxENC_RESPONSE_D_xxxxxxx_062014.TXT"))))
 
 ;---------------------------------------------------------------------------------------------------
 (verify
   (let [encounter-response-root-dir "./enc-response-files-test"
         enc-resp-root-dir-File      (io/file encounter-response-root-dir)
         all-files                   (file-seq enc-resp-root-dir-File) ; returns a tree of File objects like `find`
-        enc-resp-fnames             (vec (sort (mapv str (keep-if enc-resp-File? all-files))))]
+        enc-resp-fnames             (vec (sort (mapv str (keep-if iowa-enc-resp-File? all-files))))]
     (is (it-> all-files
           (mapv type it)
           (every? #(= % File) it))) ; every element is a java.io.File
@@ -288,9 +437,9 @@
 
 (verify
   (let [fname "./enc-response-files-test-small/ENC_RESPONSE_D_20211202_065818.TXT"]
-    (is= (enc-response-fname->utc-str fname)
+    (is= (iowa-enc-response-fname->utc-str fname)
       "2021-12-02T06:58:18")
-    (spyx-pretty (enc-response-fname->base-str fname))
+    (spyx-pretty (iowa-enc-response-fname->base-str fname))
 
     ))
 
@@ -304,7 +453,7 @@
              }]
 
     ; full data: "/Users/athom555/work/iowa-response"
-    (let [enc-resp-fnames (enc-response-dir->fnames ctx) ; uses :encounter-response-root-dir
+    (let [enc-resp-fnames (iowa-enc-response-dir->fnames ctx) ; uses :encounter-response-root-dir
           fname-first     (xfirst enc-resp-fnames)]
       ; verify found all files in dir
       (is= enc-resp-fnames
@@ -322,7 +471,7 @@
            "30000062649896 6213360078000000412022021D11574993J1025202119527117801124202100000000800000A00PAID"
            "30000062649897 6213360078000000512022021D14037045B1027202119527117801124202100000003457400A00PAID"]))
       ; verify parsed all lines => records from first file
-      (let [data-recs (enc-response-fname->parsed fname-first)
+      (let [data-recs (iowa-enc-response-fname->parsed fname-first)
             rec-1     (xfirst data-recs)
             rec-5     (xlast data-recs)]
         (is= 5 (count data-recs))
