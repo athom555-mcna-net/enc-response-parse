@@ -1,5 +1,4 @@
-(ns       ; ^:test-refresh/focus
-  tst.enc-response.parse
+(ns tst.enc-response.parse
   (:use enc-response.parse
         tupelo.core
         tupelo.test)
@@ -99,7 +98,6 @@
         rec-2    "30000062649906                6213360078000001412022021D11704114C0701202119527117801124202100000000000000A00DENIED        "
         parsed-1 (parse-string-fields specs/iowa-encounter-response rec-1)
         parsed-2 (parse-string-fields specs/iowa-encounter-response rec-2)]
-    ; (spyx-pretty parsed-1)
     (is= parsed-1
       {:mco-claim-number                "30000062649905" ; Note:  numeric fields still returned as strings!
        :iowa-transaction-control-number "62133600780000013"
@@ -116,7 +114,6 @@
        :field                           "PAID"
        :error-field-value               ""})
 
-    ; (spyx-pretty parsed-2)
     (is= parsed-2
       {:mco-claim-number                "30000062649906"
        :iowa-transaction-control-number "62133600780000014"
@@ -212,7 +209,7 @@
        :tcn                        "332332570063657000"})
     ))
 
-(verify-focus
+(verify
   (let [sample-fname "resources/sample-utah-4950.txt"
         result       (utah-enc-response-fname->parsed sample-fname)
         result-4     (xtake 4 result)]
@@ -342,45 +339,52 @@
                           :submitter-id               "HT00"
                           :tcn                        "332332610002571000"}]})
 
-    (is= (utah-enc-response-fname->tsv-recs sample-fname)
-      [{"30000445230835" [{"code" "00000" "severity" "unknown"}]}
-       {"30000445278160" [{"code" "1468" "severity" "warning"}
-                          {"code" "20154" "severity" "error"}]}
-       {"30000445278201" [{"code" "1468" "severity" "warning"}]}
-       {"30000445284956" [{"code" "00000" "severity" "unknown"}]}
-       {"30000445325958" [{"code" "00000" "severity" "unknown"}]}
-       {"30000445325959" [{"code" "00000" "severity" "unknown"}]}
-       {"30000445325960" [{"code" "00000" "severity" "unknown"}]}
-       {"30000445325961" [{"code" "00000" "severity" "unknown"}]}
-       {"30000445325962" [{"code" "00000" "severity" "unknown"}]}
-       {"30000445325963" [{"code" "00000" "severity" "unknown"}]}
-       {"30000445325964" [{"code" "2076" "severity" "error"}
-                          {"code" "2645" "severity" "warning"}
-                          {"code" "20121" "severity" "error"}
-                          {"code" "20121" "severity" "error"}
-                          {"code" "20121" "severity" "error"}]}])
+    (is= (take 5 utah-rejected-icns)
+      ["30000445325964"
+       "30000445326204"
+       "30000445326234"
+       "30000445326470"
+       "30000445326530"])
+    (let [dummy-File          (File. "./tsv-out-test.txt") ; (tio/create-temp-file "tsv" ".tmp")
+          dummy-rejected-icns #{"30000445278160" ; # keep even icns for unit tests
+                                "30000445284956"
+                                "30000445325958"
+                                "30000445325960"
+                                "30000445325962"
+                                "30000445325964"}]
+      (with-redefs [utah-rejected-icns dummy-rejected-icns]
+        (is= (utah-enc-response-fname->tsv-recs sample-fname)
+          [{"30000445278160" [{"code" "1468", "severity" "warning"}
+                              {"code" "20154", "severity" "error"}]}
+           {"30000445284956" [{"code" "00000", "severity" "unknown"}]}
+           {"30000445325958" [{"code" "00000", "severity" "unknown"}]}
+           {"30000445325960" [{"code" "00000", "severity" "unknown"}]}
+           {"30000445325962" [{"code" "00000", "severity" "unknown"}]}
+           {"30000445325964" [{"code" "2076", "severity" "error"}
+                              {"code" "2645", "severity" "warning"}
+                              {"code" "20121", "severity" "error"}
+                              {"code" "20121", "severity" "error"}
+                              {"code" "20121", "severity" "error"}]}])
 
+        (utah-enc-response-fname->tsv-file sample-fname dummy-File)
+        (let [result-str (str/quotes->single (slurp dummy-File))]
+          (is-nonblank= result-str
+           "30000445278160	[{'code':'1468','severity':'warning'},{'code':'20154','severity':'error'}]
+            30000445284956	[{'code':'00000','severity':'unknown'}]
+            30000445325958	[{'code':'00000','severity':'unknown'}]
+            30000445325960	[{'code':'00000','severity':'unknown'}]
+            30000445325962	[{'code':'00000','severity':'unknown'}]
+            30000445325964	[{'code':'2076','severity':'error'},{'code':'2645','severity':'warning'},{'code':'20121','severity':'error'},{'code':'20121','severity':'error'},{'code':'20121','severity':'error'}] ")))
 
-    (let [dummy-File (File. "./tsv-out-test.txt") ; (tio/create-temp-file "tsv" ".tmp")
-          ]
-      (is= java.io.File (type dummy-File))
-
-      (utah-enc-response-fname->tsv-file sample-fname dummy-File)
-      (let [result-str (str/quotes->single (slurp dummy-File))]
-        (is-nonblank= result-str
-          "30000445230835	[{'code':'00000','severity':'unknown'}]
-           30000445278160	[{'code':'1468','severity':'warning'},{'code':'20154','severity':'error'}]
-           30000445278201	[{'code':'1468','severity':'warning'}]
-           30000445284956	[{'code':'00000','severity':'unknown'}]
-           30000445325958	[{'code':'00000','severity':'unknown'}]
-           30000445325959	[{'code':'00000','severity':'unknown'}]
-           30000445325960	[{'code':'00000','severity':'unknown'}]
-           30000445325961	[{'code':'00000','severity':'unknown'}]
-           30000445325962	[{'code':'00000','severity':'unknown'}]
-           30000445325963	[{'code':'00000','severity':'unknown'}]
-           30000445325964	[{'code':'2076','severity':'error'},{'code':'2645','severity':'warning'},{'code':'20121','severity':'error'},{'code':'20121','severity':'error'},{'code':'20121','severity':'error'}] "
-          )))
-
+      ; Write full result
+      (when false ; only run manually for full output
+        (let [fname-enc-responses-all "/Users/athom555/work/utah-response/4950_DOHHT007992-001_15007163_20231123.txt"
+              full-output-file        "utah-out-full.tsv"]
+          (utah-enc-response-fname->tsv-file fname-enc-responses-all full-output-file)
+          (let [result-str (str/quotes->single (slurp full-output-file))]
+            (println result-str)
+            )))
+      )
     ))
 
 (verify
@@ -463,9 +467,8 @@
   (let [fname "./enc-response-files-test-small/ENC_RESPONSE_D_20211202_065818.TXT"]
     (is= (iowa-enc-response-fname->utc-str fname)
       "2021-12-02T06:58:18")
-    (spyx-pretty (iowa-enc-response-fname->base-str fname))
-
-    ))
+    (is= (iowa-enc-response-fname->base-str fname)
+      "ENC_RESPONSE_D_20211202_065818.TXT")))
 
 (verify
   (let [ctx {:db-uri                      "datomic:dev://localhost:4334/enc-response-test"

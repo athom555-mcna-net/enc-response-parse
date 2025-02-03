@@ -105,7 +105,7 @@
    {:name :record-category :format :text :length 1}
    {:name :error-number :format :text :length 5}
    {:name :error-severity :format :text :length 2}
-   {:name :error-field :format :text :length 20}
+   {:name :error-field :format :text :length 20 :length-strict? false }
    {:name :tcn :format :text :length 18 :length-strict? false}]
   )
 

@@ -7,6 +7,7 @@
     [schema.core :as s]
     [tupelo.profile :as prof]
     [tupelo.schema :as tsk]
+    [tupelo.set :as set]
     [tupelo.string :as str]
     ))
 
@@ -116,14 +117,15 @@
       [encounter-line-number encounter-reference-number error-field error-number
        record-type related-plan-id submission-number tcn]
       (and
-        (= encounter-line-number "")
+        ; (= encounter-line-number "")
         (= encounter-reference-number "0000000000") ; *** key field ***
-        (= error-field "")
+        ; (= error-field "")
         (= error-number "99999") ; *** key field ***
-        (= record-type "")
+        ; (= record-type "")
         (= related-plan-id "") ; *** key field ***
-        (not= submission-number "")
-        (= tcn "")))))
+        ; (not= submission-number "")
+        ; (= tcn "")
+        ))))
 
 ;---------------------------------------------------------------------------------------------------
 (s/defn enc-response-fname->lines :- [s/Str]
@@ -155,6 +157,23 @@
                  :else "unknown")]
     result))
 
+(s/defn utah-rejected-fname->icns :- #{s/Str}
+  "Parse the Utah rejected claims file and return a list of ICNs as strings."
+  [fname :- s/Str]
+  (let [rejected-src (slurp fname)
+        lines-1      (str/split-lines rejected-src)
+        lines-2      (mapv str/trim (xdrop 2 lines-1))
+        lines-3      (forv [line lines-2]
+                       (let [tokens (map str/trim (str/split line #"\|"))
+                             icn    (xfirst tokens)]
+                         icn))
+        result       (into (sorted-set) lines-3)]
+    result))
+
+(def fname-utah-rejected-src "resources/ut_rejected_claims_to_icn_map.txt")
+(s/def utah-rejected-icns :- #{s/Str}
+  (utah-rejected-fname->icns fname-utah-rejected-src))
+
 (s/defn utah-enc-response-fname->parsed :- [tsk/KeyMap]
   [fname :- s/Str]
   (let [lines-1   (enc-response-fname->lines fname)
@@ -166,13 +185,21 @@
 
 (s/defn utah-enc-response-fname->by-enc-ref :- {s/Str [tsk/KeyMap]}
   [fname :- s/Str]
-  (let [data-recs  (utah-enc-response-fname->parsed fname)
-        by-enc-ref (glue (sorted-map) (group-by :encounter-reference-number data-recs))]
-    by-enc-ref))
+  (let [data-recs     (utah-enc-response-fname->parsed fname)
+        by-enc-ref    (group-by :encounter-reference-number data-recs)]
+    (glue (sorted-map) by-enc-ref)))
+
+(s/defn utah-enc-response-fname->by-enc-ref-rej-only :- {s/Str [tsk/KeyMap]} ; #todo needs a test
+  [fname :- s/Str]
+  (let [by-enc-ref    (utah-enc-response-fname->by-enc-ref fname)
+        all-icns      (set (keys by-enc-ref))
+        common-icns   (set/intersection all-icns utah-rejected-icns)
+        rejected-only (glue (sorted-map) (submap-by-keys by-enc-ref common-icns))]
+    rejected-only))
 
 (s/defn utah-enc-response-fname->tsv-recs :- [{s/Str [{s/Str s/Str}]}]
   [fname :- s/Str]
-  (let [by-enc-ref (utah-enc-response-fname->by-enc-ref fname)
+  (let [by-enc-ref (utah-enc-response-fname->by-enc-ref-rej-only fname)
         tsv-recs   (forv [[icn-num enc-recs] by-enc-ref]
                      (let [error-recs (forv [enc-rec enc-recs]
                                         (with-map-vals enc-rec [error-number error-severity]
@@ -196,5 +223,4 @@
         out-str   (str/join \newline out-lines)]
     (spit file-tsv out-str)
     nil))
-
 
