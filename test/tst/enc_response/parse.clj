@@ -1,4 +1,5 @@
-(ns tst.enc-response.parse
+(ns ^:test-refresh/focus
+  tst.enc-response.parse
   (:use enc-response.parse
         tupelo.core
         tupelo.test)
@@ -8,6 +9,7 @@
     [clojure.pprint :as pp]
     [enc-response.datomic :as datomic]
     [enc-response.proc :as proc]
+    [enc-response.parse.specs :as specs]
     [schema.core :as s]
     [tupelo.string :as str]
     )
@@ -93,8 +95,8 @@
 (verify
   (let [rec-1    "30000062649905                6213360078000001312022021D71704114C0311202119527117801124202100000002296800A00PAID          "
         rec-2    "30000062649906                6213360078000001412022021D11704114C0701202119527117801124202100000000000000A00DENIED        "
-        parsed-1 (parse-string-fields iowa-encounter-response-specs rec-1)
-        parsed-2 (parse-string-fields iowa-encounter-response-specs rec-2)]
+        parsed-1 (parse-string-fields specs/iowa-encounter-response rec-1)
+        parsed-2 (parse-string-fields specs/iowa-encounter-response rec-2)]
     ; (spyx-pretty parsed-1)
     (is= parsed-1
       {:mco-claim-number                "30000062649905" ; Note:  numeric fields still returned as strings!
@@ -129,16 +131,21 @@
        :field                           "DENIED"
        :error-field-value               ""})))
 
-(verify-focus
-  (let [hdr      "HDDRMAMMIS49502023112320231123    4950PROD"
-        rec-1    "HT00300693301                               100870530                     0000000000                         99999IO"
-        rec-2    "HT00300693301           300693301           100870530                     30000445278160                0007D1468 IO            20231122332332570063657000"
-        rec-3    "HT00300693301           300693301           100870530                     30000445278160                0067D20154RL                    332332570063657000"
-        parsed-hdr (parse-string-fields utah-encounter-response-specs-hdr hdr)
-        parsed-1 (parse-string-fields utah-encounter-response-specs-rec99999 rec-1)
-        parsed-2 (parse-string-fields utah-encounter-response-specs-rec00 rec-2)
-        parsed-3 (parse-string-fields utah-encounter-response-specs-rec00 rec-3)
+(verify
+  (let [hdr          "HDDRMAMMIS49502023112320231123    4950PROD"
+        line-1        "HT00300693301                               100870530                     0000000000                         99999IO"
+        line-2        "HT00300693301           300693301           100870530                     30000445278160                0007D1468 IO            20231122332332570063657000"
+        line-3        "HT00300693301           300693301           100870530                     30000445278160                0067D20154RL                    332332570063657000"
+        parsed-hdr   (parse-string-fields specs/utah-encounter-response-hdr hdr)
+        parsed-1     (parse-string-fields specs/utah-encounter-response-rec99999 line-1)
+        parsed-1-cmn (parse-string-fields specs/utah-encounter-response-common line-1)
+        parsed-2     (parse-string-fields specs/utah-encounter-response-rec00 line-2)
+        parsed-3     (parse-string-fields specs/utah-encounter-response-rec00 line-3)
         ]
+    (is (utah-9999-line? line-1))
+    (isnt (utah-9999-line? line-2))
+    (isnt (utah-9999-line? line-3))
+
     (is= parsed-hdr
       {:category     "PROD"
        :field-01     "HDDR"
@@ -163,6 +170,18 @@
        :rejected-record-count "0000000000"
        :submission-number     "100870530"
        :submitter-id          "HT00"})
+
+    (is (->> parsed-1-cmn
+          (submatch?
+            {:encounter-line-number      ""
+             :encounter-reference-number "0000000000"
+             :error-field                ""
+             :error-number               "99999"
+             :record-type                ""
+             :related-plan-id            ""
+             :submission-number          "100870530"
+             :tcn                        ""})))
+
     (is= parsed-2
       {:capitated-plan-id          "300693301"
        :encounter-line-number      "000"
