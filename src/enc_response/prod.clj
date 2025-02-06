@@ -36,7 +36,6 @@
           (datomic/peer-transact-entities db-uri max-tx-size missing-icns))
         (prn :init-missing-icns->datomic--leave)))))
 
-
 (s/defn pull-icn-recs-from-datomic :- [tsk/KeyMap]
   "Pulls all records from datomic that possess attr `:encounter-transmission/icn`. Unwraps inner
    vector to return a vector of entity-maps."

@@ -1,0 +1,150 @@
+[
+; N=1
+
+  {:iowa-transaction-control-number "62136400780001867", :mco-claim-number "30000063213328", :error-code "A00"}
+  {:iowa-transaction-control-number "62413700780001274", :mco-claim-number "30000448502207", :error-code "A00"}
+  {:iowa-transaction-control-number "62334100780001107", :mco-claim-number "30000445494761", :error-code "A00"}
+  {:iowa-transaction-control-number "62307500780002101", :mco-claim-number "30000440287928", :error-code "A00"}
+  {:iowa-transaction-control-number "62133600780002517", :mco-claim-number "30000062721704", :error-code "A00"}
+  {:iowa-transaction-control-number "62312400780000014", :mco-claim-number "30000441175463", :error-code "A00"}
+  {:iowa-transaction-control-number "62025400780000665", :mco-claim-number "30000053627071", :error-code "A00"}
+  {:iowa-transaction-control-number "62130800780004334", :mco-claim-number "30000062083292", :error-code "A00"}
+  {:iowa-transaction-control-number "62319400780003706", :mco-claim-number "30000442460618", :error-code "A00"}
+  {:iowa-transaction-control-number "62324300780001503", :mco-claim-number "30000443409247", :error-code "A00"}
+  {:iowa-transaction-control-number "62330600780001207", :mco-claim-number "30000444813175", :error-code "A00"}
+
+; N=2
+  {:iowa-transaction-control-number "61712500780000219", :mco-claim-number "30000019456586", :error-code "A00"}
+  {:iowa-transaction-control-number "61927400780003713", :mco-claim-number "30000019456586", :error-code "A00"}
+
+  {:iowa-transaction-control-number "62201300780000770", :mco-claim-number "30000063441230", :error-code "A00"}
+  {:iowa-transaction-control-number "62201800780000770", :mco-claim-number "30000063441230", :error-code "D01"}
+
+  {:iowa-transaction-control-number "61801100780000485", :mco-claim-number "30000025291511", :error-code "A00"}
+  {:iowa-transaction-control-number "61901100780020808", :mco-claim-number "30000025291511", :error-code "A00"}
+
+  {:iowa-transaction-control-number "61729200780000538", :mco-claim-number "30000023584657", :error-code "A00"}
+  {:iowa-transaction-control-number "61901100780008188", :mco-claim-number "30000023584657", :error-code "A00"}
+
+  {:iowa-transaction-control-number "61721600780000202", :mco-claim-number "30000021609954", :error-code "A00"}
+  {:iowa-transaction-control-number "61901100780000165", :mco-claim-number "30000021609954", :error-code "A00"}
+
+  {:iowa-transaction-control-number "61727800780001424", :mco-claim-number "30000023324107", :error-code "A00"}
+  {:iowa-transaction-control-number "61901100780007661", :mco-claim-number "30000023324107", :error-code "A00"}
+
+  {:iowa-transaction-control-number "61810200780000201", :mco-claim-number "30000030447982", :error-code "A00"}
+  {:iowa-transaction-control-number "61901100780034492", :mco-claim-number "30000030447982", :error-code "A00"}
+
+  {:iowa-transaction-control-number "61721600780000206", :mco-claim-number "30000021609958", :error-code "A00"}
+  {:iowa-transaction-control-number "61901100780000169", :mco-claim-number "30000021609958", :error-code "A00"}
+
+  {:iowa-transaction-control-number "61729200780002353", :mco-claim-number "30000023716740", :error-code "A00"}
+  {:iowa-transaction-control-number "61901100780009739", :mco-claim-number "30000023716740", :error-code "A00"}
+
+  {:iowa-transaction-control-number "61732000780000856", :mco-claim-number "30000024176656", :error-code "A00"}
+  {:iowa-transaction-control-number "61901100780013665", :mco-claim-number "30000024176656", :error-code "A00"}
+
+  {:iowa-transaction-control-number "61802700780000429", :mco-claim-number "30000025547236", :error-code "A00"}
+  {:iowa-transaction-control-number "61901100780023305", :mco-claim-number "30000025547236", :error-code "A00"}
+
+; N=3
+  {:iowa-transaction-control-number "62320900780002611", :mco-claim-number "30000442669589", :error-code "A00"}
+  {:iowa-transaction-control-number "62320900780002611", :mco-claim-number "30000442669589", :error-code "A00"}
+  {:iowa-transaction-control-number "62320900780005630", :mco-claim-number "30000442669589", :error-code "D01"}
+
+  {:iowa-transaction-control-number "62318700780001632", :mco-claim-number "30000442335359", :error-code "A00"}
+  {:iowa-transaction-control-number "62318700780001632", :mco-claim-number "30000442335359", :error-code "A00"}
+  {:iowa-transaction-control-number "62318700780004991", :mco-claim-number "30000442335359", :error-code "D01"}
+
+  {:iowa-transaction-control-number "62320900780000333", :mco-claim-number "30000442667308", :error-code "A00"}
+  {:iowa-transaction-control-number "62320900780000333", :mco-claim-number "30000442667308", :error-code "A00"}
+  {:iowa-transaction-control-number "62320900780003352", :mco-claim-number "30000442667308", :error-code "D01"}
+
+  {:iowa-transaction-control-number "62318700780001730", :mco-claim-number "30000442335461", :error-code "A00"}
+  {:iowa-transaction-control-number "62318700780001730", :mco-claim-number "30000442335461", :error-code "A00"}
+  {:iowa-transaction-control-number "62318700780005089", :mco-claim-number "30000442335461", :error-code "D01"}
+
+  {:iowa-transaction-control-number "62320900780002417", :mco-claim-number "30000442669395", :error-code "A00"}
+  {:iowa-transaction-control-number "62320900780002417", :mco-claim-number "30000442669395", :error-code "A00"}
+  {:iowa-transaction-control-number "62320900780005436", :mco-claim-number "30000442669395", :error-code "D01"}
+
+  {:iowa-transaction-control-number "62318700780001228", :mco-claim-number "30000442334949", :error-code "A00"}
+  {:iowa-transaction-control-number "62318700780001228", :mco-claim-number "30000442334949", :error-code "A00"}
+  {:iowa-transaction-control-number "62318700780004587", :mco-claim-number "30000442334949", :error-code "D01"}
+
+  {:iowa-transaction-control-number "62318700780002540", :mco-claim-number "30000442336283", :error-code "A00"}
+  {:iowa-transaction-control-number "62318700780002540", :mco-claim-number "30000442336283", :error-code "A00"}
+  {:iowa-transaction-control-number "62318700780005899", :mco-claim-number "30000442336283", :error-code "D01"}
+
+  {:iowa-transaction-control-number "62320900780000810", :mco-claim-number "30000442667785", :error-code "A00"}
+  {:iowa-transaction-control-number "62320900780000810", :mco-claim-number "30000442667785", :error-code "A00"}
+  {:iowa-transaction-control-number "62320900780003829", :mco-claim-number "30000442667785", :error-code "D01"}
+
+  {:iowa-transaction-control-number "62318700780003349", :mco-claim-number "30000442350698", :error-code "A00"}
+  {:iowa-transaction-control-number "62318700780003349", :mco-claim-number "30000442350698", :error-code "A00"}
+  {:iowa-transaction-control-number "62318700780006708", :mco-claim-number "30000442350698", :error-code "D01"}
+
+  {:iowa-transaction-control-number "62320900780001898", :mco-claim-number "30000442668875", :error-code "A00"}
+  {:iowa-transaction-control-number "62320900780001898", :mco-claim-number "30000442668875", :error-code "A00"}
+  {:iowa-transaction-control-number "62320900780004917", :mco-claim-number "30000442668875", :error-code "D01"}
+
+  {:iowa-transaction-control-number "62318700780002263", :mco-claim-number "30000442336002", :error-code "A00"}
+  {:iowa-transaction-control-number "62318700780002263", :mco-claim-number "30000442336002", :error-code "A00"}
+  {:iowa-transaction-control-number "62318700780005622", :mco-claim-number "30000442336002", :error-code "D01"}
+
+; N=4
+  {:iowa-transaction-control-number "61718800780000151", :mco-claim-number "30000021292581", :error-code "A00"}
+  {:iowa-transaction-control-number "61718800780000601", :mco-claim-number "30000021292581", :error-code "D01"}
+  {:iowa-transaction-control-number "61718800780000151", :mco-claim-number "30000021292581", :error-code "A00"}
+  {:iowa-transaction-control-number "61932600781000118", :mco-claim-number "30000021292581", :error-code "A00"}
+
+  {:iowa-transaction-control-number "61718800780000168", :mco-claim-number "30000021292602", :error-code "A00"}
+  {:iowa-transaction-control-number "61718800780000618", :mco-claim-number "30000021292602", :error-code "D01"}
+  {:iowa-transaction-control-number "61718800780000168", :mco-claim-number "30000021292602", :error-code "A00"}
+  {:iowa-transaction-control-number "61932600781000130", :mco-claim-number "30000021292602", :error-code "A00"}
+
+  {:iowa-transaction-control-number "61803900780000049", :mco-claim-number "30000026016171", :error-code "A45"}
+  {:iowa-transaction-control-number "61803900780000049", :mco-claim-number "30000026016171", :error-code "B01"}
+  {:iowa-transaction-control-number "61803900780000049", :mco-claim-number "30000026016171", :error-code "B01"}
+  {:iowa-transaction-control-number "61901100780025001", :mco-claim-number "30000026016171", :error-code "A00"}
+
+  {:iowa-transaction-control-number "61718800780000009", :mco-claim-number "30000021292352", :error-code "A00"}
+  {:iowa-transaction-control-number "61718800780000459", :mco-claim-number "30000021292352", :error-code "D01"}
+  {:iowa-transaction-control-number "61718800780000009", :mco-claim-number "30000021292352", :error-code "A00"}
+  {:iowa-transaction-control-number "61932600781000006", :mco-claim-number "30000021292352", :error-code "A00"}
+
+  {:iowa-transaction-control-number "61718800780000244", :mco-claim-number "30000021292683", :error-code "A00"}
+  {:iowa-transaction-control-number "61718800780000694", :mco-claim-number "30000021292683", :error-code "D01"}
+  {:iowa-transaction-control-number "61718800780000244", :mco-claim-number "30000021292683", :error-code "A00"}
+  {:iowa-transaction-control-number "61932600781000190", :mco-claim-number "30000021292683", :error-code "A00"}
+
+  {:iowa-transaction-control-number "61718800780000118", :mco-claim-number "30000021292544", :error-code "A00"}
+  {:iowa-transaction-control-number "61718800780000568", :mco-claim-number "30000021292544", :error-code "D01"}
+  {:iowa-transaction-control-number "61718800780000118", :mco-claim-number "30000021292544", :error-code "A00"}
+  {:iowa-transaction-control-number "61932600781000094", :mco-claim-number "30000021292544", :error-code "A00"}
+
+  {:iowa-transaction-control-number "61718800780000189", :mco-claim-number "30000021292624", :error-code "A00"}
+  {:iowa-transaction-control-number "61718800780000639", :mco-claim-number "30000021292624", :error-code "D01"}
+  {:iowa-transaction-control-number "61718800780000189", :mco-claim-number "30000021292624", :error-code "A00"}
+  {:iowa-transaction-control-number "61932600781000147", :mco-claim-number "30000021292624", :error-code "A00"}
+
+  {:iowa-transaction-control-number "61718800780000187", :mco-claim-number "30000021292622", :error-code "A00"}
+  {:iowa-transaction-control-number "61718800780000637", :mco-claim-number "30000021292622", :error-code "D01"}
+  {:iowa-transaction-control-number "61718800780000187", :mco-claim-number "30000021292622", :error-code "A00"}
+  {:iowa-transaction-control-number "61932600781000145", :mco-claim-number "30000021292622", :error-code "A00"}
+
+  {:iowa-transaction-control-number "61718800780000435", :mco-claim-number "30000021292890", :error-code "A00"}
+  {:iowa-transaction-control-number "61718800780000885", :mco-claim-number "30000021292890", :error-code "D01"}
+  {:iowa-transaction-control-number "61718800780000435", :mco-claim-number "30000021292890", :error-code "A00"}
+  {:iowa-transaction-control-number "61932600781000312", :mco-claim-number "30000021292890", :error-code "A00"}
+
+  {:iowa-transaction-control-number "61718800780000112", :mco-claim-number "30000021292460", :error-code "A00"}
+  {:iowa-transaction-control-number "61718800780000562", :mco-claim-number "30000021292460", :error-code "D01"}
+  {:iowa-transaction-control-number "61718800780000112", :mco-claim-number "30000021292460", :error-code "A00"}
+  {:iowa-transaction-control-number "61932600781000091", :mco-claim-number "30000021292460", :error-code "A00"}
+
+  {:iowa-transaction-control-number "61718800780000277", :mco-claim-number "30000021292721", :error-code "A00"}
+  {:iowa-transaction-control-number "61718800780000727", :mco-claim-number "30000021292721", :error-code "D01"}
+  {:iowa-transaction-control-number "61718800780000277", :mco-claim-number "30000021292721", :error-code "A00"}
+  {:iowa-transaction-control-number "61932600781000208", :mco-claim-number "30000021292721", :error-code "A00"}
+]

@@ -34,7 +34,7 @@
              :tx-data-fname               "tx-data.edn"
              :max-tx-size                 500}))))
 
-    (let [ctx      (util/discarding-out-str
+    (let [ctx      (discarding-out-str
                      (config-load->ctx config-fname))
           expected (quote
                      {:db-uri                      "datomic:sql://encounters?jdbc:postgresql://postgres.qa:5432/topaz?user=datomic&password=geheim"
@@ -56,7 +56,7 @@
              :postgres-uri "bbb"
              :invoke-fn    enc-response.core/dummy-fn}))))
 
-    (let [ctx (util/discarding-out-str
+    (let [ctx (discarding-out-str
                 (config-load->ctx config-fname))]
       (is (submatch? '{:db-uri    "aaa?bbb"
                        :invoke-fn enc-response.core/dummy-fn}
@@ -94,7 +94,7 @@
              :tx-data-fname               "tx-data.edn"
              :max-tx-size                 500}))))
 
-    (let [ctx      (util/discarding-out-str
+    (let [ctx      (discarding-out-str
                      (config-load->ctx config-fname))
           expected (quote
                      {:db-uri                      "some-preexisting-uri"
