@@ -94,7 +94,6 @@
    input-str :- s/Str]
   (let [total-chars (apply + (mapv :length field-specs))
         padding     (repeat total-chars \space)]
-    (spyx total-chars)
     (loop [specs  field-specs
            chars  (glue (seq input-str) padding)
            result (omap/ordered-map)]

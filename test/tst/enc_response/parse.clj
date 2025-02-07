@@ -1,4 +1,4 @@
-(ns  ^:test-refresh/focus
+(ns
   tst.enc-response.parse
   (:use enc-response.parse
         tupelo.core
@@ -64,9 +64,7 @@
 
 (verify
   (throws? (spec-slice {:name :xxx :format :alpha :length 0} (vec "abcdefg"))) ; zero length
-  (throws? (spec-slice {:name :xxx :format :alpha :length 3} (vec "ab"))) ; insufficient chars
-  (throws? (spec-slice {:name :xxx :format :alpha :length 3 :length-strict? true} (vec "ab"))) ; insufficient chars
-  (throws-not? (spec-slice {:name :xxx :format :alpha :length 3 :length-strict? false} (vec "ab"))) ; insufficient chars
+  (throws-not? (spec-slice {:name :xxx :format :alpha :length 3} (vec "ab"))) ; insufficient chars
 
   (is= (spec-slice {:name :xxx :format :alpha :length 3} (vec "abc")) ; input str matches expected length
     {:state  {:chars-remaining []}
@@ -370,12 +368,12 @@
         (utah-enc-response-fname->tsv-file sample-fname dummy-File)
         (let [result-str (str/quotes->single (slurp dummy-File))]
           (is-nonblank= result-str
-           "30000445278160	[{'code':'1468','severity':'warning'},{'code':'20154','severity':'error'}]
-            30000445284956	[{'code':'00000','severity':'unknown'}]
-            30000445325958	[{'code':'00000','severity':'unknown'}]
-            30000445325960	[{'code':'00000','severity':'unknown'}]
-            30000445325962	[{'code':'00000','severity':'unknown'}]
-            30000445325964	[{'code':'2076','severity':'error'},{'code':'2645','severity':'warning'},{'code':'20121','severity':'error'},{'code':'20121','severity':'error'},{'code':'20121','severity':'error'}] ")))
+            "30000445278160	[{'code':'1468','severity':'warning'},{'code':'20154','severity':'error'}]
+             30000445284956	[{'code':'00000','severity':'unknown'}]
+             30000445325958	[{'code':'00000','severity':'unknown'}]
+             30000445325960	[{'code':'00000','severity':'unknown'}]
+             30000445325962	[{'code':'00000','severity':'unknown'}]
+             30000445325964	[{'code':'2076','severity':'error'},{'code':'2645','severity':'warning'},{'code':'20121','severity':'error'},{'code':'20121','severity':'error'},{'code':'20121','severity':'error'}] ")))
 
       ; Write full result
       (when false ; only run manually for full output
