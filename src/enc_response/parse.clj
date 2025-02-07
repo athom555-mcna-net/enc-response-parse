@@ -76,38 +76,38 @@
   [spec-in :- tsk/KeyMap
    char-seq-in :- [Character]]
   (let [spec (glue specs/opts-default spec-in)]
-    (with-map-vals spec [name format length trim? validate? length-strict?]
+    (with-map-vals spec [name format length trim? validate?]
       (assert-info (pos? length) "field length must be positive" (vals->map spec))
       ; NOTE: `split-at` works for both a string and a char seq
-      (let [[field-chars rem-chars-seq] (split-at length char-seq-in)]
-        (when length-strict?
-          (assert-info (= length (count field-chars)) "field chars missing" (vals->map spec-in field-chars rem-chars-seq)))
-        (let [field-str (cond-it-> (str/join field-chars)
-                          trim? (str/trim it))
-              result    {:state  {:chars-remaining rem-chars-seq}
-                         :output {name field-str}}]
-          (when validate?
-            (validate-format format field-str))
-          result)))))
+      (let [[field-chars rem-chars-seq] (split-at length char-seq-in)
+            field-str (cond-it-> (str/join field-chars)
+                        trim? (str/trim it))
+            result    {:state  {:chars-remaining rem-chars-seq}
+                       :output {name field-str}}]
+        (when validate?
+          (validate-format format field-str))
+        result))))
 
 (s/defn parse-string-fields :- tsk/KeyMap
   "Parse the input string the supplied fields specification"
   [field-specs :- [tsk/KeyMap]
    input-str :- s/Str]
-  (loop [specs  field-specs
-         chars  (vec input-str)
-         result (omap/ordered-map)]
-    (if (empty? specs)
-      result ; return
-      (let [last-spec?  (= 1 (count specs))
-            spec-curr   (xfirst specs)
-            ; >> (spyx spec-curr)
-            slice-out   (spec-slice spec-curr chars)
-            ; >> (spyx slice-out)
-            specs-next  (xrest specs)
-            chars-next  (fetch-in slice-out [:state :chars-remaining])
-            result-next (glue result (grab :output slice-out))]
-        (recur specs-next chars-next result-next)))))
+  (let [total-chars (apply + (mapv :length field-specs))
+        padding     (repeat total-chars \space)]
+    (spyx total-chars)
+    (loop [specs  field-specs
+           chars  (glue (seq input-str) padding)
+           result (omap/ordered-map)]
+      (if (empty? specs)
+        result ; return
+        (let [spec-curr   (xfirst specs)
+              ; >> (spyx spec-curr)
+              slice-out   (spec-slice spec-curr chars)
+              ; >> (spyx slice-out)
+              specs-next  (xrest specs)
+              chars-next  (fetch-in slice-out [:state :chars-remaining])
+              result-next (glue result (grab :output slice-out))]
+          (recur specs-next chars-next result-next))))))
 
 (s/defn utah-9999-line? :- s/Bool
   [line :- s/Str]
@@ -185,8 +185,8 @@
 
 (s/defn utah-enc-response-fname->by-enc-ref :- {s/Str [tsk/KeyMap]}
   [fname :- s/Str]
-  (let [data-recs     (utah-enc-response-fname->parsed fname)
-        by-enc-ref    (group-by :encounter-reference-number data-recs)]
+  (let [data-recs  (utah-enc-response-fname->parsed fname)
+        by-enc-ref (group-by :encounter-reference-number data-recs)]
     (glue (sorted-map) by-enc-ref)))
 
 (s/defn utah-enc-response-fname->by-enc-ref-rej-only :- {s/Str [tsk/KeyMap]} ; #todo needs a test

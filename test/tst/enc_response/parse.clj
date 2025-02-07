@@ -1,4 +1,5 @@
-(ns tst.enc-response.parse
+(ns  ^:test-refresh/focus
+  tst.enc-response.parse
   (:use enc-response.parse
         tupelo.core
         tupelo.test)

@@ -11,9 +11,7 @@
   "Default options for field specs"
   {:trim?          true ; trim leading/trailing blanks from returned string
    :validate?      true ; preform regex validation of fields
-
-   ; Don't crash if insufficient chars found in line.  Should only be used for last N fields
-   :length-strict? true})
+   })
 ; #todo add option for :failure-type [:exception or :default-result :- tsk/KeyMap]
 
 (s/def format->pattern :- tsk/KeyMap
@@ -45,8 +43,8 @@
    {:name :total-paid-amount :format :digit :length 12}
    {:name :line-number :format :digit :length 2}
    {:name :error-code :format :alphanumeric :length 3} ; #todo almost always "A00" (alt: "A45", "B01")
-   {:name :field :format :text :length 24 :length-strict? false}
-   {:name :error-field-value :format :text :length 80 :length-strict? false} ; #todo seems to be missing (all blanks!)
+   {:name :field :format :text :length 24 }
+   {:name :error-field-value :format :text :length 80 } ; #todo seems to be missing (all blanks!)
    ])
 
 (s/def utah-encounter-response-hdr :- [tsk/KeyMap]
@@ -75,8 +73,8 @@
    {:name :record-category :format :text :length 1}
    {:name :error-number :format :text :length 5}
    {:name :error-severity :format :text :length 2}
-   {:name :error-field :format :text :length 20 :length-strict? false}
-   {:name :tcn :format :text :length 18 :length-strict? false}
+   {:name :error-field :format :text :length 20 }
+   {:name :tcn :format :text :length 18 }
    ]
   )
 
@@ -92,8 +90,8 @@
    {:name :record-category :format :text :length 1}
    {:name :error-number :format :text :length 5}
    {:name :error-severity :format :text :length 2}
-   {:name :error-field :format :text :length 20 :length-strict? false}
-   {:name :tcn :format :text :length 18 :length-strict? false}]
+   {:name :error-field :format :text :length 20 }
+   {:name :tcn :format :text :length 18 }]
   )
 
 (s/def utah-encounter-response-rec99999 :- [tsk/KeyMap]
@@ -110,7 +108,7 @@
    {:name :filler-05 :format :text :length 1}
    {:name :error-number :format :text :length 5}
    {:name :error-severity :format :text :length 2}
-   {:name :filler-06 :format :text :length 20 :length-strict? false}
-   {:name :filler-07 :format :text :length 18 :length-strict? false}
+   {:name :filler-06 :format :text :length 20 }
+   {:name :filler-07 :format :text :length 18 }
    ])
 
