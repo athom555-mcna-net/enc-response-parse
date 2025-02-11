@@ -5,39 +5,17 @@ A simple template for Clojure projects
 
 == Overview
 
-This Clojure project shows my favorite layout of for both source & test files
-(sample Java source is included as well).  The project is also set-up to use the
-https://github.com/cloojure/tupelo[Tupelo Clojure] library and the
-https://github.com/jakemcc/lein-test-refresh[lein-test-refresh] plugin.
+This project can read/parse Encounter Response files for Iowa and Utah.
 
-== How to User This Project
+== Datomic DB
 
-To use this project, we assume you have already installed Java, Clojure, and Leiningen, and `git`.
+To run the project tests, use these scripts:
 
-=== Clone the Project Using Git
+    datomic-start.bash    # start the DB
+    datomic-stop.bash     # stop the DB
+    datomic-ps.bash       # show DB status
 
-Verify you have Git installed:
-
-```bash
-> git --version
-git version 2.25.0
-```
-
-Use `git` to clone the project (via SSH) into a new project names `demo`:
-```bash
-> git clone  git@github.com:io-tupelo/clj-template.git  demo  # git ssh URL
-```
-
-or, clone via HTTPS (if you don't have SSH set up on your computer & GitHub):
-```bash
-> git clone  https://github.com/io-tupelo/clj-template.git  demo  # git https URL
-```
-
-Then `cd` (change directory) into the new project:
-
-```bash
-> cd demo
-```
+== Run the tests
 
 === Verify you have Java & Clojure set up correctly
 

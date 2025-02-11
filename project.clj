@@ -5,10 +5,10 @@
   ;-----------------------------------------------------------------------------
 
   :dependencies [
-                 [com.datomic/peer          "1.0.7260"]
+                 [com.datomic/peer          "1.0.7277"]
                  [org.clojure/clojure       "1.12.0"]
                  [org.flatland/ordered      "1.15.12"]
-                 [org.postgresql/postgresql "42.7.4"]
+                 [org.postgresql/postgresql "42.7.5"]
                  [prismatic/schema          "1.4.1"]
                  [tupelo/tupelo             "24.12.03b"]
                  ]
