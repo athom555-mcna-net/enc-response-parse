@@ -76,11 +76,10 @@
 (verify   ; document normal and error cases
   (let [field-specs            [{:name :a :format :alpha :length 1}
                                 {:name :bb :format :digit :length 2}
-                                {:name :ccc :format :alphanumeric :length 3 }]
+                                {:name :ccc :format :alphanumeric :length 3}]
         field-specs-novalidate [{:name :a :format :alpha :length 1}
                                 {:name :bb :format :digit :length 2}
-                                {:name           :ccc :format :alphanumeric :length 3
-                                 :validate? false}]
+                                {:name :ccc :format :alphanumeric :length 3 :validate? false}]
         ]
     (is= (parse-string-fields field-specs "a23cc3")
       {:a "a" :bb "23" :ccc "cc3"})
