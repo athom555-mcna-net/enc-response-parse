@@ -138,7 +138,7 @@
                  :else "unknown")]
     result))
 
-(s/defn utah-99999-line? :- s/Bool
+(s/defn utah-99999-rec? :- s/Bool
   [line :- s/Str]
   (let [parsed-rec (parse-string-fields specs/utah-encounter-response-common line)]
     ; #todo maybe use only the "key field" values for test???
@@ -177,7 +177,7 @@
   [fname :- s/Str]
   (let [lines-1   (enc-response-fname->lines fname)
         lines-2   (xrest lines-1) ; drop hdr line
-        lines-3   (drop-if utah-99999-line? lines-2)
+        lines-3   (drop-if utah-99999-rec? lines-2)
         data-recs (forv [line lines-3]
                     (parse-string-fields specs/utah-encounter-response-rec00 line))]
     data-recs))

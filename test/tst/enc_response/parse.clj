@@ -139,9 +139,9 @@
         parsed-2     (parse-string-fields specs/utah-encounter-response-rec00 line-2)
         parsed-3     (parse-string-fields specs/utah-encounter-response-rec00 line-3)
         ]
-    (is (utah-99999-line? line-1))
-    (isnt (utah-99999-line? line-2))
-    (isnt (utah-99999-line? line-3))
+    (is (utah-99999-rec? line-1))
+    (isnt (utah-99999-rec? line-2))
+    (isnt (utah-99999-rec? line-3))
 
     (is= parsed-hdr
       {:category     "PROD"
