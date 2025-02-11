@@ -108,24 +108,6 @@
               result-next (glue result (grab :output slice-out))]
           (recur specs-next chars-next result-next))))))
 
-(s/defn utah-9999-line? :- s/Bool
-  [line :- s/Str]
-  (let [parsed-rec (parse-string-fields specs/utah-encounter-response-common line)]
-    ; #todo maybe use only the "key field" values for test???
-    (with-map-vals parsed-rec
-      [encounter-line-number encounter-reference-number error-field error-number
-       record-type related-plan-id submission-number tcn]
-      (and
-        ; (= encounter-line-number "")
-        (= encounter-reference-number "0000000000") ; *** key field ***
-        ; (= error-field "")
-        (= error-number "99999") ; *** key field ***
-        ; (= record-type "")
-        (= related-plan-id "") ; *** key field ***
-        ; (not= submission-number "")
-        ; (= tcn "")
-        ))))
-
 ;---------------------------------------------------------------------------------------------------
 (s/defn enc-response-fname->lines :- [s/Str]
   [fname :- s/Str]
@@ -156,6 +138,24 @@
                  :else "unknown")]
     result))
 
+(s/defn utah-99999-line? :- s/Bool
+  [line :- s/Str]
+  (let [parsed-rec (parse-string-fields specs/utah-encounter-response-common line)]
+    ; #todo maybe use only the "key field" values for test???
+    (with-map-vals parsed-rec
+      [encounter-line-number encounter-reference-number error-field error-number
+       record-type related-plan-id submission-number tcn]
+      (and
+        ; (= encounter-line-number "")
+        (= encounter-reference-number "0000000000") ; *** key field ***
+        ; (= error-field "")
+        (= error-number "99999") ; *** key field ***
+        ; (= record-type "")
+        (= related-plan-id "") ; *** key field ***
+        ; (not= submission-number "")
+        ; (= tcn "")
+        ))))
+
 (s/defn utah-rejected-fname->icns :- #{s/Str}
   "Parse the Utah rejected claims file and return a list of ICNs as strings."
   [fname :- s/Str]
@@ -177,7 +177,7 @@
   [fname :- s/Str]
   (let [lines-1   (enc-response-fname->lines fname)
         lines-2   (xrest lines-1) ; drop hdr line
-        lines-3   (drop-if utah-9999-line? lines-2)
+        lines-3   (drop-if utah-99999-line? lines-2)
         data-recs (forv [line lines-3]
                     (parse-string-fields specs/utah-encounter-response-rec00 line))]
     data-recs))
