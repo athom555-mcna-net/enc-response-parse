@@ -92,7 +92,7 @@
     (spyx config-fname)
     (main-impl config-fname)
     (spy :main--leave))
-  (spy :calling-system-exit)
   (do
+    (spy :calling-system-exit)
     (Thread/sleep 500)
     (System/exit 0)))

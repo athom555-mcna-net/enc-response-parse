@@ -13,7 +13,6 @@
     [tupelo.io :as tio]
     [tupelo.schema :as tsk]
     [tupelo.string :as str]
-    [tupelo.test.jvm :as ttj]
     )
   (:import
     [java.io File]
